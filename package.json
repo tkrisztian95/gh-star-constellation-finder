@@ -4,7 +4,8 @@
   "description": "AI-powered TUI to organize GitHub stars into native lists.",
   "type": "module",
   "scripts": {
-    "start": "tsc && node dist/index.js"
+    "start": "tsc && node dist/index.js",
+    "dev": "tsx src/index.tsx"
   },
   "dependencies": {
     "@octokit/graphql": "^8.1.0",
