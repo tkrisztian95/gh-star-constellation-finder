@@ -1,30 +1,13 @@
 import OpenAI from 'openai';
 import { z } from 'zod';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
-
-const SYSTEM_PROMPT =
-  "You are a technical librarian. Analyze the provided README content. " +
-  "Categorize it into a short 2-3 word topic (e.g., 'Vector Databases' or 'Rust CLI Tools') " +
-  "and provide one 'Killer Feature' in under 10 words.";
+import { SYSTEM_PROMPT, buildUserMessage } from './prompts.js';
 
 const responseSchema = z.object({
   category: z.string(),
   killerFeature: z.string(),
+  dataQuality: z.enum(['full', 'sparse']).optional(),
 });
-
-function buildUserMessage(input: RepoInput): string {
-  return [
-    `Repository: ${input.owner}/${input.name}`,
-    `Description: ${input.description || 'N/A'}`,
-    `Language: ${input.language ?? 'N/A'}`,
-    `Topics: ${input.topics.join(', ') || 'N/A'}`,
-    '',
-    'README:',
-    input.readme || '(no README)',
-    '',
-    'Respond in JSON with keys "category" and "killerFeature".',
-  ].join('\n');
-}
 
 export function createOpenAIAnalyzer(): Analyzer {
   const apiKey = process.env.OPENAI_API_KEY;
