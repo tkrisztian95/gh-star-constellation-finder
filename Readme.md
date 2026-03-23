@@ -20,7 +20,7 @@
 ### Prerequisites
 
 * **Node.js** (v18 or higher)
-* **GitHub Personal Access Token (PAT):** Requires `repo` and `read:user` scopes.
+* **GitHub Personal Access Token (PAT):** Requires `repo` and `user` scopes. Note: the `user` scope (not just `read:user`) is required for creating and managing GitHub Lists via the GraphQL API. Use a **classic token** — fine-grained tokens do not support this mutation.
 * **AI Provider:** An OpenAI API Key OR [Ollama](https://ollama.com/) running locally (e.g., `llama3`).
 
 ### Installation
