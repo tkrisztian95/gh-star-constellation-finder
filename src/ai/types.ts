@@ -10,6 +10,7 @@ export interface RepoInput {
 export interface AnalysisResult {
   category: string;
   killerFeature: string;
+  dataQuality?: 'full' | 'sparse';
 }
 
 export interface Analyzer {
