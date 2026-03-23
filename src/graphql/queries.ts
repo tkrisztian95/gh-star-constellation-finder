@@ -24,11 +24,6 @@ export const STARRED_REPOSITORIES_QUERY = `
               }
             }
           }
-          lists(first: 20) {
-            nodes {
-              id
-            }
-          }
         }
       }
     }

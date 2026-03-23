@@ -15,7 +15,6 @@ interface GraphQLRepo {
   primaryLanguage: { name: string } | null;
   stargazerCount: number;
   repositoryTopics: { nodes: Array<{ topic: { name: string } }> };
-  lists: { nodes: Array<{ id: string }> };
 }
 
 interface StarredReposResponse {
@@ -50,7 +49,7 @@ function mapRepo(node: GraphQLRepo): Repo {
     language: node.primaryLanguage?.name ?? null,
     stargazerCount: node.stargazerCount,
     topics: node.repositoryTopics.nodes.map((t) => t.topic.name),
-    listIds: node.lists.nodes.map((l) => l.id),
+    listIds: [],
   };
 }
 

@@ -157,6 +157,19 @@ async function main() {
     fetchUserLists(graphqlWithAuth),
   ]);
 
+  // Derive listIds from fetched lists (Repository.lists field doesn't exist in GitHub's API)
+  const repoListIds = new Map<string, string[]>();
+  for (const list of lists) {
+    for (const repoId of list.repoIds) {
+      const ids = repoListIds.get(repoId) ?? [];
+      ids.push(list.id);
+      repoListIds.set(repoId, ids);
+    }
+  }
+  for (const repo of allRepos) {
+    repo.listIds = repoListIds.get(repo.id) ?? [];
+  }
+
   const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
 
   if (repos.length === 0) {
