@@ -7,7 +7,7 @@ import type { RepoInput } from './types.js';
 // D — Don't rules with examples
 // E — Calibration examples
 // C — Context: sparse data handling
-export const SYSTEM_PROMPT = `You are a technical librarian organising a developer's GitHub starred repositories into named lists.
+const BASE_SYSTEM_PROMPT = `You are a technical librarian organising a developer's GitHub starred repositories into named lists.
 
 TASK
 Analyse the provided repository data and return a JSON object with three fields:
@@ -46,6 +46,19 @@ DATA QUALITY
 
 Respond ONLY with a valid JSON object. No prose, no markdown, no code fences.`;
 
+export function buildSystemPrompt(existingListNames: string[]): string {
+  if (existingListNames.length === 0) {
+    return BASE_SYSTEM_PROMPT;
+  }
+
+  const nameList = existingListNames.map((n) => `- "${n}"`).join('\n');
+  return `${BASE_SYSTEM_PROMPT}
+
+EXISTING LISTS
+The developer already has the following GitHub Lists. When the repo clearly fits one of these, you MUST use that exact list name as the "category" value (preserve casing). Only invent a new category name when none of these is a good fit.
+${nameList}`;
+}
+
 export function buildUserMessage(input: RepoInput): string {
   const readmeContent = input.readme?.trim() ?? '';
   const readmeLength = readmeContent.length;
@@ -69,4 +82,66 @@ export function buildUserMessage(input: RepoInput): string {
     '',
     'Respond in JSON with keys "category", "killerFeature", and "dataQuality".',
   ].join('\n');
+}
+
+export function buildConsolidationPrompt(proposedNames: string[]): string {
+  const nameList = proposedNames.map((n) => `"${n}"`).join(', ');
+  return `You are a technical librarian consolidating proposed GitHub List names into a minimal, well-named set.
+
+TASK
+Map every proposed name to a canonical name. Names that cover the same concrete technical domain must share one canonical name. Names that are genuinely distinct stay as-is.
+
+CANONICAL NAME RULES
+- Title Case, 2–4 words, concrete technical domain
+- Remove language qualifiers when the domain is the point: "Rust CLI Tools" + "Go CLI Tools" → "CLI Tools"
+- Keep language qualifiers only when the language IS the defining trait: "Rust Memory Management" stays specific
+- Prefer the more specific name: "HTTP Clients" beats "API Tools"; "Component Libraries" beats "Frontend Tools"
+- Never invent vague umbrella names: not "Developer Tools", "Utilities", "Libraries"
+
+MERGE WHEN
+- Names differ only by language/runtime qualifier and share the same domain ("Rust X", "Go X", "Python X" → "X")
+- Names are synonyms for the same domain ("Vector Databases" and "Embedding Stores" → "Vector Databases")
+- One name is a strict subset of another ("React Hooks" under "React State Management" → "React State Management")
+
+DO NOT MERGE WHEN
+- Domains are related but distinct ("HTTP Clients" and "API Gateways" are different things)
+- Merging would require a vague umbrella name
+- You are uncertain — map each to itself
+
+PROCESS
+Before writing JSON, mentally group the names by domain. Choose the best canonical name for each group. Then produce the mapping.
+
+EXAMPLES
+
+Input: "Rust CLI Tools", "Go CLI Utilities", "Python CLI Scripts", "GraphQL Clients", "REST API Clients", "Vector Databases", "Embedding Stores"
+Output: {
+  "Rust CLI Tools": "CLI Tools",
+  "Go CLI Utilities": "CLI Tools",
+  "Python CLI Scripts": "CLI Tools",
+  "GraphQL Clients": "GraphQL Clients",
+  "REST API Clients": "REST API Clients",
+  "Vector Databases": "Vector Databases",
+  "Embedding Stores": "Vector Databases"
+}
+
+Input: "React State Management", "Vue State Management", "React Component Libraries", "LLM Inference Engines", "Local AI Runners"
+Output: {
+  "React State Management": "Frontend State Management",
+  "Vue State Management": "Frontend State Management",
+  "React Component Libraries": "React Component Libraries",
+  "LLM Inference Engines": "LLM Inference Engines",
+  "Local AI Runners": "LLM Inference Engines"
+}
+
+Input: "Terminal Emulators", "Shell Dotfiles", "CSS Animation Libraries"
+Output: {
+  "Terminal Emulators": "Terminal Emulators",
+  "Shell Dotfiles": "Shell Dotfiles",
+  "CSS Animation Libraries": "CSS Animation Libraries"
+}
+
+NOW PROCESS THIS INPUT
+[${nameList}]
+
+Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
 }

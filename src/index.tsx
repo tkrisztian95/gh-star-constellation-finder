@@ -6,6 +6,7 @@ import { authenticate } from './github/auth.js';
 import { fetchStarredRepos, fetchUserLists } from './github/starFetcher.js';
 import { fetchAllReadmes } from './github/readmeFetcher.js';
 import { createAnalyzer, type Backend } from './ai/index.js';
+import { consolidateCategories } from './ai/consolidator.js';
 import { generateSuggestions } from './engine/suggestionEngine.js';
 import type { AnalyzedRepo } from './engine/suggestionEngine.js';
 import { applyAcceptedSuggestions, type MutationResult } from './github/mutator.js';
@@ -239,6 +240,7 @@ async function main() {
 
   // Analyze repos
   const analyzer = createAnalyzer(cliArgs.backend);
+  const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
 
@@ -254,12 +256,30 @@ async function main() {
         language: repo.language,
         topics: repo.topics,
         readme,
+        existingListNames,
       });
       analyzedRepos.push({ repo, analysis });
       analyzed++;
       setPhase({ tag: 'analyzing', analyzed, total: repos.length });
     })
   );
+
+  // Consolidate proposed new category names to reduce list proliferation
+  const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
+  const newCategoryNames = [
+    ...new Set(
+      analyzedRepos
+        .map((r) => r.analysis.category)
+        .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim()))
+    ),
+  ];
+  const remapping = await consolidateCategories(newCategoryNames);
+  for (const entry of analyzedRepos) {
+    const consolidated = remapping.get(entry.analysis.category);
+    if (consolidated) {
+      entry.analysis.category = consolidated;
+    }
+  }
 
   // Generate suggestions
   const { suggestions, count } = generateSuggestions(analyzedRepos, lists);
