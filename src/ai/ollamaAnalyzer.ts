@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
-import { SYSTEM_PROMPT, buildUserMessage } from './prompts.js';
+import { buildSystemPrompt, buildUserMessage } from './prompts.js';
 
 const responseSchema = z.object({
   category: z.string(),
@@ -22,7 +22,7 @@ export function createOllamaAnalyzer(model = 'llama3'): Analyzer {
             model,
             stream: false,
             messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: buildSystemPrompt(input.existingListNames ?? []) },
               { role: 'user', content: buildUserMessage(input) },
             ],
           }),

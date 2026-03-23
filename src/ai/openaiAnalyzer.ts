@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { z } from 'zod';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
-import { SYSTEM_PROMPT, buildUserMessage } from './prompts.js';
+import { buildSystemPrompt, buildUserMessage } from './prompts.js';
 
 const responseSchema = z.object({
   category: z.string(),
@@ -24,7 +24,7 @@ export function createOpenAIAnalyzer(): Analyzer {
         model: 'gpt-4o-mini',
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: buildSystemPrompt(input.existingListNames ?? []) },
           { role: 'user', content: buildUserMessage(input) },
         ],
       });
