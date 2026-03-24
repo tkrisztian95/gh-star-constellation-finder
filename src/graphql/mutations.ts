@@ -10,12 +10,12 @@ export const CREATE_LIST_MUTATION = `
 `;
 
 export const ADD_REPOS_TO_LIST_MUTATION = `
-  mutation AddReposToList($listId: ID!, $repositoryIds: [ID!]!) {
-    addStarredRepositoriesToUserList(input: {
-      userListId: $listId
-      starrableIds: $repositoryIds
+  mutation AddReposToList($itemId: ID!, $listIds: [ID!]!) {
+    updateUserListsForItem(input: {
+      itemId: $itemId
+      listIds: $listIds
     }) {
-      userList {
+      lists {
         id
         name
       }
