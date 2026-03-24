@@ -1,14 +1,8 @@
 import OpenAI from 'openai';
-import { z } from 'zod';
 import type { Langfuse } from 'langfuse';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
+import { parseAnalysisResponse } from './types.js';
 import { buildSystemPrompt, buildUserMessage } from './prompts.js';
-
-const responseSchema = z.object({
-  category: z.string(),
-  killerFeature: z.string(),
-  dataQuality: z.enum(['full', 'sparse']).optional(),
-});
 
 export function createOpenAIAnalyzer(langfuse?: Langfuse | null): Analyzer {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -65,15 +59,7 @@ export function createOpenAIAnalyzer(langfuse?: Langfuse | null): Analyzer {
         // tracing errors must not affect analysis
       }
 
-      try {
-        const parsed = responseSchema.parse(JSON.parse(content));
-        return parsed;
-      } catch {
-        console.warn(
-          `Warning: could not parse AI response for ${input.owner}/${input.name}, using raw text`
-        );
-        return { category: content, killerFeature: '' };
-      }
+      return parseAnalysisResponse(content);
     },
   };
 }
