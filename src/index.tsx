@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { render, Box, Text } from "ink";
-import * as readline from "node:readline";
 
 import { authenticate } from "./github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
@@ -19,6 +18,8 @@ import { applyAcceptedSuggestions, deleteAllLists, type MutationResult } from ".
 import type { Suggestion, ConsolidationStrategy } from "./types.js";
 
 import { LoadingScreen } from "./components/LoadingScreen.js";
+import { ConfirmScreen } from "./components/ConfirmScreen.js";
+import { StrategyScreen } from "./components/StrategyScreen.js";
 import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
 import { SummaryScreen } from "./components/SummaryScreen.js";
 
@@ -50,44 +51,12 @@ function parseArgs(): CliArgs {
   return result;
 }
 
-function prompt(question: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === "y");
-    });
-  });
-}
-
-function promptStrategy(): Promise<ConsolidationStrategy> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    const question = [
-      "\nConsolidation strategy:",
-      "  1) Keep existing  — preserve all lists, add new ones as needed (default)",
-      "  2) Re-create all  — delete every list, then build fresh from AI categories",
-      "  3) Allow rename   — keep lists but rename them when AI suggests a better name",
-      "Select [1/2/3, Enter = 1]: ",
-    ].join("\n");
-    rl.question(question, (answer) => {
-      rl.close();
-      if (answer === "2") resolve("recreate");
-      else if (answer === "3") resolve("allow-rename");
-      else resolve("keep-existing");
-    });
-  });
-}
-
 // --- App state types ---
 
 type AppPhase =
+  | { tag: "fetching-initial" }
+  | { tag: "confirm"; repoCount: number }
+  | { tag: "pick-strategy" }
   | { tag: "fetching" }
   | { tag: "analyzing"; analyzed: number; total: number }
   | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
@@ -107,12 +76,21 @@ type AppPhase =
 
 interface AppProps {
   phase: AppPhase;
+  onConfirm: (proceed: boolean) => void;
+  onStrategySelect: (strategy: ConsolidationStrategy) => void;
   onReviewComplete: (decisions: Map<number, ReviewDecision>) => void;
   onReviewQuit: (decisions: Map<number, ReviewDecision>) => void;
   onSummaryConfirm: (apply: boolean) => void;
 }
 
-function App({ phase, onReviewComplete, onReviewQuit, onSummaryConfirm }: AppProps) {
+function App({
+  phase,
+  onConfirm,
+  onStrategySelect,
+  onReviewComplete,
+  onReviewQuit,
+  onSummaryConfirm,
+}: AppProps) {
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1} width={90}>
       <Box justifyContent="space-between" marginBottom={1}>
@@ -121,6 +99,16 @@ function App({ phase, onReviewComplete, onReviewQuit, onSummaryConfirm }: AppPro
         </Text>
         <Text color="gray">v1.0</Text>
       </Box>
+
+      {phase.tag === "fetching-initial" && (
+        <LoadingScreen analyzed={0} total={0} phase="fetching" />
+      )}
+
+      {phase.tag === "confirm" && (
+        <ConfirmScreen repoCount={phase.repoCount} onConfirm={onConfirm} />
+      )}
+
+      {phase.tag === "pick-strategy" && <StrategyScreen onSelect={onStrategySelect} />}
 
       {phase.tag === "fetching" && <LoadingScreen analyzed={0} total={0} phase="fetching" />}
 
@@ -189,56 +177,28 @@ async function main() {
   const cliArgs = parseArgs();
 
   // Auth
-  const { login, token, graphqlWithAuth } = await authenticate();
-  console.log(`Authenticated as: ${login}`);
-
-  // Fetch stars + lists
-  console.log("Fetching starred repositories...");
-  const [allRepos, lists] = await Promise.all([
-    fetchStarredRepos(graphqlWithAuth),
-    fetchUserLists(graphqlWithAuth),
-  ]);
-
-  // Derive listIds from fetched lists (Repository.lists field doesn't exist in GitHub's API)
-  const repoListIds = new Map<string, string[]>();
-  for (const list of lists) {
-    for (const repoId of list.repoIds) {
-      const ids = repoListIds.get(repoId) ?? [];
-      ids.push(list.id);
-      repoListIds.set(repoId, ids);
-    }
-  }
-  for (const repo of allRepos) {
-    repo.listIds = repoListIds.get(repo.id) ?? [];
-  }
-
-  const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
-
-  if (repos.length === 0) {
-    console.log("No starred repositories found.");
-    process.exit(0);
-  }
-
-  // Confirm before analysis
-  const proceed = await prompt(
-    `\nFound ${repos.length} starred repos. This will make ${repos.length} AI API calls. Proceed? [y/N] `,
-  );
-  if (!proceed) {
-    console.log("Aborted.");
-    process.exit(0);
-  }
-
-  // Strategy selection (task 7.1)
-  const strategy = await promptStrategy();
+  const { token, graphqlWithAuth } = await authenticate();
 
   // Set up phase state for the TUI
-  let phase: AppPhase = { tag: "fetching" };
+  let phase: AppPhase = { tag: "fetching-initial" };
   let setPhase: (p: AppPhase) => void = () => {};
+  let onConfirm: (proceed: boolean) => void = () => {};
+  let onStrategySelect: (strategy: ConsolidationStrategy) => void = () => {};
   let onReviewComplete: (d: Map<number, ReviewDecision>) => void = () => {};
   let onReviewQuit: (d: Map<number, ReviewDecision>) => void = () => {};
   let onSummaryConfirm: (apply: boolean) => void = () => {};
 
   // Promises to bridge TUI events back to async flow
+  let confirmResolve: (proceed: boolean) => void;
+  const confirmPromise = new Promise<boolean>((resolve) => {
+    confirmResolve = resolve;
+  });
+
+  let strategyResolve: (strategy: ConsolidationStrategy) => void;
+  const strategyPromise = new Promise<ConsolidationStrategy>((resolve) => {
+    strategyResolve = resolve;
+  });
+
   let reviewResolve: (result: { decisions: Map<number, ReviewDecision>; quit: boolean }) => void;
   const reviewPromise = new Promise<{ decisions: Map<number, ReviewDecision>; quit: boolean }>(
     (resolve) => {
@@ -262,6 +222,8 @@ async function main() {
       };
     }, []);
 
+    onConfirm = (proceed) => confirmResolve(proceed);
+    onStrategySelect = (strategy) => strategyResolve(strategy);
     onReviewComplete = (decisions) => reviewResolve({ decisions, quit: false });
     onReviewQuit = (decisions) => reviewResolve({ decisions, quit: true });
     onSummaryConfirm = (apply) => summaryResolve(apply);
@@ -269,6 +231,8 @@ async function main() {
     return (
       <App
         phase={currentPhase}
+        onConfirm={onConfirm}
+        onStrategySelect={onStrategySelect}
         onReviewComplete={onReviewComplete}
         onReviewQuit={onReviewQuit}
         onSummaryConfirm={onSummaryConfirm}
@@ -277,6 +241,45 @@ async function main() {
   }
 
   const { unmount } = render(<ReactiveApp />);
+
+  // Fetch stars + lists
+  const [allRepos, lists] = await Promise.all([
+    fetchStarredRepos(graphqlWithAuth),
+    fetchUserLists(graphqlWithAuth),
+  ]);
+
+  // Derive listIds from fetched lists (Repository.lists field doesn't exist in GitHub's API)
+  const repoListIds = new Map<string, string[]>();
+  for (const list of lists) {
+    for (const repoId of list.repoIds) {
+      const ids = repoListIds.get(repoId) ?? [];
+      ids.push(list.id);
+      repoListIds.set(repoId, ids);
+    }
+  }
+  for (const repo of allRepos) {
+    repo.listIds = repoListIds.get(repo.id) ?? [];
+  }
+
+  const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
+
+  if (repos.length === 0) {
+    unmount();
+    console.log("No starred repositories found.");
+    process.exit(0);
+  }
+
+  // Confirm before analysis
+  setPhase({ tag: "confirm", repoCount: repos.length });
+  const proceed = await confirmPromise;
+  if (!proceed) {
+    unmount();
+    process.exit(0);
+  }
+
+  // Strategy selection
+  setPhase({ tag: "pick-strategy" });
+  const strategy = await strategyPromise;
 
   // Fetch READMEs
   setPhase({ tag: "fetching" });
