@@ -8,7 +8,7 @@ const responseSchema = z.object({
   dataQuality: z.enum(['full', 'sparse']).optional(),
 });
 
-export function createOllamaAnalyzer(model = 'llama3'): Analyzer {
+export function createOllamaAnalyzer(model = process.env.OLLAMA_MODEL ?? 'llama3'): Analyzer {
   const host = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 
   return {
