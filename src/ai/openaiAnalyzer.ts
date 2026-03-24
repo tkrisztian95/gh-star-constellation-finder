@@ -1,10 +1,10 @@
 import OpenAI from 'openai';
-import type { Langfuse } from 'langfuse';
+import type { LangfuseSpan } from './tracing.js';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
 import { parseAnalysisResponse } from './types.js';
 import { buildSystemPrompt, buildUserMessage } from './prompts.js';
 
-export function createOpenAIAnalyzer(langfuse?: Langfuse | null): Analyzer {
+export function createOpenAIAnalyzer(parent?: LangfuseSpan | null): Analyzer {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.error('Error: OPENAI_API_KEY is required for the openai backend');
@@ -19,10 +19,10 @@ export function createOpenAIAnalyzer(langfuse?: Langfuse | null): Analyzer {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildUserMessage(input);
 
-      let generation: ReturnType<Langfuse['generation']> | undefined;
+      let generation: ReturnType<LangfuseSpan['generation']> | undefined;
       try {
-        if (langfuse) {
-          generation = langfuse.generation({
+        if (parent) {
+          generation = parent.generation({
             name: `analyze-${input.owner}/${input.name}`,
             model,
             input: [

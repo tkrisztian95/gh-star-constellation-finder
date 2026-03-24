@@ -1,11 +1,11 @@
-import type { Langfuse } from 'langfuse';
+import type { LangfuseSpan } from './tracing.js';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
 import { parseAnalysisResponse } from './types.js';
 import { buildSystemPrompt, buildUserMessage } from './prompts.js';
 
 export function createOllamaAnalyzer(
   model = process.env.OLLAMA_MODEL ?? 'llama3',
-  langfuse?: Langfuse | null,
+  parent?: LangfuseSpan | null,
 ): Analyzer {
   const host = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 
@@ -14,10 +14,10 @@ export function createOllamaAnalyzer(
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildUserMessage(input);
 
-      let generation: ReturnType<Langfuse['generation']> | undefined;
+      let generation: ReturnType<LangfuseSpan['generation']> | undefined;
       try {
-        if (langfuse) {
-          generation = langfuse.generation({
+        if (parent) {
+          generation = parent.generation({
             name: `analyze-${input.owner}/${input.name}`,
             model,
             input: [
