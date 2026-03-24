@@ -6,7 +6,12 @@ import { authenticate } from "./github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
 import { fetchAllReadmes } from "./github/readmeFetcher.js";
 import { createAnalyzer, type Backend } from "./ai/index.js";
-import { createLangfuseClient, flushTracing } from "./ai/tracing.js";
+import {
+  createLangfuseClient,
+  createRunTrace,
+  generateSessionId,
+  flushTracing,
+} from "./ai/tracing.js";
 import { consolidateCategories } from "./ai/consolidator.js";
 import { generateSuggestions } from "./engine/suggestionEngine.js";
 import type { AnalyzedRepo, ReroutedRepo } from "./engine/suggestionEngine.js";
@@ -257,9 +262,16 @@ async function main() {
   process.on("beforeExit", () => {
     flushTracing(langfuse);
   });
+  const trace = langfuse
+    ? createRunTrace(
+        langfuse,
+        { repoCount: repos.length, backend: cliArgs.backend ?? "openai" },
+        generateSessionId(),
+      )
+    : null;
 
   // Analyze repos
-  const analyzer = createAnalyzer(cliArgs.backend, langfuse);
+  const analyzer = createAnalyzer(cliArgs.backend, trace);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
