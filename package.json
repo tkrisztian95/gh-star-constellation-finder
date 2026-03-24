@@ -5,7 +5,18 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.tsx",
-    "dev": "bun run src/index.tsx"
+    "dev": "bun run src/index.tsx",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@octokit/graphql": "^8.1.0",
@@ -17,6 +28,13 @@
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
     "typescript": "^5.0.0"
   }
 }
