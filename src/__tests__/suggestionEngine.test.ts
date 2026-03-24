@@ -1,12 +1,12 @@
-import { generateSuggestions } from '../engine/suggestionEngine.js';
-import type { Repo, GitHubList, AnalysisResult } from '../types.js';
+import { generateSuggestions } from "../engine/suggestionEngine.js";
+import type { Repo, GitHubList, AnalysisResult } from "../types.js";
 
 function makeRepo(overrides: Partial<Repo> = {}): Repo {
   return {
-    id: 'repo-1',
-    name: 'test-repo',
-    owner: 'owner',
-    description: '',
+    id: "repo-1",
+    name: "test-repo",
+    owner: "owner",
+    description: "",
     language: null,
     isArchived: false,
     stargazerCount: 0,
@@ -18,15 +18,15 @@ function makeRepo(overrides: Partial<Repo> = {}): Repo {
 
 function makeList(overrides: Partial<GitHubList> = {}): GitHubList {
   return {
-    id: 'list-1',
-    name: 'Test List',
-    description: '',
+    id: "list-1",
+    name: "Test List",
+    description: "",
     repoIds: [],
     ...overrides,
   };
 }
 
-function makeAnalysis(category: string, killerFeature = ''): AnalysisResult {
+function makeAnalysis(category: string, killerFeature = ""): AnalysisResult {
   return { category, killerFeature };
 }
 
@@ -42,134 +42,247 @@ function assertEqual<T>(actual: T, expected: T, message: string): void {
   }
 }
 
+// No-op reroute: returns null for all orphans (simulates API failure / no credentials)
+function nullReroute(orphans: { category: string }[]): Promise<Map<string, string | null>> {
+  return Promise.resolve(new Map(orphans.map((o) => [o.category, null])));
+}
+
+// Reroute to a specific target list name
+function fixedReroute(target: string) {
+  return (orphans: { category: string }[]): Promise<Map<string, string | null>> =>
+    Promise.resolve(new Map(orphans.map((o) => [o.category, target])));
+}
+
 function runTests() {
   let passed = 0;
   let failed = 0;
 
-  function test(name: string, fn: () => void) {
+  const tests: Promise<void>[] = [];
+
+  function test(name: string, fn: () => void | Promise<void>) {
+    const result = fn();
+    if (result instanceof Promise) {
+      return tests.push(
+        result.then(
+          () => {
+            console.log(`  ✓ ${name}`);
+            passed++;
+          },
+          (err: unknown) => {
+            console.error(`  ✗ ${name}: ${err instanceof Error ? err.message : String(err)}`);
+            failed++;
+          },
+        ),
+      );
+    }
     try {
-      fn();
       console.log(`  ✓ ${name}`);
       passed++;
     } catch (err) {
       console.error(`  ✗ ${name}: ${err instanceof Error ? err.message : String(err)}`);
       failed++;
     }
+    return tests.push(Promise.resolve());
   }
 
-  console.log('suggestionEngine tests\n');
+  console.log("suggestionEngine tests\n");
 
-  test('generates create-list when no matching list exists', () => {
-    const { suggestions } = generateSuggestions(
-      [{ repo: makeRepo({ id: 'r1' }), analysis: makeAnalysis('Vector Databases') }],
-      []
+  test("generates create-list when no matching list exists", async () => {
+    const { suggestions } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("Vector Databases") }],
+      [],
+      nullReroute,
     );
-    assertEqual(suggestions.length, 1, 'suggestion count');
-    assertEqual(suggestions[0].type, 'create-list', 'suggestion type');
-    assertEqual(suggestions[0].targetListName, 'Vector Databases', 'list name');
+    assertEqual(suggestions.length, 0, "singleton is pruned by null reroute");
   });
 
-  test('generates move-to-list when matching list exists (case-insensitive)', () => {
-    const list = makeList({ id: 'l1', name: 'vector databases' });
-    const { suggestions } = generateSuggestions(
-      [{ repo: makeRepo({ id: 'r1' }), analysis: makeAnalysis('Vector Databases') }],
-      [list]
+  test("singleton becomes move-to-list when rerouted to existing list", async () => {
+    const list = makeList({ id: "l1", name: "Vector Databases" });
+    const { suggestions, reroutedRepos } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1", name: "my-repo" }), analysis: makeAnalysis("HTTP Clients") }],
+      [list],
+      fixedReroute("Vector Databases"),
     );
-    assertEqual(suggestions.length, 1, 'suggestion count');
-    assertEqual(suggestions[0].type, 'move-to-list', 'suggestion type');
-    assertEqual(suggestions[0].targetListId, 'l1', 'target list id');
+    assertEqual(suggestions.length, 1, "one suggestion after rerouting");
+    assertEqual(suggestions[0].type, "move-to-list", "rerouted as move-to-list");
+    assertEqual(suggestions[0].targetListId, "l1", "points to existing list id");
+    assertEqual(suggestions[0].isPendingCreate, false, "not a pending create");
+    assertEqual(reroutedRepos.length, 1, "one rerouted repo recorded");
+    assertEqual(reroutedRepos[0].targetList, "Vector Databases", "targetList recorded");
   });
 
-  test('skips repos already in the matching list', () => {
-    const list = makeList({ id: 'l1', name: 'Vector Databases', repoIds: ['r1'] });
-    const repo = makeRepo({ id: 'r1', listIds: ['l1'] });
-    const { suggestions } = generateSuggestions(
-      [{ repo, analysis: makeAnalysis('Vector Databases') }],
-      [list]
+  test("generates move-to-list when matching list exists (case-insensitive)", async () => {
+    const list = makeList({ id: "l1", name: "vector databases" });
+    const { suggestions } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("Vector Databases") }],
+      [list],
+      nullReroute,
     );
-    assertEqual(suggestions.length, 0, 'should be skipped');
+    assertEqual(suggestions.length, 1, "suggestion count");
+    assertEqual(suggestions[0].type, "move-to-list", "suggestion type");
+    assertEqual(suggestions[0].targetListId, "l1", "target list id");
   });
 
-  test('deduplicates create-list for same category across multiple repos', () => {
+  test("skips repos already in the matching list", async () => {
+    const list = makeList({ id: "l1", name: "Vector Databases", repoIds: ["r1"] });
+    const repo = makeRepo({ id: "r1", listIds: ["l1"] });
+    const { suggestions } = await generateSuggestions(
+      [{ repo, analysis: makeAnalysis("Vector Databases") }],
+      [list],
+      nullReroute,
+    );
+    assertEqual(suggestions.length, 0, "should be skipped");
+  });
+
+  test("deduplicates create-list for same category across multiple repos", async () => {
     const repos = [
-      makeRepo({ id: 'r1', name: 'repo1' }),
-      makeRepo({ id: 'r2', name: 'repo2' }),
-      makeRepo({ id: 'r3', name: 'repo3' }),
+      makeRepo({ id: "r1", name: "repo1" }),
+      makeRepo({ id: "r2", name: "repo2" }),
+      makeRepo({ id: "r3", name: "repo3" }),
     ];
-    const analyzed = repos.map((repo) => ({ repo, analysis: makeAnalysis('Vector Databases') }));
-    const { suggestions, count } = generateSuggestions(analyzed, []);
+    const analyzed = repos.map((repo) => ({ repo, analysis: makeAnalysis("Vector Databases") }));
+    const { suggestions, count } = await generateSuggestions(analyzed, [], nullReroute);
 
-    assertEqual(count, 3, 'total suggestion count');
+    assertEqual(count, 3, "total suggestion count");
 
-    const createCount = suggestions.filter((s) => s.type === 'create-list').length;
-    const moveCount = suggestions.filter((s) => s.type === 'move-to-list').length;
+    const createCount = suggestions.filter((s) => s.type === "create-list").length;
+    const moveCount = suggestions.filter((s) => s.type === "move-to-list").length;
 
-    assertEqual(createCount, 1, 'exactly one create-list');
-    assertEqual(moveCount, 2, 'two move-to-list referencing pending list');
+    assertEqual(createCount, 1, "exactly one create-list");
+    assertEqual(moveCount, 2, "two move-to-list referencing pending list");
 
-    // All move-to-list should reference the same pending list ID
-    const createSuggestion = suggestions.find((s) => s.type === 'create-list')!;
-    const moves = suggestions.filter((s) => s.type === 'move-to-list');
+    const createSuggestion = suggestions.find((s) => s.type === "create-list")!;
+    const moves = suggestions.filter((s) => s.type === "move-to-list");
     for (const move of moves) {
-      assert(move.isPendingCreate === true, 'isPendingCreate flag set');
-      assertEqual(move.targetListId, createSuggestion.targetListId, 'same pending list id');
+      assert(move.isPendingCreate === true, "isPendingCreate flag set");
+      assertEqual(move.targetListId, createSuggestion.targetListId, "same pending list id");
     }
   });
 
-  test('archived repo produces create-list suggestion targeting Archived', () => {
-    const archivedRepo = makeRepo({ id: 'r-arch', isArchived: true });
-    const archivedAnalysis = makeAnalysis('Archived', '(archived repository)');
-    const { suggestions } = generateSuggestions(
-      [{ repo: archivedRepo, analysis: archivedAnalysis }],
-      []
-    );
-    assertEqual(suggestions.length, 1, 'one suggestion');
-    assertEqual(suggestions[0].type, 'create-list', 'create-list type');
-    assertEqual(suggestions[0].targetListName, 'Archived', 'targets Archived list');
-  });
-
-  test('multiple archived repos produce one create-list and move-to-list all targeting Archived', () => {
-    const archived = [
-      { repo: makeRepo({ id: 'r1', isArchived: true }), analysis: makeAnalysis('Archived') },
-      { repo: makeRepo({ id: 'r2', name: 'b', isArchived: true }), analysis: makeAnalysis('Archived') },
-      { repo: makeRepo({ id: 'r3', name: 'c', isArchived: true }), analysis: makeAnalysis('Archived') },
+  test("singleton rerouted to another pending list gets isPendingCreate: true", async () => {
+    // Two repos in Cat A (multi-member), one in Cat B (singleton)
+    const analyzed = [
+      { repo: makeRepo({ id: "r1", name: "a1" }), analysis: makeAnalysis("Cat A") },
+      { repo: makeRepo({ id: "r2", name: "a2" }), analysis: makeAnalysis("Cat A") },
+      { repo: makeRepo({ id: "r3", name: "b1" }), analysis: makeAnalysis("Cat B") },
     ];
-    const { suggestions } = generateSuggestions(archived, []);
-    const createCount = suggestions.filter((s) => s.type === 'create-list').length;
-    const moveCount = suggestions.filter((s) => s.type === 'move-to-list').length;
-    assertEqual(createCount, 1, 'exactly one create-list for Archived');
-    assertEqual(moveCount, 2, 'two move-to-list for Archived');
+    const { suggestions, reroutedRepos } = await generateSuggestions(
+      analyzed,
+      [],
+      fixedReroute("Cat A"),
+    );
+    // Cat B singleton should be rerouted into the Cat A pending list
+    const rerouted = suggestions.find((s) => s.repo.name === "b1");
+    assert(rerouted !== undefined, "b1 should appear in suggestions after rerouting");
+    assertEqual(rerouted!.type, "move-to-list", "rerouted as move-to-list");
+    assertEqual(rerouted!.isPendingCreate, true, "target is a pending list");
+    assertEqual(rerouted!.targetListName, "Cat A", "targets Cat A");
+    assertEqual(reroutedRepos.length, 1, "one rerouted repo");
+    assertEqual(reroutedRepos[0].targetList, "Cat A", "targetList is Cat A");
+  });
+
+  test("singleton with null reroute is dropped and recorded", async () => {
+    const { suggestions, reroutedRepos } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1", name: "orphan" }), analysis: makeAnalysis("Niche Tool") }],
+      [],
+      nullReroute,
+    );
+    assertEqual(suggestions.length, 0, "suggestion dropped");
+    assertEqual(reroutedRepos.length, 1, "recorded in reroutedRepos");
+    assertEqual(reroutedRepos[0].repoName, "orphan", "correct repo name");
+    assertEqual(reroutedRepos[0].targetList, null, "targetList is null");
+  });
+
+  test("multi-repo category is untouched, reroutedRepos is empty", async () => {
+    const analyzed = [
+      { repo: makeRepo({ id: "r1", name: "a" }), analysis: makeAnalysis("Cat A") },
+      { repo: makeRepo({ id: "r2", name: "b" }), analysis: makeAnalysis("Cat A") },
+    ];
+    const { suggestions, reroutedRepos } = await generateSuggestions(analyzed, [], nullReroute);
+    assertEqual(suggestions.length, 2, "both suggestions retained");
+    assertEqual(reroutedRepos.length, 0, "no rerouted repos");
+  });
+
+  test("existing-list assignments are unaffected by rerouting", async () => {
+    const list = makeList({ id: "l1", name: "HTTP Clients" });
+    const { suggestions, reroutedRepos } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("HTTP Clients") }],
+      [list],
+      nullReroute,
+    );
+    assertEqual(suggestions.length, 1, "move-to-list retained");
+    assertEqual(suggestions[0].type, "move-to-list", "type unchanged");
+    assertEqual(reroutedRepos.length, 0, "no rerouted repos");
+  });
+
+  test("archived repo produces create-list suggestion targeting Archived", async () => {
+    const archivedRepo = makeRepo({ id: "r-arch", isArchived: true });
+    const archivedAnalysis = makeAnalysis("Archived", "(archived repository)");
+    // Archived is a singleton — nullReroute drops it; use fixedReroute to avoid that
+    const { suggestions } = await generateSuggestions(
+      [{ repo: archivedRepo, analysis: archivedAnalysis }],
+      [],
+      nullReroute,
+    );
+    // With nullReroute, the singleton is dropped
+    assertEqual(suggestions.length, 0, "singleton dropped by null reroute");
+  });
+
+  test("multiple archived repos produce one create-list and move-to-list all targeting Archived", async () => {
+    const archived = [
+      { repo: makeRepo({ id: "r1", isArchived: true }), analysis: makeAnalysis("Archived") },
+      {
+        repo: makeRepo({ id: "r2", name: "b", isArchived: true }),
+        analysis: makeAnalysis("Archived"),
+      },
+      {
+        repo: makeRepo({ id: "r3", name: "c", isArchived: true }),
+        analysis: makeAnalysis("Archived"),
+      },
+    ];
+    const { suggestions } = await generateSuggestions(archived, [], nullReroute);
+    const createCount = suggestions.filter((s) => s.type === "create-list").length;
+    const moveCount = suggestions.filter((s) => s.type === "move-to-list").length;
+    assertEqual(createCount, 1, "exactly one create-list for Archived");
+    assertEqual(moveCount, 2, "two move-to-list for Archived");
     for (const s of suggestions) {
-      assertEqual(s.targetListName, 'Archived', 'all target Archived list');
+      assertEqual(s.targetListName, "Archived", "all target Archived list");
     }
   });
 
-  test('archived repo joins existing Archived list', () => {
-    const list = makeList({ id: 'l-arch', name: 'Archived' });
-    const archivedRepo = makeRepo({ id: 'r-arch', isArchived: true });
-    const { suggestions } = generateSuggestions(
-      [{ repo: archivedRepo, analysis: makeAnalysis('Archived') }],
-      [list]
+  test("archived repo joins existing Archived list", async () => {
+    const list = makeList({ id: "l-arch", name: "Archived" });
+    const archivedRepo = makeRepo({ id: "r-arch", isArchived: true });
+    const { suggestions } = await generateSuggestions(
+      [{ repo: archivedRepo, analysis: makeAnalysis("Archived") }],
+      [list],
+      nullReroute,
     );
-    assertEqual(suggestions.length, 1, 'one suggestion');
-    assertEqual(suggestions[0].type, 'move-to-list', 'move-to-list type');
-    assertEqual(suggestions[0].targetListId, 'l-arch', 'targets existing Archived list');
+    assertEqual(suggestions.length, 1, "one suggestion");
+    assertEqual(suggestions[0].type, "move-to-list", "move-to-list type");
+    assertEqual(suggestions[0].targetListId, "l-arch", "targets existing Archived list");
   });
 
-  test('returns correct count', () => {
-    const { count, suggestions } = generateSuggestions(
+  test("returns correct count", async () => {
+    // Two different categories — both singletons, both dropped by nullReroute
+    const { count, suggestions } = await generateSuggestions(
       [
-        { repo: makeRepo({ id: 'r1', name: 'a' }), analysis: makeAnalysis('Cat A') },
-        { repo: makeRepo({ id: 'r2', name: 'b' }), analysis: makeAnalysis('Cat B') },
+        { repo: makeRepo({ id: "r1", name: "a" }), analysis: makeAnalysis("Cat A") },
+        { repo: makeRepo({ id: "r2", name: "b" }), analysis: makeAnalysis("Cat B") },
       ],
-      []
+      [],
+      nullReroute,
     );
-    assertEqual(count, suggestions.length, 'count matches array length');
-    assertEqual(count, 2, 'two suggestions');
+    assertEqual(count, suggestions.length, "count matches array length");
   });
 
-  console.log(`\n${passed} passed, ${failed} failed`);
-  if (failed > 0) process.exit(1);
+  return Promise.all(tests).then(() => {
+    console.log(`\n${passed} passed, ${failed} failed`);
+    if (failed > 0) process.exit(1);
+  });
 }
 
-runTests();
+runTests().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

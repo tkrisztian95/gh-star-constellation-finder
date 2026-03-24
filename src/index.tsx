@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { render, Box, Text } from 'ink';
-import * as readline from 'node:readline';
+import React, { useState, useEffect } from "react";
+import { render, Box, Text } from "ink";
+import * as readline from "node:readline";
 
-import { authenticate } from './github/auth.js';
-import { fetchStarredRepos, fetchUserLists } from './github/starFetcher.js';
-import { fetchAllReadmes } from './github/readmeFetcher.js';
-import { createAnalyzer, type Backend } from './ai/index.js';
-import { createLangfuseClient, flushTracing } from './ai/tracing.js';
-import { consolidateCategories } from './ai/consolidator.js';
-import { generateSuggestions } from './engine/suggestionEngine.js';
-import type { AnalyzedRepo } from './engine/suggestionEngine.js';
-import { applyAcceptedSuggestions, type MutationResult } from './github/mutator.js';
-import type { Suggestion } from './types.js';
+import { authenticate } from "./github/auth.js";
+import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
+import { fetchAllReadmes } from "./github/readmeFetcher.js";
+import { createAnalyzer, type Backend } from "./ai/index.js";
+import { createLangfuseClient, flushTracing } from "./ai/tracing.js";
+import { consolidateCategories } from "./ai/consolidator.js";
+import { generateSuggestions } from "./engine/suggestionEngine.js";
+import type { AnalyzedRepo, ReroutedRepo } from "./engine/suggestionEngine.js";
+import { applyAcceptedSuggestions, type MutationResult } from "./github/mutator.js";
+import type { Suggestion } from "./types.js";
 
-import { LoadingScreen } from './components/LoadingScreen.js';
-import { ReviewScreen, type ReviewDecision } from './components/ReviewScreen.js';
-import { SummaryScreen } from './components/SummaryScreen.js';
+import { LoadingScreen } from "./components/LoadingScreen.js";
+import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
+import { SummaryScreen } from "./components/SummaryScreen.js";
 
 // --- CLI arg parsing ---
 
@@ -30,13 +30,13 @@ function parseArgs(): CliArgs {
   const result: CliArgs = { concurrency: 5 };
 
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--backend' && args[i + 1]) {
+    if (args[i] === "--backend" && args[i + 1]) {
       result.backend = args[i + 1] as Backend;
       i++;
-    } else if (args[i] === '--limit' && args[i + 1]) {
+    } else if (args[i] === "--limit" && args[i + 1]) {
       result.limit = parseInt(args[i + 1], 10);
       i++;
-    } else if (args[i] === '--concurrency' && args[i + 1]) {
+    } else if (args[i] === "--concurrency" && args[i + 1]) {
       result.concurrency = parseInt(args[i + 1], 10);
       i++;
     }
@@ -53,7 +53,7 @@ function prompt(question: string): Promise<boolean> {
     });
     rl.question(question, (answer) => {
       rl.close();
-      resolve(answer.toLowerCase() === 'y');
+      resolve(answer.toLowerCase() === "y");
     });
   });
 }
@@ -61,13 +61,18 @@ function prompt(question: string): Promise<boolean> {
 // --- App state types ---
 
 type AppPhase =
-  | { tag: 'fetching' }
-  | { tag: 'analyzing'; analyzed: number; total: number }
-  | { tag: 'review'; suggestions: Suggestion[]; mergeWarnings: string[] }
-  | { tag: 'summary'; suggestions: Suggestion[]; decisions: Map<number, ReviewDecision> }
-  | { tag: 'applying'; results: MutationResult[] }
-  | { tag: 'done'; results: MutationResult[] }
-  | { tag: 'error'; message: string };
+  | { tag: "fetching" }
+  | { tag: "analyzing"; analyzed: number; total: number }
+  | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
+  | {
+      tag: "summary";
+      suggestions: Suggestion[];
+      decisions: Map<number, ReviewDecision>;
+      reroutedRepos: ReroutedRepo[];
+    }
+  | { tag: "applying"; results: MutationResult[] }
+  | { tag: "done"; results: MutationResult[] }
+  | { tag: "error"; message: string };
 
 // --- Main App Component ---
 
@@ -88,15 +93,13 @@ function App({ phase, onReviewComplete, onReviewQuit, onSummaryConfirm }: AppPro
         <Text color="gray">v1.0</Text>
       </Box>
 
-      {phase.tag === 'fetching' && (
-        <LoadingScreen analyzed={0} total={0} phase="fetching" />
-      )}
+      {phase.tag === "fetching" && <LoadingScreen analyzed={0} total={0} phase="fetching" />}
 
-      {phase.tag === 'analyzing' && (
+      {phase.tag === "analyzing" && (
         <LoadingScreen analyzed={phase.analyzed} total={phase.total} phase="analyzing" />
       )}
 
-      {phase.tag === 'review' && (
+      {phase.tag === "review" && (
         <ReviewScreen
           suggestions={phase.suggestions}
           mergeWarnings={phase.mergeWarnings}
@@ -105,37 +108,42 @@ function App({ phase, onReviewComplete, onReviewQuit, onSummaryConfirm }: AppPro
         />
       )}
 
-      {phase.tag === 'summary' && (
+      {phase.tag === "summary" && (
         <SummaryScreen
           suggestions={phase.suggestions}
           decisions={phase.decisions}
+          reroutedRepos={phase.reroutedRepos}
           onConfirm={onSummaryConfirm}
         />
       )}
 
-      {phase.tag === 'applying' && (
+      {phase.tag === "applying" && (
         <Box flexDirection="column" padding={1}>
-          <Text bold color="cyan">Applying changes...</Text>
+          <Text bold color="cyan">
+            Applying changes...
+          </Text>
           {phase.results.map((r, i) => (
-            <Text key={i} color={r.status === 'success' ? 'green' : 'red'}>
-              {r.status === 'success' ? '✓' : '✗'} {r.message}
+            <Text key={i} color={r.status === "success" ? "green" : "red"}>
+              {r.status === "success" ? "✓" : "✗"} {r.message}
             </Text>
           ))}
         </Box>
       )}
 
-      {phase.tag === 'done' && (
+      {phase.tag === "done" && (
         <Box flexDirection="column" padding={1}>
-          <Text bold color="green">Done!</Text>
+          <Text bold color="green">
+            Done!
+          </Text>
           {phase.results.map((r, i) => (
-            <Text key={i} color={r.status === 'success' ? 'green' : 'red'}>
-              {r.status === 'success' ? '✓' : '✗'} {r.message}
+            <Text key={i} color={r.status === "success" ? "green" : "red"}>
+              {r.status === "success" ? "✓" : "✗"} {r.message}
             </Text>
           ))}
         </Box>
       )}
 
-      {phase.tag === 'error' && (
+      {phase.tag === "error" && (
         <Box padding={1}>
           <Text color="red">Error: {phase.message}</Text>
         </Box>
@@ -154,7 +162,7 @@ async function main() {
   console.log(`Authenticated as: ${login}`);
 
   // Fetch stars + lists
-  console.log('Fetching starred repositories...');
+  console.log("Fetching starred repositories...");
   const [allRepos, lists] = await Promise.all([
     fetchStarredRepos(graphqlWithAuth),
     fetchUserLists(graphqlWithAuth),
@@ -176,21 +184,21 @@ async function main() {
   const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
 
   if (repos.length === 0) {
-    console.log('No starred repositories found.');
+    console.log("No starred repositories found.");
     process.exit(0);
   }
 
   // Confirm before analysis
   const proceed = await prompt(
-    `\nFound ${repos.length} starred repos. This will make ${repos.length} AI API calls. Proceed? [y/N] `
+    `\nFound ${repos.length} starred repos. This will make ${repos.length} AI API calls. Proceed? [y/N] `,
   );
   if (!proceed) {
-    console.log('Aborted.');
+    console.log("Aborted.");
     process.exit(0);
   }
 
   // Set up phase state for the TUI
-  let phase: AppPhase = { tag: 'fetching' };
+  let phase: AppPhase = { tag: "fetching" };
   let setPhase: (p: AppPhase) => void = () => {};
   let onReviewComplete: (d: Map<number, ReviewDecision>) => void = () => {};
   let onReviewQuit: (d: Map<number, ReviewDecision>) => void = () => {};
@@ -199,11 +207,15 @@ async function main() {
   // Promises to bridge TUI events back to async flow
   let reviewResolve: (result: { decisions: Map<number, ReviewDecision>; quit: boolean }) => void;
   const reviewPromise = new Promise<{ decisions: Map<number, ReviewDecision>; quit: boolean }>(
-    (resolve) => { reviewResolve = resolve; }
+    (resolve) => {
+      reviewResolve = resolve;
+    },
   );
 
   let summaryResolve: (apply: boolean) => void;
-  const summaryPromise = new Promise<boolean>((resolve) => { summaryResolve = resolve; });
+  const summaryPromise = new Promise<boolean>((resolve) => {
+    summaryResolve = resolve;
+  });
 
   // Reactive state management for Ink
   function ReactiveApp() {
@@ -233,16 +245,18 @@ async function main() {
   const { unmount } = render(<ReactiveApp />);
 
   // Fetch READMEs
-  setPhase({ tag: 'fetching' });
+  setPhase({ tag: "fetching" });
   const readmes = await fetchAllReadmes(
     repos.map((r) => ({ owner: r.owner, name: r.name })),
     token,
-    cliArgs.concurrency
+    cliArgs.concurrency,
   );
 
   // Set up Langfuse tracing (no-op when credentials are absent)
   const langfuse = createLangfuseClient();
-  process.on('beforeExit', () => { flushTracing(langfuse); });
+  process.on("beforeExit", () => {
+    flushTracing(langfuse);
+  });
 
   // Analyze repos
   const analyzer = createAnalyzer(cliArgs.backend, langfuse);
@@ -250,15 +264,19 @@ async function main() {
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
 
-  setPhase({ tag: 'analyzing', analyzed: 0, total: repos.length });
+  setPhase({ tag: "analyzing", analyzed: 0, total: repos.length });
 
   await Promise.all(
     repos.map(async (repo) => {
       let analysis;
       if (repo.isArchived) {
-        analysis = { category: 'Archived', killerFeature: '(archived repository)', dataQuality: 'sparse' as const };
+        analysis = {
+          category: "Archived",
+          killerFeature: "(archived repository)",
+          dataQuality: "sparse" as const,
+        };
       } else {
-        const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? '';
+        const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
         analysis = await analyzer.analyze({
           name: repo.name,
           owner: repo.owner,
@@ -272,8 +290,8 @@ async function main() {
       }
       analyzedRepos.push({ repo, analysis });
       analyzed++;
-      setPhase({ tag: 'analyzing', analyzed, total: repos.length });
-    })
+      setPhase({ tag: "analyzing", analyzed, total: repos.length });
+    }),
   );
 
   // Consolidate proposed new category names to reduce list proliferation
@@ -282,10 +300,13 @@ async function main() {
     ...new Set(
       analyzedRepos
         .map((r) => r.analysis.category)
-        .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim()))
+        .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim())),
     ),
   ];
-  const { remapping, mergeWarnings } = await consolidateCategories(newCategoryNames, existingListNames);
+  const { remapping, mergeWarnings } = await consolidateCategories(
+    newCategoryNames,
+    existingListNames,
+  );
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);
     if (consolidated) {
@@ -293,21 +314,21 @@ async function main() {
     }
   }
 
-  // Generate suggestions
-  const { suggestions, count } = generateSuggestions(analyzedRepos, lists);
+  // Generate suggestions (re-routes singleton-category repos via AI)
+  const { suggestions, count, reroutedRepos } = await generateSuggestions(analyzedRepos, lists);
 
   if (count === 0) {
     unmount();
-    console.log('No suggestions generated — all repos are already well organized!');
+    console.log("No suggestions generated — all repos are already well organized!");
     process.exit(0);
   }
 
   // Enter TUI review
-  setPhase({ tag: 'review', suggestions, mergeWarnings });
+  setPhase({ tag: "review", suggestions, mergeWarnings });
 
   const { decisions, quit } = await reviewPromise;
 
-  const acceptedCount = Array.from(decisions.values()).filter((d) => d === 'accepted').length;
+  const acceptedCount = Array.from(decisions.values()).filter((d) => d === "accepted").length;
 
   if (quit && acceptedCount === 0) {
     unmount();
@@ -315,18 +336,18 @@ async function main() {
   }
 
   // Summary screen
-  setPhase({ tag: 'summary', suggestions, decisions });
+  setPhase({ tag: "summary", suggestions, decisions, reroutedRepos });
   const apply = await summaryPromise;
 
   if (!apply || acceptedCount === 0) {
     unmount();
-    console.log('No changes applied.');
+    console.log("No changes applied.");
     process.exit(0);
   }
 
   // Apply mutations
   const mutationResults: MutationResult[] = [];
-  setPhase({ tag: 'applying', results: [] });
+  setPhase({ tag: "applying", results: [] });
 
   const finalResults = await applyAcceptedSuggestions(
     suggestions,
@@ -334,18 +355,18 @@ async function main() {
     graphqlWithAuth,
     (result) => {
       mutationResults.push(result);
-      setPhase({ tag: 'applying', results: [...mutationResults] });
-    }
+      setPhase({ tag: "applying", results: [...mutationResults] });
+    },
   );
 
-  setPhase({ tag: 'done', results: finalResults });
+  setPhase({ tag: "done", results: finalResults });
 
   // Wait briefly for TUI to render final state
   await new Promise((resolve) => setTimeout(resolve, 500));
   unmount();
 
-  const succeeded = finalResults.filter((r) => r.status === 'success').length;
-  const failed = finalResults.filter((r) => r.status === 'failed').length;
+  const succeeded = finalResults.filter((r) => r.status === "success").length;
+  const failed = finalResults.filter((r) => r.status === "failed").length;
   const skipped = decisions.size - acceptedCount;
 
   console.log(`\nSession summary: ${succeeded} succeeded, ${failed} failed, ${skipped} skipped`);

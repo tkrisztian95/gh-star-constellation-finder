@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
-import { buildConsolidationPrompt } from './prompts.js';
-import type { ConsolidationResult } from './types.js';
+import OpenAI from "openai";
+import { buildConsolidationPrompt, buildReroutingPrompt } from "./prompts.js";
+import type { ConsolidationResult } from "./types.js";
 
 const GITHUB_MAX_LISTS = 32;
 
@@ -17,20 +17,22 @@ function parseRemapping(json: string, proposedNames: string[]): Map<string, stri
   const result = new Map<string, string>();
   for (const name of proposedNames) {
     const mapped = raw[name];
-    result.set(name, typeof mapped === 'string' && mapped.trim() ? mapped.trim() : name);
+    result.set(name, typeof mapped === "string" && mapped.trim() ? mapped.trim() : name);
   }
   return result;
 }
 
 export function buildMergeWarnings(
   remapping: Map<string, string>,
-  proposedNames: string[]
+  proposedNames: string[],
 ): string[] {
   const warnings: string[] = [];
   for (const name of proposedNames) {
     const canonical = remapping.get(name);
     if (canonical && canonical !== name) {
-      warnings.push(`"${name}" merged into "${canonical}" to stay within the ${GITHUB_MAX_LISTS}-list GitHub limit`);
+      warnings.push(
+        `"${name}" merged into "${canonical}" to stay within the ${GITHUB_MAX_LISTS}-list GitHub limit`,
+      );
     }
   }
   return warnings;
@@ -45,7 +47,7 @@ export function enforcebudget(
   remapping: Map<string, string>,
   proposedNames: string[],
   existingListNamesLower: Set<string>,
-  budget: number
+  budget: number,
 ): { remapping: Map<string, string>; extraWarnings: string[] } {
   // Group proposed names by their current canonical target (new lists only)
   const groups = new Map<string, string[]>(); // canonical → [originalNames]
@@ -76,7 +78,7 @@ export function enforcebudget(
       updatedRemapping.set(orig, winner);
       if (canonical !== winner) {
         extraWarnings.push(
-          `"${orig}" (was "${canonical}") merged into "${winner}" — GitHub list budget exceeded`
+          `"${orig}" (was "${canonical}") merged into "${winner}" — GitHub list budget exceeded`,
         );
       }
     }
@@ -88,19 +90,24 @@ export function enforcebudget(
 async function consolidateViaOpenAI(
   proposedNames: string[],
   existingListNames: string[],
-  maxLists: number
+  maxLists: number,
 ): Promise<ConsolidationResult> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY not set');
+  if (!apiKey) throw new Error("OPENAI_API_KEY not set");
 
   const client = new OpenAI({ apiKey });
   const completion = await client.chat.completions.create({
-    model: 'gpt-4o-mini',
-    response_format: { type: 'json_object' },
-    messages: [{ role: 'user', content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists) }],
+    model: "gpt-4o-mini",
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "user",
+        content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists),
+      },
+    ],
   });
 
-  const content = completion.choices[0]?.message?.content ?? '{}';
+  const content = completion.choices[0]?.message?.content ?? "{}";
   const remapping = parseRemapping(content, proposedNames);
   return buildResult(remapping, proposedNames, existingListNames, maxLists);
 }
@@ -108,18 +115,23 @@ async function consolidateViaOpenAI(
 async function consolidateViaOllama(
   proposedNames: string[],
   existingListNames: string[],
-  maxLists: number
+  maxLists: number,
 ): Promise<ConsolidationResult> {
-  const host = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
-  const model = 'llama3';
+  const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
+  const model = "llama3";
 
   const response = await fetch(`${host}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    method: "POST",
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({
       model,
       stream: false,
-      messages: [{ role: 'user', content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists) }],
+      messages: [
+        {
+          role: "user",
+          content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists),
+        },
+      ],
     }),
   });
 
@@ -127,8 +139,8 @@ async function consolidateViaOllama(
     throw new Error(`Ollama consolidation error: HTTP ${response.status}`);
   }
 
-  const body = await response.json() as { message?: { content?: string } };
-  const content = body.message?.content ?? '{}';
+  const body = (await response.json()) as { message?: { content?: string } };
+  const content = body.message?.content ?? "{}";
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   const remapping = parseRemapping(jsonMatch ? jsonMatch[0] : content, proposedNames);
   return buildResult(remapping, proposedNames, existingListNames, maxLists);
@@ -138,7 +150,7 @@ function buildResult(
   remapping: Map<string, string>,
   proposedNames: string[],
   existingListNames: string[],
-  maxLists: number
+  maxLists: number,
 ): ConsolidationResult {
   const warnings = buildMergeWarnings(remapping, proposedNames);
   const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
@@ -148,7 +160,7 @@ function buildResult(
     remapping,
     proposedNames,
     existingListNamesLower,
-    budget
+    budget,
   );
 
   return {
@@ -160,7 +172,7 @@ function buildResult(
 export async function consolidateCategories(
   proposedNames: string[],
   existingListNames: string[] = [],
-  maxLists: number = GITHUB_MAX_LISTS
+  maxLists: number = GITHUB_MAX_LISTS,
 ): Promise<ConsolidationResult> {
   if (proposedNames.length < 2) {
     return identityResult(proposedNames);
@@ -174,8 +186,81 @@ export async function consolidateCategories(
       : await consolidateViaOpenAI(proposedNames, existingListNames, maxLists);
   } catch (err) {
     console.warn(
-      `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`
+      `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`,
     );
     return identityResult(proposedNames);
+  }
+}
+
+function parseReroutingResponse(
+  json: string,
+  orphanCategories: string[],
+): Map<string, string | null> {
+  const result = new Map<string, string | null>();
+  try {
+    const raw = JSON.parse(json) as Record<string, unknown>;
+    for (const category of orphanCategories) {
+      const mapped = raw[category];
+      result.set(category, typeof mapped === "string" && mapped.trim() ? mapped.trim() : null);
+    }
+  } catch {
+    for (const category of orphanCategories) {
+      result.set(category, null);
+    }
+  }
+  return result;
+}
+
+function nullRerouteMap(orphanCategories: string[]): Map<string, string | null> {
+  return new Map(orphanCategories.map((c) => [c, null]));
+}
+
+export async function rerouteOrphanRepos(
+  orphans: { category: string }[],
+  availableTargets: string[],
+): Promise<Map<string, string | null>> {
+  if (orphans.length === 0 || availableTargets.length === 0) {
+    return nullRerouteMap(orphans.map((o) => o.category));
+  }
+
+  const orphanCategories = orphans.map((o) => o.category);
+  const prompt = buildReroutingPrompt(orphans, availableTargets);
+  const useOllama = !process.env.OPENAI_API_KEY && !!process.env.OLLAMA_HOST;
+
+  try {
+    let content: string;
+
+    if (useOllama) {
+      const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
+      const model = process.env.OLLAMA_MODEL ?? "llama3";
+      const response = await fetch(`${host}/api/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model,
+          stream: false,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!response.ok) throw new Error(`Ollama rerouting error: HTTP ${response.status}`);
+      const body = (await response.json()) as { message?: { content?: string } };
+      const raw = body.message?.content ?? "{}";
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      content = jsonMatch ? jsonMatch[0] : raw;
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new Error("OPENAI_API_KEY not set");
+      const client = new OpenAI({ apiKey });
+      const completion = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }],
+      });
+      content = completion.choices[0]?.message?.content ?? "{}";
+    }
+
+    return parseReroutingResponse(content, orphanCategories);
+  } catch {
+    return nullRerouteMap(orphanCategories);
   }
 }
