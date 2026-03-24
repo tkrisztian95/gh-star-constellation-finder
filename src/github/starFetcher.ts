@@ -13,6 +13,7 @@ interface GraphQLRepo {
   owner: { login: string };
   description: string | null;
   primaryLanguage: { name: string } | null;
+  isArchived: boolean;
   stargazerCount: number;
   repositoryTopics: { nodes: Array<{ topic: { name: string } }> };
 }
@@ -47,6 +48,7 @@ function mapRepo(node: GraphQLRepo): Repo {
     owner: node.owner.login,
     description: node.description ?? '',
     language: node.primaryLanguage?.name ?? null,
+    isArchived: node.isArchived,
     stargazerCount: node.stargazerCount,
     topics: node.repositoryTopics.nodes.map((t) => t.topic.name),
     listIds: [],

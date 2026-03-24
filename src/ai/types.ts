@@ -5,6 +5,7 @@ export interface RepoInput {
   language: string | null;
   topics: string[];
   readme: string;
+  isArchived: boolean;
   existingListNames?: string[];
 }
 

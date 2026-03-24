@@ -8,6 +8,7 @@ function makeRepo(overrides: Partial<Repo> = {}): Repo {
     owner: 'owner',
     description: '',
     language: null,
+    isArchived: false,
     stargazerCount: 0,
     topics: [],
     listIds: [],
@@ -113,6 +114,46 @@ function runTests() {
       assert(move.isPendingCreate === true, 'isPendingCreate flag set');
       assertEqual(move.targetListId, createSuggestion.targetListId, 'same pending list id');
     }
+  });
+
+  test('archived repo produces create-list suggestion targeting Archived', () => {
+    const archivedRepo = makeRepo({ id: 'r-arch', isArchived: true });
+    const archivedAnalysis = makeAnalysis('Archived', '(archived repository)');
+    const { suggestions } = generateSuggestions(
+      [{ repo: archivedRepo, analysis: archivedAnalysis }],
+      []
+    );
+    assertEqual(suggestions.length, 1, 'one suggestion');
+    assertEqual(suggestions[0].type, 'create-list', 'create-list type');
+    assertEqual(suggestions[0].targetListName, 'Archived', 'targets Archived list');
+  });
+
+  test('multiple archived repos produce one create-list and move-to-list all targeting Archived', () => {
+    const archived = [
+      { repo: makeRepo({ id: 'r1', isArchived: true }), analysis: makeAnalysis('Archived') },
+      { repo: makeRepo({ id: 'r2', name: 'b', isArchived: true }), analysis: makeAnalysis('Archived') },
+      { repo: makeRepo({ id: 'r3', name: 'c', isArchived: true }), analysis: makeAnalysis('Archived') },
+    ];
+    const { suggestions } = generateSuggestions(archived, []);
+    const createCount = suggestions.filter((s) => s.type === 'create-list').length;
+    const moveCount = suggestions.filter((s) => s.type === 'move-to-list').length;
+    assertEqual(createCount, 1, 'exactly one create-list for Archived');
+    assertEqual(moveCount, 2, 'two move-to-list for Archived');
+    for (const s of suggestions) {
+      assertEqual(s.targetListName, 'Archived', 'all target Archived list');
+    }
+  });
+
+  test('archived repo joins existing Archived list', () => {
+    const list = makeList({ id: 'l-arch', name: 'Archived' });
+    const archivedRepo = makeRepo({ id: 'r-arch', isArchived: true });
+    const { suggestions } = generateSuggestions(
+      [{ repo: archivedRepo, analysis: makeAnalysis('Archived') }],
+      [list]
+    );
+    assertEqual(suggestions.length, 1, 'one suggestion');
+    assertEqual(suggestions[0].type, 'move-to-list', 'move-to-list type');
+    assertEqual(suggestions[0].targetListId, 'l-arch', 'targets existing Archived list');
   });
 
   test('returns correct count', () => {
