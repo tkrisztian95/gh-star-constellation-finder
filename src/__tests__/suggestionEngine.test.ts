@@ -263,6 +263,34 @@ function runTests() {
     assertEqual(suggestions[0].targetListId, "l-arch", "targets existing Archived list");
   });
 
+  test("skips repos with analysis-failed category", async () => {
+    const { suggestions, reroutedRepos } = await generateSuggestions(
+      [
+        {
+          repo: makeRepo({ id: "r1", name: "failed-repo" }),
+          analysis: makeAnalysis("analysis-failed"),
+        },
+        {
+          repo: makeRepo({ id: "r2", name: "good-repo" }),
+          analysis: makeAnalysis("Vector Databases"),
+        },
+        {
+          repo: makeRepo({ id: "r3", name: "good-repo-2" }),
+          analysis: makeAnalysis("Vector Databases"),
+        },
+      ],
+      [],
+      nullReroute,
+    );
+    assert(
+      suggestions.every((s) => s.targetListName !== "analysis-failed"),
+      "no suggestion targets analysis-failed list",
+    );
+    assertEqual(reroutedRepos.length, 0, "failed repo not recorded in reroutedRepos");
+    // The two good repos form a multi-member category — both suggestions retained
+    assertEqual(suggestions.length, 2, "only good repos produce suggestions");
+  });
+
   test("returns correct count", async () => {
     // Two different categories — both singletons, both dropped by nullReroute
     const { count, suggestions } = await generateSuggestions(
