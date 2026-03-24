@@ -55,3 +55,35 @@ Bun automatically loads `.env` — no extra flags needed.
 | `OPENAI_API_KEY` | One of these | OpenAI API key |
 | `OLLAMA_HOST` | One of these | Ollama base URL (default: `http://localhost:11434`) |
 | `OLLAMA_MODEL` | with Ollama | Model name (e.g. `llama3`) |
+| `LANGFUSE_PUBLIC_KEY` | optional | Langfuse public key (enables prompt tracing) |
+| `LANGFUSE_SECRET_KEY` | optional | Langfuse secret key |
+| `LANGFUSE_BASE_URL` | optional | Custom Langfuse host (default: Langfuse cloud) |
+
+## 🔍 Prompt Tracing (optional)
+
+Prompt tracing captures each AI call — system prompt, user message, model, token usage, and latency — as a structured trace in [Langfuse](https://langfuse.com). It is strictly opt-in: if the env vars are absent the app behaves exactly as without this feature.
+
+### Cloud setup
+
+1. Sign up at [https://cloud.langfuse.com](https://cloud.langfuse.com) and create a project.
+2. Copy the public and secret keys into your `.env`:
+
+```
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+```
+
+### Local setup with Docker
+
+```bash
+docker run --name langfuse \
+  -e NEXTAUTH_SECRET=changeme \
+  -e SALT=changeme \
+  -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/langfuse \
+  -p 3000:3000 \
+  langfuse/langfuse:latest
+```
+
+Then set `LANGFUSE_BASE_URL=http://localhost:3000` in your `.env`.
+
+> Note: Ollama responses do not include token usage data, so the `usage` field will be omitted from Ollama traces.

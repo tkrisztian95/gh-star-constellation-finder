@@ -6,6 +6,7 @@ import { authenticate } from './github/auth.js';
 import { fetchStarredRepos, fetchUserLists } from './github/starFetcher.js';
 import { fetchAllReadmes } from './github/readmeFetcher.js';
 import { createAnalyzer, type Backend } from './ai/index.js';
+import { createLangfuseClient, flushTracing } from './ai/tracing.js';
 import { consolidateCategories } from './ai/consolidator.js';
 import { generateSuggestions } from './engine/suggestionEngine.js';
 import type { AnalyzedRepo } from './engine/suggestionEngine.js';
@@ -238,8 +239,12 @@ async function main() {
     cliArgs.concurrency
   );
 
+  // Set up Langfuse tracing (no-op when credentials are absent)
+  const langfuse = createLangfuseClient();
+  process.on('beforeExit', () => { flushTracing(langfuse); });
+
   // Analyze repos
-  const analyzer = createAnalyzer(cliArgs.backend);
+  const analyzer = createAnalyzer(cliArgs.backend, langfuse);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
