@@ -1,8 +1,8 @@
-import { Langfuse } from 'langfuse';
+import { Langfuse } from "langfuse";
 
 // Derived span/trace types — avoids depending on named internal exports from langfuse
-export type LangfuseTrace = ReturnType<Langfuse['trace']>;
-export type LangfuseSpan = ReturnType<LangfuseTrace['span']>;
+export type LangfuseTrace = ReturnType<Langfuse["trace"]>;
+export type LangfuseSpan = ReturnType<LangfuseTrace["span"]>;
 
 export function createLangfuseClient(): Langfuse | null {
   const publicKey = process.env.LANGFUSE_PUBLIC_KEY;
@@ -20,11 +20,16 @@ export function createLangfuseClient(): Langfuse | null {
   return new Langfuse(options);
 }
 
+export function generateSessionId(): string {
+  return crypto.randomUUID();
+}
+
 export function createRunTrace(
   langfuse: Langfuse,
-  metadata: { repoCount: number; backend: string }
+  metadata: { repoCount: number; backend: string },
+  sessionId: string,
 ): LangfuseTrace {
-  return langfuse.trace({ name: 'constellation-run', metadata });
+  return langfuse.trace({ name: "constellation-run", metadata, sessionId });
 }
 
 export async function flushTracing(langfuse: Langfuse | null): Promise<void> {
