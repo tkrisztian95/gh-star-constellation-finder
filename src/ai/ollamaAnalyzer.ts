@@ -1,13 +1,7 @@
-import { z } from 'zod';
 import type { Langfuse } from 'langfuse';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
+import { parseAnalysisResponse } from './types.js';
 import { buildSystemPrompt, buildUserMessage } from './prompts.js';
-
-const responseSchema = z.object({
-  category: z.string(),
-  killerFeature: z.string(),
-  dataQuality: z.enum(['full', 'sparse']).optional(),
-});
 
 export function createOllamaAnalyzer(
   model = process.env.OLLAMA_MODEL ?? 'llama3',
@@ -76,17 +70,7 @@ export function createOllamaAnalyzer(
         // tracing errors must not affect analysis
       }
 
-      try {
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        const jsonStr = jsonMatch ? jsonMatch[0] : content;
-        const parsed = responseSchema.parse(JSON.parse(jsonStr));
-        return parsed;
-      } catch {
-        console.warn(
-          `Warning: could not parse Ollama response for ${input.owner}/${input.name}, using raw text`
-        );
-        return { category: content.trim() || 'analysis-failed', killerFeature: '' };
-      }
+      return parseAnalysisResponse(content, 'analysis-failed');
     },
   };
 }
