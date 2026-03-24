@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { Langfuse } from 'langfuse';
 import type { Analyzer, RepoInput, AnalysisResult } from './types.js';
 import { buildSystemPrompt, buildUserMessage } from './prompts.js';
 
@@ -8,11 +9,33 @@ const responseSchema = z.object({
   dataQuality: z.enum(['full', 'sparse']).optional(),
 });
 
-export function createOllamaAnalyzer(model = process.env.OLLAMA_MODEL ?? 'llama3'): Analyzer {
+export function createOllamaAnalyzer(
+  model = process.env.OLLAMA_MODEL ?? 'llama3',
+  langfuse?: Langfuse | null,
+): Analyzer {
   const host = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 
   return {
     async analyze(input: RepoInput): Promise<AnalysisResult> {
+      const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
+      const userMessage = buildUserMessage(input);
+
+      let generation: ReturnType<Langfuse['generation']> | undefined;
+      try {
+        if (langfuse) {
+          generation = langfuse.generation({
+            name: `analyze-${input.owner}/${input.name}`,
+            model,
+            input: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
+            ],
+          });
+        }
+      } catch {
+        // tracing errors must not affect analysis
+      }
+
       let response: Response;
       try {
         response = await fetch(`${host}/api/chat`, {
@@ -22,8 +45,8 @@ export function createOllamaAnalyzer(model = process.env.OLLAMA_MODEL ?? 'llama3
             model,
             stream: false,
             messages: [
-              { role: 'system', content: buildSystemPrompt(input.existingListNames ?? []) },
-              { role: 'user', content: buildUserMessage(input) },
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userMessage },
             ],
           }),
         });
@@ -44,6 +67,14 @@ export function createOllamaAnalyzer(model = process.env.OLLAMA_MODEL ?? 'llama3
 
       const body = await response.json() as { message?: { content?: string } };
       const content = body.message?.content ?? '';
+
+      try {
+        if (generation) {
+          generation.end({ output: content });
+        }
+      } catch {
+        // tracing errors must not affect analysis
+      }
 
       try {
         const jsonMatch = content.match(/\{[\s\S]*\}/);
