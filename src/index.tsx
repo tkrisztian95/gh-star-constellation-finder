@@ -63,7 +63,7 @@ function prompt(question: string): Promise<boolean> {
 type AppPhase =
   | { tag: 'fetching' }
   | { tag: 'analyzing'; analyzed: number; total: number }
-  | { tag: 'review'; suggestions: Suggestion[] }
+  | { tag: 'review'; suggestions: Suggestion[]; mergeWarnings: string[] }
   | { tag: 'summary'; suggestions: Suggestion[]; decisions: Map<number, ReviewDecision> }
   | { tag: 'applying'; results: MutationResult[] }
   | { tag: 'done'; results: MutationResult[] }
@@ -99,6 +99,7 @@ function App({ phase, onReviewComplete, onReviewQuit, onSummaryConfirm }: AppPro
       {phase.tag === 'review' && (
         <ReviewScreen
           suggestions={phase.suggestions}
+          mergeWarnings={phase.mergeWarnings}
           onComplete={onReviewComplete}
           onQuit={onReviewQuit}
         />
@@ -284,7 +285,7 @@ async function main() {
         .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim()))
     ),
   ];
-  const remapping = await consolidateCategories(newCategoryNames);
+  const { remapping, mergeWarnings } = await consolidateCategories(newCategoryNames, existingListNames);
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);
     if (consolidated) {
@@ -302,7 +303,7 @@ async function main() {
   }
 
   // Enter TUI review
-  setPhase({ tag: 'review', suggestions });
+  setPhase({ tag: 'review', suggestions, mergeWarnings });
 
   const { decisions, quit } = await reviewPromise;
 

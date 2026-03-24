@@ -1,4 +1,4 @@
-import { buildUserMessage } from '../ai/prompts.js';
+import { buildUserMessage, buildConsolidationPrompt } from '../ai/prompts.js';
 import type { RepoInput } from '../ai/types.js';
 
 function makeInput(overrides: Partial<RepoInput> = {}): RepoInput {
@@ -43,6 +43,39 @@ function runTests() {
   test('buildUserMessage includes Archived: yes for archived repos', () => {
     const msg = buildUserMessage(makeInput({ isArchived: true }));
     assert(msg.includes('Archived: yes'), 'should contain "Archived: yes"');
+  });
+
+  // buildConsolidationPrompt — budget awareness
+
+  test('buildConsolidationPrompt fresh account: budget is 32, no existing lists', () => {
+    const prompt = buildConsolidationPrompt(['CLI Tools', 'Vector Databases'], [], 32);
+    assert(prompt.includes('already has 0'), 'should show 0 existing lists');
+    assert(prompt.includes('at most 32 distinct new'), 'should state budget of 32');
+    assert(prompt.includes('(none)'), 'should show no existing lists');
+  });
+
+  test('buildConsolidationPrompt partial account: correct budget computed', () => {
+    const prompt = buildConsolidationPrompt(
+      ['CLI Tools', 'Vector Databases'],
+      ['React Hooks', 'GraphQL Clients', 'LLM Tools'],
+      32
+    );
+    assert(prompt.includes('already has 3'), 'should show 3 existing lists');
+    assert(prompt.includes('at most 29 distinct new'), 'should compute budget of 29');
+    assert(prompt.includes('"React Hooks"'), 'should list existing list names');
+  });
+
+  test('buildConsolidationPrompt zero budget: instructs no new lists', () => {
+    const thirtyTwo = Array.from({ length: 32 }, (_, i) => `List ${i + 1}`);
+    const prompt = buildConsolidationPrompt(['New Category'], thirtyTwo, 32);
+    assert(prompt.includes('already has 32'), 'should show 32 existing lists');
+    assert(prompt.includes('at most 0 distinct new'), 'should state budget of 0');
+  });
+
+  test('buildConsolidationPrompt includes proposed names in input section', () => {
+    const prompt = buildConsolidationPrompt(['Rust CLI Tools', 'Go CLI Tools'], [], 32);
+    assert(prompt.includes('"Rust CLI Tools"'), 'should include first proposed name');
+    assert(prompt.includes('"Go CLI Tools"'), 'should include second proposed name');
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

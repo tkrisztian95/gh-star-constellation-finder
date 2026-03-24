@@ -44,3 +44,8 @@ export interface AnalysisResult {
 export interface Analyzer {
   analyze(input: RepoInput): Promise<AnalysisResult>;
 }
+
+export interface ConsolidationResult {
+  remapping: Map<string, string>;
+  mergeWarnings: string[];
+}
