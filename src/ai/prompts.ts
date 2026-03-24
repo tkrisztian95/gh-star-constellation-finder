@@ -1,4 +1,4 @@
-import type { RepoInput } from './types.js';
+import type { RepoInput } from "./types.js";
 
 // TIDD-EC structured prompt
 // T — Task context: categories become GitHub List names
@@ -28,6 +28,7 @@ CATEGORY RULES — DO NOT:
 - Do not use generic categories like "JavaScript Tools", "Python Libraries", "Developer Tools", or "Utilities"
 - Do not use adjectives alone without a domain noun (e.g. not "Awesome Repos")
 - Do not include the language name unless it is the defining characteristic (e.g. "Rust CLI Tools" is fine; "Rust Library" is not)
+- Do not conflate visually-adjacent domains: UI/UX design tools ≠ "Data Visualization Tools" (charts/graphs/dashboards); design systems ≠ "Frontend Frameworks"; AI coding assistants ≠ "LLM Inference Engines" (unless they run local models)
 
 KILLER FEATURE RULES — DO:
 - Start with an imperative action verb (Run, Deploy, Generate, Query, Parse, Visualise, etc.)
@@ -51,21 +52,26 @@ export function buildSystemPrompt(existingListNames: string[]): string {
     return BASE_SYSTEM_PROMPT;
   }
 
-  const nameList = existingListNames.map((n) => `- "${n}"`).join('\n');
+  const nameList = existingListNames.map((n) => `- "${n}"`).join("\n");
   return `${BASE_SYSTEM_PROMPT}
 
 EXISTING LISTS
-The developer already has the following GitHub Lists. When the repo clearly fits one of these, you MUST use that exact list name as the "category" value (preserve casing). Only invent a new category name when none of these is a good fit.
+The developer already has the following GitHub Lists. When the repo's primary technical domain clearly matches one of these, you MUST use that exact list name as the "category" value (preserve casing). "Clearly matches" means same concrete domain — not just superficially related. Prefer inventing a new specific category over forcing a repo into a loosely-related existing list.
+
+Common false matches to avoid:
+- UI/UX design tools, design systems, AI design assistants → NOT "Data Visualization Tools" (which is strictly for charting, graphing, and data-plot libraries)
+- Model fine-tuning or training libraries → NOT "LLM Inference Engines" (unless the primary use is inference)
+- General frontend component tools → NOT "React State Management" unless state management is their core purpose
 ${nameList}`;
 }
 
 export function buildUserMessage(input: RepoInput): string {
-  const readmeContent = input.readme?.trim() ?? '';
+  const readmeContent = input.readme?.trim() ?? "";
   const readmeLength = readmeContent.length;
 
   let readmeSection: string;
   if (readmeLength === 0) {
-    readmeSection = 'README: (absent — no README file found)';
+    readmeSection = "README: (absent — no README file found)";
   } else if (readmeLength < 50) {
     readmeSection = `README (${readmeLength} chars — very short):\n${readmeContent}`;
   } else {
@@ -74,29 +80,27 @@ export function buildUserMessage(input: RepoInput): string {
 
   return [
     `Repository: ${input.owner}/${input.name}`,
-    `Description: ${input.description || '(none)'}`,
-    `Language: ${input.language ?? '(unknown)'}`,
-    `Topics: ${input.topics.length > 0 ? input.topics.join(', ') : '(none)'}`,
-    `Archived: ${input.isArchived ? 'yes' : 'no'}`,
-    '',
+    `Description: ${input.description || "(none)"}`,
+    `Language: ${input.language ?? "(unknown)"}`,
+    `Topics: ${input.topics.length > 0 ? input.topics.join(", ") : "(none)"}`,
+    `Archived: ${input.isArchived ? "yes" : "no"}`,
+    "",
     readmeSection,
-    '',
+    "",
     'Respond in JSON with keys "category", "killerFeature", and "dataQuality".',
-  ].join('\n');
+  ].join("\n");
 }
 
 export function buildConsolidationPrompt(
   proposedNames: string[],
   existingListNames: string[] = [],
-  maxLists: number = 32
+  maxLists: number = 32,
 ): string {
-  const nameList = proposedNames.map((n) => `"${n}"`).join(', ');
+  const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
   const existingCount = existingListNames.length;
   const budget = maxLists - existingCount;
   const existingSection =
-    existingCount > 0
-      ? existingListNames.map((n) => `- "${n}"`).join('\n')
-      : '(none)';
+    existingCount > 0 ? existingListNames.map((n) => `- "${n}"`).join("\n") : "(none)";
 
   return `You are a technical librarian consolidating proposed GitHub List names into a minimal, well-named set.
 
