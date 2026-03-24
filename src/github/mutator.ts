@@ -16,8 +16,8 @@ interface CreateListResponse {
 }
 
 interface AddReposResponse {
-  addStarredRepositoriesToUserList: {
-    userList: { id: string; name: string };
+  updateUserListsForItem: {
+    lists: Array<{ id: string; name: string }>;
   };
 }
 
@@ -53,8 +53,8 @@ export async function applyAcceptedSuggestions(
 
         // Also add the repo to the newly created list
         await graphqlWithAuth<AddReposResponse>(ADD_REPOS_TO_LIST_MUTATION, {
-          listId: newListId,
-          repositoryIds: [suggestion.repo.id],
+          itemId: suggestion.repo.id,
+          listIds: [newListId],
         });
 
         const result: MutationResult = {
@@ -98,8 +98,8 @@ export async function applyAcceptedSuggestions(
 
       try {
         await graphqlWithAuth<AddReposResponse>(ADD_REPOS_TO_LIST_MUTATION, {
-          listId: targetId,
-          repositoryIds: [suggestion.repo.id],
+          itemId: suggestion.repo.id,
+          listIds: [targetId],
         });
 
         const result: MutationResult = {
