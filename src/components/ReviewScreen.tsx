@@ -26,11 +26,12 @@ function QuitConfirmPrompt({ acceptedCount, onConfirm }: QuitConfirmProps) {
 
 interface ReviewScreenProps {
   suggestions: Suggestion[];
+  mergeWarnings: string[];
   onComplete: (decisions: Map<number, ReviewDecision>) => void;
   onQuit: (decisions: Map<number, ReviewDecision>) => void;
 }
 
-export function ReviewScreen({ suggestions, onComplete, onQuit }: ReviewScreenProps) {
+export function ReviewScreen({ suggestions, mergeWarnings, onComplete, onQuit }: ReviewScreenProps) {
   const [index, setIndex] = useState(0);
   const [decisions, setDecisions] = useState<Map<number, ReviewDecision>>(new Map());
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
@@ -92,6 +93,24 @@ export function ReviewScreen({ suggestions, onComplete, onQuit }: ReviewScreenPr
 
   return (
     <Box flexDirection="column">
+      {/* Merge advisory */}
+      {mergeWarnings.length > 0 && (
+        <Box
+          flexDirection="column"
+          borderStyle="round"
+          borderColor="yellow"
+          padding={1}
+          marginBottom={1}
+        >
+          <Text bold color="yellow">⚠ GitHub list limit advisory</Text>
+          <Text color="yellow">Some categories were merged to stay within GitHub's 32-list limit:</Text>
+          {mergeWarnings.map((w, i) => (
+            <Text key={i} color="yellow">  • {w}</Text>
+          ))}
+          <Text color="gray">Tip: delete unused lists to free up slots, then re-run analysis.</Text>
+        </Box>
+      )}
+
       {/* Header */}
       <Box justifyContent="space-between" marginBottom={1}>
         <Text bold color="magenta">

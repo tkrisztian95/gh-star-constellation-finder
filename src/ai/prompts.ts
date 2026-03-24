@@ -85,12 +85,33 @@ export function buildUserMessage(input: RepoInput): string {
   ].join('\n');
 }
 
-export function buildConsolidationPrompt(proposedNames: string[]): string {
+export function buildConsolidationPrompt(
+  proposedNames: string[],
+  existingListNames: string[] = [],
+  maxLists: number = 32
+): string {
   const nameList = proposedNames.map((n) => `"${n}"`).join(', ');
+  const existingCount = existingListNames.length;
+  const budget = maxLists - existingCount;
+  const existingSection =
+    existingCount > 0
+      ? existingListNames.map((n) => `- "${n}"`).join('\n')
+      : '(none)';
+
   return `You are a technical librarian consolidating proposed GitHub List names into a minimal, well-named set.
 
 TASK
 Map every proposed name to a canonical name. Names that cover the same concrete technical domain must share one canonical name. Names that are genuinely distinct stay as-is.
+
+LIST BUDGET
+The developer already has ${existingCount} GitHub list(s). GitHub enforces a hard limit of ${maxLists} lists total.
+You may produce at most ${budget} distinct new canonical name(s) in your output.
+If the proposed names would result in more than ${budget} distinct new names, merge the least-specific categories into broader ones until you are within budget.
+Prefer merging new proposals over inventing vague umbrella names. When merging, prefer the more specific surviving name.
+Do NOT produce a canonical name that is semantically identical to an existing list.
+
+EXISTING LISTS
+${existingSection}
 
 CANONICAL NAME RULES
 - Title Case, 2–4 words, concrete technical domain
@@ -103,6 +124,7 @@ MERGE WHEN
 - Names differ only by language/runtime qualifier and share the same domain ("Rust X", "Go X", "Python X" → "X")
 - Names are synonyms for the same domain ("Vector Databases" and "Embedding Stores" → "Vector Databases")
 - One name is a strict subset of another ("React Hooks" under "React State Management" → "React State Management")
+- Budget pressure requires it (see LIST BUDGET above)
 
 DO NOT MERGE WHEN
 - Domains are related but distinct ("HTTP Clients" and "API Gateways" are different things)
@@ -110,7 +132,7 @@ DO NOT MERGE WHEN
 - You are uncertain — map each to itself
 
 PROCESS
-Before writing JSON, mentally group the names by domain. Choose the best canonical name for each group. Then produce the mapping.
+Before writing JSON, mentally group the names by domain. Choose the best canonical name for each group. Verify the number of distinct new names does not exceed ${budget}. Then produce the mapping.
 
 EXAMPLES
 
