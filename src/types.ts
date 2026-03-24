@@ -22,13 +22,41 @@ export interface AnalysisResult {
   killerFeature: string;
 }
 
-export type SuggestionType = 'create-list' | 'move-to-list';
+export type ConsolidationStrategy = "keep-existing" | "recreate" | "allow-rename";
 
-export interface Suggestion {
+export interface CreateListSuggestion {
+  type: "create-list";
   repo: Repo;
-  type: SuggestionType;
   targetListId?: string;
   targetListName: string;
   analysis: AnalysisResult;
   isPendingCreate?: boolean;
 }
+
+export interface MoveToListSuggestion {
+  type: "move-to-list";
+  repo: Repo;
+  targetListId?: string;
+  targetListName: string;
+  analysis: AnalysisResult;
+  isPendingCreate?: boolean;
+}
+
+export interface RenameListSuggestion {
+  type: "rename-list";
+  listId: string;
+  oldName: string;
+  newName: string;
+}
+
+export interface DeleteListSuggestion {
+  type: "delete-list";
+  listId: string;
+  listName: string;
+}
+
+export type Suggestion =
+  | CreateListSuggestion
+  | MoveToListSuggestion
+  | RenameListSuggestion
+  | DeleteListSuggestion;

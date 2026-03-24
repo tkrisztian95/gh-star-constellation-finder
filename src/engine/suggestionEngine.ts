@@ -1,4 +1,10 @@
-import type { Repo, GitHubList, AnalysisResult, Suggestion } from "../types.js";
+import type {
+  Repo,
+  GitHubList,
+  AnalysisResult,
+  Suggestion,
+  ConsolidationStrategy,
+} from "../types.js";
 import { rerouteOrphanRepos } from "../ai/consolidator.js";
 
 export interface AnalyzedRepo {
@@ -22,6 +28,7 @@ export async function generateSuggestions(
   analyzedRepos: AnalyzedRepo[],
   existingLists: GitHubList[],
   rerouteOrphanReposFn: typeof rerouteOrphanRepos = rerouteOrphanRepos,
+  strategy: ConsolidationStrategy = "keep-existing",
 ): Promise<SuggestionResult> {
   const suggestions: Suggestion[] = [];
 
@@ -34,6 +41,9 @@ export async function generateSuggestions(
   // Map of lowercased category -> pending new list ID (placeholder)
   const pendingNewLists = new Map<string, string>();
 
+  // Track which existing lists are claimed by a category match
+  const claimedListIds = new Set<string>();
+
   for (const { repo, analysis } of analyzedRepos) {
     if (analysis.category === "analysis-failed") continue;
 
@@ -41,6 +51,8 @@ export async function generateSuggestions(
     const existingList = existingListsByName.get(normalizedCategory);
 
     if (existingList) {
+      claimedListIds.add(existingList.id);
+
       // Skip if already in the matching list
       if (repo.listIds.includes(existingList.id)) {
         continue;
@@ -84,12 +96,76 @@ export async function generateSuggestions(
     }
   }
 
+  // --- allow-rename: replace create-list with rename-list for unclaimed existing lists ---
+
+  if (strategy === "allow-rename" && existingLists.length > 0) {
+    const unclaimedLists = existingLists.filter((l) => !claimedListIds.has(l.id));
+    let unclaimedIdx = 0;
+
+    // Find create-list suggestions (first repo for each pending category)
+    // and replace with rename-list + update associated moves to use rename: prefix
+    const renamedCategories = new Map<string, string>(); // pendingId -> 'rename:<listId>'
+
+    const patchedForRename: Suggestion[] = [];
+    for (const s of suggestions) {
+      if (
+        s.type === "create-list" &&
+        s.isPendingCreate &&
+        s.targetListId?.startsWith("pending:") &&
+        unclaimedIdx < unclaimedLists.length
+      ) {
+        const targetList = unclaimedLists[unclaimedIdx++];
+        const renameId = `rename:${targetList.id}`;
+        renamedCategories.set(s.targetListId, renameId);
+
+        // Emit the rename-list suggestion (no repo context)
+        patchedForRename.push({
+          type: "rename-list",
+          listId: targetList.id,
+          oldName: targetList.name,
+          newName: s.targetListName,
+        });
+
+        // Convert the create-list into a move-to-list using the rename placeholder
+        patchedForRename.push({
+          ...s,
+          type: "move-to-list",
+          targetListId: renameId,
+          isPendingCreate: false,
+        });
+      } else if (
+        s.type === "move-to-list" &&
+        s.isPendingCreate &&
+        s.targetListId &&
+        renamedCategories.has(s.targetListId)
+      ) {
+        // Update move-to-list refs to the renamed placeholder
+        patchedForRename.push({
+          ...s,
+          targetListId: renamedCategories.get(s.targetListId),
+          isPendingCreate: false,
+        });
+      } else {
+        patchedForRename.push(s);
+      }
+    }
+
+    // Replace suggestions with patched version (rename-list suggestions already prepended inline)
+    suggestions.length = 0;
+    suggestions.push(...patchedForRename);
+  }
+
   // --- Single-member pending list re-routing ---
 
   // Count members per pending list ID
   const pendingListMemberCount = new Map<string, number>();
   for (const s of suggestions) {
-    if (s.isPendingCreate && s.targetListId) {
+    if (
+      s.type !== "rename-list" &&
+      s.type !== "delete-list" &&
+      s.isPendingCreate &&
+      s.targetListId
+    ) {
       pendingListMemberCount.set(
         s.targetListId,
         (pendingListMemberCount.get(s.targetListId) ?? 0) + 1,
@@ -153,6 +229,11 @@ export async function generateSuggestions(
   const reroutedRepos: ReroutedRepo[] = [];
 
   for (const s of suggestions) {
+    if (s.type === "rename-list" || s.type === "delete-list") {
+      patchedSuggestions.push(s);
+      continue;
+    }
+
     if (!s.isPendingCreate || !s.targetListId || !singletonListIds.has(s.targetListId)) {
       patchedSuggestions.push(s);
       continue;

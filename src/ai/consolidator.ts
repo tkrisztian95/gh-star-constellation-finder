@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { buildConsolidationPrompt, buildReroutingPrompt } from "./prompts.js";
 import type { ConsolidationResult } from "./types.js";
+import type { ConsolidationStrategy } from "../types.js";
 
 const GITHUB_MAX_LISTS = 32;
 
@@ -91,6 +92,7 @@ async function consolidateViaOpenAI(
   proposedNames: string[],
   existingListNames: string[],
   maxLists: number,
+  strategy: ConsolidationStrategy,
 ): Promise<ConsolidationResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY not set");
@@ -102,7 +104,7 @@ async function consolidateViaOpenAI(
     messages: [
       {
         role: "user",
-        content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists),
+        content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists, strategy),
       },
     ],
   });
@@ -116,6 +118,7 @@ async function consolidateViaOllama(
   proposedNames: string[],
   existingListNames: string[],
   maxLists: number,
+  strategy: ConsolidationStrategy,
 ): Promise<ConsolidationResult> {
   const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
   const model = "llama3";
@@ -129,7 +132,7 @@ async function consolidateViaOllama(
       messages: [
         {
           role: "user",
-          content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists),
+          content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists, strategy),
         },
       ],
     }),
@@ -173,17 +176,31 @@ export async function consolidateCategories(
   proposedNames: string[],
   existingListNames: string[] = [],
   maxLists: number = GITHUB_MAX_LISTS,
+  strategy: ConsolidationStrategy = "keep-existing",
 ): Promise<ConsolidationResult> {
   if (proposedNames.length < 2) {
     return identityResult(proposedNames);
   }
 
+  const effectiveExistingNames = strategy === "recreate" ? [] : existingListNames;
+  const effectiveMaxLists = strategy === "recreate" ? GITHUB_MAX_LISTS : maxLists;
+
   const useOllama = !process.env.OPENAI_API_KEY && !!process.env.OLLAMA_HOST;
 
   try {
     return useOllama
-      ? await consolidateViaOllama(proposedNames, existingListNames, maxLists)
-      : await consolidateViaOpenAI(proposedNames, existingListNames, maxLists);
+      ? await consolidateViaOllama(
+          proposedNames,
+          effectiveExistingNames,
+          effectiveMaxLists,
+          strategy,
+        )
+      : await consolidateViaOpenAI(
+          proposedNames,
+          effectiveExistingNames,
+          effectiveMaxLists,
+          strategy,
+        );
   } catch (err) {
     console.warn(
       `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`,

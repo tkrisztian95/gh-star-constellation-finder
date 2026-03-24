@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { Suggestion } from "../types.js";
+import type { Suggestion, ConsolidationStrategy } from "../types.js";
 import type { ReroutedRepo } from "../engine/suggestionEngine.js";
 import type { ReviewDecision } from "./ReviewScreen.js";
 
@@ -8,13 +8,23 @@ interface SummaryScreenProps {
   suggestions: Suggestion[];
   decisions: Map<number, ReviewDecision>;
   reroutedRepos: ReroutedRepo[];
+  strategy?: ConsolidationStrategy;
+  existingListCount?: number;
   onConfirm: (apply: boolean) => void;
 }
+
+const STRATEGY_LABELS: Record<ConsolidationStrategy, string> = {
+  "keep-existing": "Keep existing",
+  recreate: "Re-create all",
+  "allow-rename": "Allow rename",
+};
 
 export function SummaryScreen({
   suggestions,
   decisions,
   reroutedRepos,
+  strategy = "keep-existing",
+  existingListCount = 0,
   onConfirm,
 }: SummaryScreenProps) {
   const accepted: Suggestion[] = [];
@@ -36,9 +46,21 @@ export function SummaryScreen({
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="magenta">
-        Review Summary
-      </Text>
+      <Box justifyContent="space-between">
+        <Text bold color="magenta">
+          Review Summary
+        </Text>
+        <Text color="cyan">[{STRATEGY_LABELS[strategy]}]</Text>
+      </Box>
+
+      {strategy === "recreate" && existingListCount > 0 && (
+        <Box marginTop={1} borderStyle="round" borderColor="red" padding={1}>
+          <Text color="red" bold>
+            ⚠ Will DELETE {existingListCount} existing list{existingListCount !== 1 ? "s" : ""}{" "}
+            before applying
+          </Text>
+        </Box>
+      )}
 
       <Box marginTop={1} flexDirection="column">
         <Text>
@@ -64,16 +86,35 @@ export function SummaryScreen({
       {accepted.length > 0 && (
         <Box marginTop={1} flexDirection="column">
           <Text bold>Accepted actions:</Text>
-          {accepted.map((s, i) => (
-            <Text key={i} color="gray">
-              {" "}
-              {s.type === "create-list" ? "Create" : "Move"}{" "}
-              <Text color="white">
-                {s.repo.owner}/{s.repo.name}
-              </Text>{" "}
-              → <Text color="cyan">{s.targetListName}</Text>
-            </Text>
-          ))}
+          {accepted.map((s, i) => {
+            if (s.type === "rename-list") {
+              return (
+                <Text key={i} color="gray">
+                  {" "}
+                  Rename list <Text color="white">'{s.oldName}'</Text> →{" "}
+                  <Text color="cyan">'{s.newName}'</Text>
+                </Text>
+              );
+            }
+            if (s.type === "delete-list") {
+              return (
+                <Text key={i} color="gray">
+                  {" "}
+                  Delete list <Text color="white">'{s.listName}'</Text>
+                </Text>
+              );
+            }
+            return (
+              <Text key={i} color="gray">
+                {" "}
+                {s.type === "create-list" ? "Create" : "Move"}{" "}
+                <Text color="white">
+                  {s.repo.owner}/{s.repo.name}
+                </Text>{" "}
+                → <Text color="cyan">{s.targetListName}</Text>
+              </Text>
+            );
+          })}
         </Box>
       )}
 
