@@ -15,8 +15,8 @@ import {
 import { consolidateCategories } from "./ai/consolidator.js";
 import { generateSuggestions } from "./engine/suggestionEngine.js";
 import type { AnalyzedRepo, ReroutedRepo } from "./engine/suggestionEngine.js";
-import { applyAcceptedSuggestions, type MutationResult } from "./github/mutator.js";
-import type { Suggestion } from "./types.js";
+import { applyAcceptedSuggestions, deleteAllLists, type MutationResult } from "./github/mutator.js";
+import type { Suggestion, ConsolidationStrategy } from "./types.js";
 
 import { LoadingScreen } from "./components/LoadingScreen.js";
 import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
@@ -63,6 +63,28 @@ function prompt(question: string): Promise<boolean> {
   });
 }
 
+function promptStrategy(): Promise<ConsolidationStrategy> {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    const question = [
+      "\nConsolidation strategy:",
+      "  1) Keep existing  — preserve all lists, add new ones as needed (default)",
+      "  2) Re-create all  — delete every list, then build fresh from AI categories",
+      "  3) Allow rename   — keep lists but rename them when AI suggests a better name",
+      "Select [1/2/3, Enter = 1]: ",
+    ].join("\n");
+    rl.question(question, (answer) => {
+      rl.close();
+      if (answer === "2") resolve("recreate");
+      else if (answer === "3") resolve("allow-rename");
+      else resolve("keep-existing");
+    });
+  });
+}
+
 // --- App state types ---
 
 type AppPhase =
@@ -74,6 +96,8 @@ type AppPhase =
       suggestions: Suggestion[];
       decisions: Map<number, ReviewDecision>;
       reroutedRepos: ReroutedRepo[];
+      strategy: ConsolidationStrategy;
+      existingListCount: number;
     }
   | { tag: "applying"; results: MutationResult[] }
   | { tag: "done"; results: MutationResult[] }
@@ -118,6 +142,8 @@ function App({ phase, onReviewComplete, onReviewQuit, onSummaryConfirm }: AppPro
           suggestions={phase.suggestions}
           decisions={phase.decisions}
           reroutedRepos={phase.reroutedRepos}
+          strategy={phase.strategy}
+          existingListCount={phase.existingListCount}
           onConfirm={onSummaryConfirm}
         />
       )}
@@ -201,6 +227,9 @@ async function main() {
     console.log("Aborted.");
     process.exit(0);
   }
+
+  // Strategy selection (task 7.1)
+  const strategy = await promptStrategy();
 
   // Set up phase state for the TUI
   let phase: AppPhase = { tag: "fetching" };
@@ -318,6 +347,8 @@ async function main() {
   const { remapping, mergeWarnings } = await consolidateCategories(
     newCategoryNames,
     existingListNames,
+    undefined,
+    strategy,
   );
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);
@@ -327,7 +358,12 @@ async function main() {
   }
 
   // Generate suggestions (re-routes singleton-category repos via AI)
-  const { suggestions, count, reroutedRepos } = await generateSuggestions(analyzedRepos, lists);
+  const { suggestions, count, reroutedRepos } = await generateSuggestions(
+    analyzedRepos,
+    lists,
+    undefined,
+    strategy,
+  );
 
   if (count === 0) {
     unmount();
@@ -348,13 +384,25 @@ async function main() {
   }
 
   // Summary screen
-  setPhase({ tag: "summary", suggestions, decisions, reroutedRepos });
+  setPhase({
+    tag: "summary",
+    suggestions,
+    decisions,
+    reroutedRepos,
+    strategy,
+    existingListCount: lists.length,
+  });
   const apply = await summaryPromise;
 
   if (!apply || acceptedCount === 0) {
     unmount();
     console.log("No changes applied.");
     process.exit(0);
+  }
+
+  // In recreate mode, delete all existing lists before applying (task 7.4)
+  if (strategy === "recreate" && lists.length > 0) {
+    await deleteAllLists(lists, graphqlWithAuth);
   }
 
   // Apply mutations

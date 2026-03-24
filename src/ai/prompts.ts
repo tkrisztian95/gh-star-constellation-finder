@@ -1,4 +1,5 @@
 import type { RepoInput } from "./types.js";
+import type { ConsolidationStrategy } from "../types.js";
 
 // TIDD-EC structured prompt
 // T — Task context: categories become GitHub List names
@@ -95,12 +96,18 @@ export function buildConsolidationPrompt(
   proposedNames: string[],
   existingListNames: string[] = [],
   maxLists: number = 32,
+  strategy: ConsolidationStrategy = "keep-existing",
 ): string {
   const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
   const existingCount = existingListNames.length;
   const budget = maxLists - existingCount;
   const existingSection =
     existingCount > 0 ? existingListNames.map((n) => `- "${n}"`).join("\n") : "(none)";
+
+  const renameHint =
+    strategy === "allow-rename"
+      ? `\nRENAME HINT\nYou may also map a proposed name to an improved version of an existing list name when the AI suggests a clearly better name for the same domain. In this case produce the new, improved name as the canonical name (do not use the old existing name). This is only appropriate when the new name is strictly better — not just different.\n`
+      : "";
 
   return `You are a technical librarian consolidating proposed GitHub List names into a minimal, well-named set.
 
@@ -113,7 +120,7 @@ You may produce at most ${budget} distinct new canonical name(s) in your output.
 If the proposed names would result in more than ${budget} distinct new names, merge the least-specific categories into broader ones until you are within budget.
 Prefer merging new proposals over inventing vague umbrella names. When merging, prefer the more specific surviving name.
 Do NOT produce a canonical name that is semantically identical to an existing list.
-
+${renameHint}
 EXISTING LISTS
 ${existingSection}
 
