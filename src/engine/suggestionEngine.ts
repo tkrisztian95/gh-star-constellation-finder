@@ -35,6 +35,8 @@ export async function generateSuggestions(
   const pendingNewLists = new Map<string, string>();
 
   for (const { repo, analysis } of analyzedRepos) {
+    if (analysis.category === "analysis-failed") continue;
+
     const normalizedCategory = analysis.category.toLowerCase().trim();
     const existingList = existingListsByName.get(normalizedCategory);
 
