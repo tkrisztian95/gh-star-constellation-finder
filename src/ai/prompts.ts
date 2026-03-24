@@ -77,6 +77,7 @@ export function buildUserMessage(input: RepoInput): string {
     `Description: ${input.description || '(none)'}`,
     `Language: ${input.language ?? '(unknown)'}`,
     `Topics: ${input.topics.length > 0 ? input.topics.join(', ') : '(none)'}`,
+    `Archived: ${input.isArchived ? 'yes' : 'no'}`,
     '',
     readmeSection,
     '',

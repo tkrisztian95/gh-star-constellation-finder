@@ -7,6 +7,7 @@ export interface Repo {
   stargazerCount: number;
   topics: string[];
   listIds: string[];
+  isArchived: boolean;
 }
 
 export interface GitHubList {

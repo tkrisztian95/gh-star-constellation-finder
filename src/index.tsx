@@ -253,16 +253,22 @@ async function main() {
 
   await Promise.all(
     repos.map(async (repo) => {
-      const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? '';
-      const analysis = await analyzer.analyze({
-        name: repo.name,
-        owner: repo.owner,
-        description: repo.description,
-        language: repo.language,
-        topics: repo.topics,
-        readme,
-        existingListNames,
-      });
+      let analysis;
+      if (repo.isArchived) {
+        analysis = { category: 'Archived', killerFeature: '(archived repository)', dataQuality: 'sparse' as const };
+      } else {
+        const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? '';
+        analysis = await analyzer.analyze({
+          name: repo.name,
+          owner: repo.owner,
+          description: repo.description,
+          language: repo.language,
+          topics: repo.topics,
+          readme,
+          isArchived: false,
+          existingListNames,
+        });
+      }
       analyzedRepos.push({ repo, analysis });
       analyzed++;
       setPhase({ tag: 'analyzing', analyzed, total: repos.length });

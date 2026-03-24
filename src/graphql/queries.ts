@@ -16,6 +16,7 @@ export const STARRED_REPOSITORIES_QUERY = `
           primaryLanguage {
             name
           }
+          isArchived
           stargazerCount
           repositoryTopics(first: 20) {
             nodes {
