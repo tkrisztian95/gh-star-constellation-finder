@@ -172,3 +172,29 @@ NOW PROCESS THIS INPUT
 
 Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
 }
+
+export function buildReroutingPrompt(
+  orphans: { category: string }[],
+  availableTargets: string[],
+): string {
+  const orphanList = orphans.map((o) => `"${o.category}"`).join(", ");
+  const targetList = availableTargets.map((t) => `"${t}"`).join(", ");
+
+  return `You are a technical librarian re-routing orphan GitHub repository categories into an existing named list.
+
+TASK
+For each orphan category, pick the single best available target list. If no available list is a reasonable semantic match, return null for that category.
+
+ORPHAN CATEGORIES
+[${orphanList}]
+
+AVAILABLE TARGETS
+[${targetList}]
+
+RULES
+- Only map to a target from the AVAILABLE TARGETS list. Do not invent new names.
+- A "reasonable semantic match" means the orphan's domain clearly belongs in the target list (e.g. "Rust HTTP Client" → "HTTP Clients").
+- If in doubt, return null — a dropped suggestion is better than a wrong assignment.
+
+Return ONLY a valid JSON object mapping each orphan category to a target list name string, or null. No prose, no markdown, no code fences.`;
+}
