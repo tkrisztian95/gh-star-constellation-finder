@@ -1,6 +1,7 @@
 # 🌌 gh-star-constellation-finder
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-000000?style=flat-square&logo=bun&logoColor=white)](https://bun.sh/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 **Stop hoarding stars. Start building constellations.**
@@ -19,7 +20,7 @@
 
 ### Prerequisites
 
-* **Node.js** (v18 or higher)
+* **Bun** (v1.0 or higher) — [install](https://bun.sh/)
 * **GitHub Personal Access Token (PAT):** Requires `repo` and `user` scopes. Note: the `user` scope (not just `read:user`) is required for creating and managing GitHub Lists via the GraphQL API. Use a **classic token** — fine-grained tokens do not support this mutation.
 * **AI Provider:** An OpenAI API Key OR [Ollama](https://ollama.com/) running locally (e.g., `llama3`).
 
@@ -27,11 +28,30 @@
 
 ```bash
 # Clone the repository
-git clone [https://github.com/yourusername/gh-star-constellation-finder.git](https://github.com/yourusername/gh-star-constellation-finder.git)
+git clone https://github.com/yourusername/gh-star-constellation-finder.git
 
 # Install dependencies
 cd gh-star-constellation-finder
-npm install
+bun install
 
 # Set up environment variables
 cp .env.example .env
+# Edit .env with your GitHub token and AI provider credentials
+```
+
+### Running
+
+```bash
+bun run dev
+```
+
+Bun automatically loads `.env` — no extra flags needed.
+
+## ⚙️ Configuration
+
+| Variable | Required | Description |
+|---|---|---|
+| `GITHUB_TOKEN` | ✅ | Classic PAT with `user` and `repo` scopes |
+| `OPENAI_API_KEY` | One of these | OpenAI API key |
+| `OLLAMA_HOST` | One of these | Ollama base URL (default: `http://localhost:11434`) |
+| `OLLAMA_MODEL` | with Ollama | Model name (e.g. `llama3`) |
