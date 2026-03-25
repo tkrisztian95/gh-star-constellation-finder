@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { render, Box, Text } from "ink";
 
-import { authenticate } from "./github/auth.js";
+import { authenticate, type AuthResult } from "./github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
 import { fetchAllReadmes } from "./github/readmeFetcher.js";
 import { createAnalyzer, type Backend } from "./ai/index.js";
@@ -29,11 +29,12 @@ interface CliArgs {
   backend?: Backend;
   limit?: number;
   concurrency: number;
+  analyzeOnly: boolean;
 }
 
 function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
-  const result: CliArgs = { concurrency: 5 };
+  const result: CliArgs = { concurrency: 5, analyzeOnly: false };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--backend" && args[i + 1]) {
@@ -45,6 +46,8 @@ function parseArgs(): CliArgs {
     } else if (args[i] === "--concurrency" && args[i + 1]) {
       result.concurrency = parseInt(args[i + 1], 10);
       i++;
+    } else if (args[i] === "--analyze-only") {
+      result.analyzeOnly = true;
     }
   }
 
@@ -178,6 +181,101 @@ function App({
   );
 }
 
+// --- Headless analyze-only pipeline ---
+
+async function runAnalyzeOnly(
+  cliArgs: CliArgs,
+  token: string,
+  graphqlWithAuth: AuthResult["graphqlWithAuth"],
+) {
+  const [allRepos, lists] = await Promise.all([
+    fetchStarredRepos(graphqlWithAuth),
+    fetchUserLists(graphqlWithAuth),
+  ]);
+
+  const repoListIds = new Map<string, string[]>();
+  for (const list of lists) {
+    for (const repoId of list.repoIds) {
+      const ids = repoListIds.get(repoId) ?? [];
+      ids.push(list.id);
+      repoListIds.set(repoId, ids);
+    }
+  }
+  for (const repo of allRepos) {
+    repo.listIds = repoListIds.get(repo.id) ?? [];
+  }
+
+  const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
+
+  const readmes = await fetchAllReadmes(
+    repos.map((r) => ({ owner: r.owner, name: r.name })),
+    token,
+    cliArgs.concurrency,
+  );
+
+  const analyzer = createAnalyzer(cliArgs.backend, null);
+  const existingListNames = lists.map((l) => l.name);
+  const analyzedRepos: AnalyzedRepo[] = [];
+
+  await Promise.all(
+    repos.map(async (repo) => {
+      let analysis;
+      if (repo.isArchived) {
+        analysis = {
+          category: "Archived",
+          killerFeature: "(archived repository)",
+          dataQuality: "sparse" as const,
+        };
+      } else {
+        const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
+        analysis = await analyzer.analyze({
+          name: repo.name,
+          owner: repo.owner,
+          description: repo.description,
+          language: repo.language,
+          topics: repo.topics,
+          readme,
+          isArchived: false,
+          existingListNames,
+        });
+      }
+      analyzedRepos.push({ repo, analysis });
+    }),
+  );
+
+  const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
+  const newCategoryNames = [
+    ...new Set(
+      analyzedRepos
+        .map((r) => r.analysis.category)
+        .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim())),
+    ),
+  ];
+  const { remapping } = await consolidateCategories(
+    newCategoryNames,
+    existingListNames,
+    undefined,
+    "allow-rename",
+  );
+  for (const entry of analyzedRepos) {
+    const consolidated = remapping.get(entry.analysis.category);
+    if (consolidated) {
+      entry.analysis.category = consolidated;
+    }
+  }
+
+  const runId = generateSessionId();
+
+  const { suggestions } = await generateSuggestions(
+    analyzedRepos,
+    lists,
+    undefined,
+    "allow-rename",
+  );
+
+  process.stdout.write(JSON.stringify({ runId, analyzedRepos, suggestions }, null, 2) + "\n");
+}
+
 // --- Orchestration ---
 
 async function main() {
@@ -185,6 +283,11 @@ async function main() {
 
   // Auth
   const { token, graphqlWithAuth } = await authenticate();
+
+  if (cliArgs.analyzeOnly) {
+    await runAnalyzeOnly(cliArgs, token, graphqlWithAuth);
+    process.exit(0);
+  }
 
   // Set up phase state for the TUI
   let phase: AppPhase = { tag: "fetching-initial" };

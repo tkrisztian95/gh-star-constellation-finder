@@ -1,5 +1,3 @@
-## ADDED Requirements
-
 ### Requirement: --analyze-only flag triggers headless JSON output mode
 The CLI SHALL accept an `--analyze-only` flag. When present, the application SHALL run the full read pipeline (fetch starred repos, fetch READMEs, AI analysis, category consolidation, suggestion generation) without rendering any interactive TUI, print a single JSON document to stdout, and exit with code `0`.
 
@@ -50,9 +48,9 @@ In `--analyze-only` mode the process SHALL write only the JSON document to stdou
 - **WHEN** stdout is captured while running with `--analyze-only`
 - **THEN** the captured output SHALL be parseable as JSON with no leading or trailing non-JSON characters
 
-### Requirement: analyze-only mode uses balanced consolidation strategy
-In `--analyze-only` mode the category consolidation step SHALL use the `"balanced"` strategy, as no interactive strategy picker is shown.
+### Requirement: analyze-only mode uses allow-rename consolidation strategy
+In `--analyze-only` mode the category consolidation step SHALL use the `"allow-rename"` strategy, as no interactive strategy picker is shown.
 
 #### Scenario: Consolidation runs without user input
 - **WHEN** `--analyze-only` is used and no strategy flag is provided
-- **THEN** category consolidation SHALL proceed with strategy `"balanced"` without prompting the user
+- **THEN** category consolidation SHALL proceed with strategy `"allow-rename"` without prompting the user

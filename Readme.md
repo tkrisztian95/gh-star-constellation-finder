@@ -15,6 +15,7 @@
 * **Native Integration:** Uses the GitHub GraphQL API to create and manage lists directly on your profile—no third-party database required.
 * **Human-in-the-Loop:** View AI-generated "Proposals" and "Insights" before committing any changes to your account.
 * **Health Audits:** Automatically flags "stale" or archived repositories to help you declutter.
+* **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document (analysis + suggestions + run ID) to stdout for scripting or inspection.
 
 ## 🚀 Getting Started
 
@@ -46,6 +47,40 @@ bun run dev
 ```
 
 Bun automatically loads `.env` — no extra flags needed.
+
+## 🛠 CLI Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--backend <name>` | `openai` | AI backend to use (`openai` or `ollama`) |
+| `--limit <n>` | _(all)_ | Limit the number of repos analysed |
+| `--concurrency <n>` | `5` | Parallel README fetch concurrency |
+| `--analyze-only` | off | Headless mode — skip the TUI and print JSON to stdout |
+
+### `--analyze-only` mode
+
+Runs the full analysis pipeline (fetch → analyse → consolidate → suggest) without rendering the interactive TUI, then prints a single JSON document to stdout and exits:
+
+```bash
+bun run dev -- --analyze-only --limit 20 | jq '.suggestions'
+```
+
+Output shape:
+
+```json
+{
+  "runId": "7bd948c8-...",
+  "analyzedRepos": [
+    {
+      "repo": { "id": "...", "name": "...", "owner": "...", ... },
+      "analysis": { "category": "...", "killerFeature": "...", "dataQuality": "..." }
+    }
+  ],
+  "suggestions": [ ... ]
+}
+```
+
+Compatible with `--backend` and `--limit`. No GitHub writes are performed in this mode.
 
 ## ⚙️ Configuration
 
