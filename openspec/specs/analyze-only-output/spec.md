@@ -10,25 +10,23 @@ The CLI SHALL accept an `--analyze-only` flag. When present, the application SHA
 - **THEN** the existing interactive TUI flow SHALL run exactly as before
 
 ### Requirement: JSON output contains run ID, analyzed repos, and suggestions
-The JSON document emitted in `--analyze-only` mode SHALL be an object with three top-level keys: `runId` (string), `analyzedRepos` (array), and `suggestions` (array).
+The JSON document emitted in `--analyze-only` mode SHALL be an object with the following top-level keys: `runId` (string), `suggestions` (array), `summary` (object), and `errors` (array).
 
 `runId` SHALL be a unique identifier for the run generated via the existing `generateSessionId()` utility from `src/ai/tracing.ts`.
 
-Each `analyzedRepos` entry SHALL include repo metadata fields (`id`, `name`, `owner`, `description`, `language`, `topics`, `isArchived`) and the AI analysis fields (`category`, `killerFeature`, `dataQuality`).
-
 Each `suggestions` entry SHALL use the existing `Suggestion` type shape.
+
+The `summary` object SHALL contain: `starredCount`, `analyzedCount`, `suggestionCount`, `durationMs`, `model`, `githubUser`, and optionally `langfuseSessionId` (when Langfuse is configured and its session ID differs from `runId`).
+
+The `errors` array SHALL contain `{ repo, owner }` entries for any repos whose AI analysis failed.
 
 #### Scenario: Output is parseable JSON with expected keys
 - **WHEN** `--analyze-only` output is parsed with `JSON.parse`
-- **THEN** the result SHALL have `runId`, `analyzedRepos`, and `suggestions` as top-level properties
+- **THEN** the result SHALL have `runId`, `suggestions`, `summary`, and `errors` as top-level properties
 
 #### Scenario: runId is a non-empty string
 - **WHEN** the JSON output is inspected
 - **THEN** `runId` SHALL be a non-empty string that is unique across runs
-
-#### Scenario: analyzedRepos entries contain analysis fields
-- **WHEN** a repo entry is inspected
-- **THEN** it SHALL have `repo` (metadata) and `analysis` sub-objects with `category`, `killerFeature`, and `dataQuality` fields
 
 ### Requirement: Existing CLI flags are honoured in analyze-only mode
 When `--analyze-only` is combined with `--backend`, `--limit`, or `--concurrency`, those flags SHALL take effect just as they do in interactive mode.

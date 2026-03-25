@@ -1,12 +1,15 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const responseSchema = z.object({
   category: z.string(),
   killerFeature: z.string(),
-  dataQuality: z.enum(['full', 'sparse']).optional(),
+  dataQuality: z.enum(["full", "sparse"]).optional(),
 });
 
-export function parseAnalysisResponse(content: string, fallback = 'analysis-failed'): AnalysisResult {
+export function parseAnalysisResponse(
+  content: string,
+  fallback = "analysis-failed",
+): AnalysisResult {
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   const jsonStr = jsonMatch ? jsonMatch[0] : content;
   try {
@@ -14,13 +17,13 @@ export function parseAnalysisResponse(content: string, fallback = 'analysis-fail
   } catch {
     try {
       const raw = JSON.parse(jsonStr) as Record<string, unknown>;
-      const category = typeof raw['category'] === 'string' ? raw['category'] : '';
-      const killerFeature = typeof raw['killerFeature'] === 'string' ? raw['killerFeature'] : '';
+      const category = typeof raw["category"] === "string" ? raw["category"] : "";
+      const killerFeature = typeof raw["killerFeature"] === "string" ? raw["killerFeature"] : "";
       if (category) return { category, killerFeature };
     } catch {
       // not valid JSON at all
     }
-    return { category: content.trim() || fallback, killerFeature: '' };
+    return { category: content.trim() || fallback, killerFeature: "" };
   }
 }
 
@@ -38,10 +41,11 @@ export interface RepoInput {
 export interface AnalysisResult {
   category: string;
   killerFeature: string;
-  dataQuality?: 'full' | 'sparse';
+  dataQuality?: "full" | "sparse";
 }
 
 export interface Analyzer {
+  modelId?: string;
   analyze(input: RepoInput): Promise<AnalysisResult>;
 }
 

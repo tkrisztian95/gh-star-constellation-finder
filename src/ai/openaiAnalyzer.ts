@@ -14,6 +14,7 @@ export function createOpenAIAnalyzer(parent?: LangfuseTrace | null): Analyzer {
   const client = new OpenAI({ apiKey });
 
   return {
+    modelId: "openai/gpt-4o-mini",
     async analyze(input: RepoInput): Promise<AnalysisResult> {
       const model = "gpt-4o-mini";
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);

@@ -197,7 +197,10 @@ async function runAnalyzeOnly(
   cliArgs: CliArgs,
   token: string,
   graphqlWithAuth: AuthResult["graphqlWithAuth"],
+  login: string,
 ) {
+  const startMs = Date.now();
+
   const [allRepos, lists] = await Promise.all([
     fetchStarredRepos(graphqlWithAuth),
     fetchUserLists(graphqlWithAuth),
@@ -223,7 +226,18 @@ async function runAnalyzeOnly(
     cliArgs.concurrency,
   );
 
-  const analyzer = createAnalyzer(cliArgs.backend, null);
+  // Set up Langfuse tracing (no-op when credentials are absent)
+  const langfuse = createLangfuseClient();
+  const langfuseSessionId = generateSessionId();
+  const trace = langfuse
+    ? createRunTrace(
+        langfuse,
+        { repoCount: repos.length, backend: cliArgs.backend ?? "openai" },
+        langfuseSessionId,
+      )
+    : null;
+
+  const analyzer = createAnalyzer(cliArgs.backend, trace);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
 
@@ -283,7 +297,25 @@ async function runAnalyzeOnly(
     "allow-rename",
   );
 
-  const json = JSON.stringify({ runId, analyzedRepos, suggestions }, null, 2) + "\n";
+  const errors = analyzedRepos
+    .filter((e) => e.analysis.category === "analysis-failed")
+    .map((e) => ({ repo: e.repo.name, owner: e.repo.owner }));
+
+  const summary: Record<string, unknown> = {
+    starredCount: allRepos.length,
+    analyzedCount: repos.length,
+    suggestionCount: suggestions.length,
+    durationMs: Date.now() - startMs,
+    model: analyzer.modelId ?? null,
+    githubUser: login,
+  };
+  if (langfuse && langfuseSessionId !== runId) {
+    summary.langfuseSessionId = langfuseSessionId;
+  }
+
+  await flushTracing(langfuse);
+
+  const json = JSON.stringify({ runId, summary, suggestions, errors }, null, 2) + "\n";
   if (cliArgs.outputPath) {
     fs.writeFileSync(cliArgs.outputPath, json);
     process.stderr.write(`Saved analysis to ${cliArgs.outputPath}\n`);
@@ -298,10 +330,10 @@ async function main() {
   const cliArgs = parseArgs();
 
   // Auth
-  const { token, graphqlWithAuth } = await authenticate();
+  const { token, graphqlWithAuth, login } = await authenticate();
 
   if (cliArgs.analyzeOnly) {
-    await runAnalyzeOnly(cliArgs, token, graphqlWithAuth);
+    await runAnalyzeOnly(cliArgs, token, graphqlWithAuth, login);
     process.exit(0);
   }
 

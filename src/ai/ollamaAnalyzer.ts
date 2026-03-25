@@ -10,6 +10,7 @@ export function createOllamaAnalyzer(
   const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
 
   return {
+    modelId: `ollama/${model}`,
     async analyze(input: RepoInput): Promise<AnalysisResult> {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildUserMessage(input);
