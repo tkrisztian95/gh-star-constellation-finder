@@ -42,11 +42,15 @@ When `--analyze-only` is combined with `--backend`, `--limit`, or `--concurrency
 - **THEN** the Ollama backend SHALL be used for analysis
 
 ### Requirement: stdout is clean JSON in analyze-only mode
-In `--analyze-only` mode the process SHALL write only the JSON document to stdout. No progress indicators, TUI frames, or other text SHALL appear on stdout.
+In `--analyze-only` mode without `--output`, the process SHALL write only the JSON document to stdout. No progress indicators, TUI frames, or other text SHALL appear on stdout. When `--output` is provided, stdout SHALL be entirely empty — the JSON document is written to the file instead.
 
-#### Scenario: stdout contains only JSON
-- **WHEN** stdout is captured while running with `--analyze-only`
+#### Scenario: stdout contains only JSON (no --output)
+- **WHEN** stdout is captured while running with `--analyze-only` and no `--output` flag
 - **THEN** the captured output SHALL be parseable as JSON with no leading or trailing non-JSON characters
+
+#### Scenario: stdout is empty when --output is used
+- **WHEN** stdout is captured while running with `--analyze-only --output <path>`
+- **THEN** the captured stdout SHALL be empty
 
 ### Requirement: analyze-only mode uses allow-rename consolidation strategy
 In `--analyze-only` mode the category consolidation step SHALL use the `"allow-rename"` strategy, as no interactive strategy picker is shown.
