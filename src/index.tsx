@@ -1,3 +1,4 @@
+import fs from "fs";
 import React, { useState, useEffect } from "react";
 import { render, Box, Text } from "ink";
 
@@ -30,6 +31,7 @@ interface CliArgs {
   limit?: number;
   concurrency: number;
   analyzeOnly: boolean;
+  outputPath?: string;
 }
 
 function parseArgs(): CliArgs {
@@ -48,7 +50,15 @@ function parseArgs(): CliArgs {
       i++;
     } else if (args[i] === "--analyze-only") {
       result.analyzeOnly = true;
+    } else if (args[i] === "--output" && args[i + 1]) {
+      result.outputPath = args[i + 1];
+      i++;
     }
+  }
+
+  if (result.outputPath && !result.analyzeOnly) {
+    process.stderr.write("Error: --output requires --analyze-only\n");
+    process.exit(1);
   }
 
   return result;
@@ -273,7 +283,13 @@ async function runAnalyzeOnly(
     "allow-rename",
   );
 
-  process.stdout.write(JSON.stringify({ runId, analyzedRepos, suggestions }, null, 2) + "\n");
+  const json = JSON.stringify({ runId, analyzedRepos, suggestions }, null, 2) + "\n";
+  if (cliArgs.outputPath) {
+    fs.writeFileSync(cliArgs.outputPath, json);
+    process.stderr.write(`Saved analysis to ${cliArgs.outputPath}\n`);
+  } else {
+    process.stdout.write(json);
+  }
 }
 
 // --- Orchestration ---
