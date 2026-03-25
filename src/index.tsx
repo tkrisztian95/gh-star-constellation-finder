@@ -70,6 +70,7 @@ type AppPhase =
     }
   | { tag: "applying"; results: MutationResult[] }
   | { tag: "done"; results: MutationResult[] }
+  | { tag: "info"; message: string }
   | { tag: "error"; message: string };
 
 // --- Main App Component ---
@@ -159,6 +160,12 @@ function App({
               {r.status === "success" ? "✓" : "✗"} {r.message}
             </Text>
           ))}
+        </Box>
+      )}
+
+      {phase.tag === "info" && (
+        <Box padding={1}>
+          <Text color="cyan">{phase.message}</Text>
         </Box>
       )}
 
@@ -264,8 +271,9 @@ async function main() {
   const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
 
   if (repos.length === 0) {
+    setPhase({ tag: "info", message: "No starred repositories found." });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     unmount();
-    console.log("No starred repositories found.");
     process.exit(0);
   }
 
@@ -369,8 +377,12 @@ async function main() {
   );
 
   if (count === 0) {
+    setPhase({
+      tag: "info",
+      message: "No suggestions generated — all repos are already well organized!",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     unmount();
-    console.log("No suggestions generated — all repos are already well organized!");
     process.exit(0);
   }
 
@@ -398,8 +410,9 @@ async function main() {
   const apply = await summaryPromise;
 
   if (!apply || acceptedCount === 0) {
+    setPhase({ tag: "info", message: "No changes applied." });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     unmount();
-    console.log("No changes applied.");
     process.exit(0);
   }
 
@@ -428,11 +441,7 @@ async function main() {
   await new Promise((resolve) => setTimeout(resolve, 500));
   unmount();
 
-  const succeeded = finalResults.filter((r) => r.status === "success").length;
   const failed = finalResults.filter((r) => r.status === "failed").length;
-  const skipped = decisions.size - acceptedCount;
-
-  console.log(`\nSession summary: ${succeeded} succeeded, ${failed} failed, ${skipped} skipped`);
 
   if (failed > 0) {
     process.exit(1);
