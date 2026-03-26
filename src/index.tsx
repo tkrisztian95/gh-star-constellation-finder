@@ -23,6 +23,7 @@ import { ConfirmScreen } from "./components/ConfirmScreen.js";
 import { StrategyScreen } from "./components/StrategyScreen.js";
 import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
 import { SummaryScreen } from "./components/SummaryScreen.js";
+import { SavePromptScreen } from "./components/SavePromptScreen.js";
 
 // --- CLI arg parsing ---
 
@@ -84,7 +85,14 @@ type AppPhase =
   | { tag: "applying"; results: MutationResult[] }
   | { tag: "done"; results: MutationResult[] }
   | { tag: "info"; message: string }
-  | { tag: "error"; message: string };
+  | { tag: "error"; message: string }
+  | {
+      tag: "save-prompt";
+      suggestions: Suggestion[];
+      decisions: Map<number, ReviewDecision>;
+      mutationResults?: MutationResult[];
+      saveError?: string;
+    };
 
 // --- Main App Component ---
 
@@ -95,6 +103,7 @@ interface AppProps {
   onReviewComplete: (decisions: Map<number, ReviewDecision>) => void;
   onReviewQuit: (decisions: Map<number, ReviewDecision>) => void;
   onSummaryConfirm: (apply: boolean) => void;
+  onSavePromptSubmit: (path: string) => void;
 }
 
 function App({
@@ -104,6 +113,7 @@ function App({
   onReviewComplete,
   onReviewQuit,
   onSummaryConfirm,
+  onSavePromptSubmit,
 }: AppProps) {
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1} width={90}>
@@ -187,8 +197,36 @@ function App({
           <Text color="red">Error: {phase.message}</Text>
         </Box>
       )}
+
+      {phase.tag === "save-prompt" && (
+        <SavePromptScreen onSubmit={onSavePromptSubmit} errorMessage={phase.saveError} />
+      )}
     </Box>
   );
+}
+
+// --- Session JSON builder ---
+
+interface SessionDecision {
+  suggestionIndex: number;
+  decision: ReviewDecision;
+}
+
+interface SessionJsonInput {
+  runId: string;
+  summary: Record<string, unknown>;
+  suggestions: Suggestion[];
+  errors: { repo: string; owner: string }[];
+  decisions?: SessionDecision[];
+  mutationResults?: MutationResult[];
+}
+
+function buildSessionJson(input: SessionJsonInput): string {
+  const { runId, summary, suggestions, errors, decisions, mutationResults } = input;
+  const obj: Record<string, unknown> = { runId, summary, suggestions, errors };
+  if (decisions !== undefined) obj.decisions = decisions;
+  if (mutationResults !== undefined) obj.mutationResults = mutationResults;
+  return JSON.stringify(obj, null, 2) + "\n";
 }
 
 // --- Headless analyze-only pipeline ---
@@ -315,7 +353,7 @@ async function runAnalyzeOnly(
 
   await flushTracing(langfuse);
 
-  const json = JSON.stringify({ runId, summary, suggestions, errors }, null, 2) + "\n";
+  const json = buildSessionJson({ runId, summary, suggestions, errors });
   if (cliArgs.outputPath) {
     fs.writeFileSync(cliArgs.outputPath, json);
     process.stderr.write(`Saved analysis to ${cliArgs.outputPath}\n`);
