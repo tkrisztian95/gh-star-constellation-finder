@@ -12,10 +12,10 @@
 
 * **TUI-First Experience:** A beautiful, keyboard-driven interface built with [Ink](https://github.com/vadimdemedes/ink).
 * **Deep Analysis:** Goes beyond simple tags by reading repository `README.md` files to understand the "why" behind a project.
-* **Native Integration:** Uses the GitHub GraphQL API to create and manage lists directly on your profile—no third-party database required.
-* **Human-in-the-Loop:** View AI-generated "Proposals" and "Insights" before committing any changes to your account.
-* **Health Audits:** Automatically flags "stale" or archived repositories to help you declutter.
-* **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document (analysis + suggestions + run ID) to stdout for scripting or inspection.
+* **Native Integration:** Uses the GitHub GraphQL API to create and manage lists directly on your profile — no third-party database required.
+* **Human-in-the-Loop:** Review AI-generated suggestions and insights before any changes are written to your account.
+* **Health Audits:** Automatically flags archived repositories to help you declutter.
+* **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document to stdout for scripting or inspection.
 
 ## 🚀 Getting Started
 
@@ -29,10 +29,10 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/gh-star-constellation-finder.git
+git clone https://github.com/your-username/gh-star-constellation-finder.git
+cd gh-star-constellation-finder
 
 # Install dependencies
-cd gh-star-constellation-finder
 bun install
 
 # Set up environment variables
@@ -48,6 +48,28 @@ bun run dev
 
 Bun automatically loads `.env` — no extra flags needed.
 
+## 🔄 TUI Workflow
+
+The interactive mode walks you through these steps:
+
+1. **Confirm** — shows how many starred repos will be analysed; press `y` to proceed.
+2. **Strategy** — choose how existing GitHub Lists are handled (see [Consolidation Strategies](#consolidation-strategies) below).
+3. **Fetch & Analyse** — READMEs are fetched concurrently and each repo is sent to the AI for categorization.
+4. **Review** — browse every suggestion, accept or skip individual ones with keyboard shortcuts.
+5. **Summary** — see a final diff of what will be created/updated before any writes happen.
+6. **Apply** — accepted suggestions are written to GitHub via GraphQL mutations.
+7. **Save** — optionally save the full session JSON (suggestions + decisions + mutation results) to a file.
+
+### Consolidation Strategies
+
+After confirming, you pick one of three strategies that controls how the AI's proposed categories are merged with your existing lists:
+
+| # | Strategy | Behaviour |
+|---|---|---|
+| 1 | **Keep existing** _(default)_ | Preserve all current lists; add new ones only for genuinely new categories. |
+| 2 | **Re-create all** | Delete every existing list, then build a fresh set from AI categories. |
+| 3 | **Allow rename** | Keep existing lists but rename them when the AI suggests a better name. |
+
 ## 🛠 CLI Flags
 
 | Flag | Default | Description |
@@ -56,31 +78,39 @@ Bun automatically loads `.env` — no extra flags needed.
 | `--limit <n>` | _(all)_ | Limit the number of repos analysed |
 | `--concurrency <n>` | `5` | Parallel README fetch concurrency |
 | `--analyze-only` | off | Headless mode — skip the TUI and print JSON to stdout |
+| `--output <path>` | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout |
 
 ### `--analyze-only` mode
 
-Runs the full analysis pipeline (fetch → analyse → consolidate → suggest) without rendering the interactive TUI, then prints a single JSON document to stdout and exits:
+Runs the full pipeline (fetch → analyse → consolidate → suggest) without launching the TUI, then exits:
 
 ```bash
+# Print to stdout and pipe to jq
 bun run dev -- --analyze-only --limit 20 | jq '.suggestions'
+
+# Save to a file
+bun run dev -- --analyze-only --output starred.json
 ```
+
+> `--output` requires `--analyze-only`. No GitHub writes are performed in this mode.
 
 Output shape:
 
 ```json
 {
   "runId": "7bd948c8-...",
-  "analyzedRepos": [
-    {
-      "repo": { "id": "...", "name": "...", "owner": "...", ... },
-      "analysis": { "category": "...", "killerFeature": "...", "dataQuality": "..." }
-    }
-  ],
-  "suggestions": [ ... ]
+  "summary": {
+    "starredCount": 312,
+    "analyzedCount": 20,
+    "suggestionCount": 14,
+    "durationMs": 8431,
+    "model": "gpt-4o-mini",
+    "githubUser": "your-login"
+  },
+  "suggestions": [ ... ],
+  "errors": [ ... ]
 }
 ```
-
-Compatible with `--backend` and `--limit`. No GitHub writes are performed in this mode.
 
 ## ⚙️ Configuration
 
