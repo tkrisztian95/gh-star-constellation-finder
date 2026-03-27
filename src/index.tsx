@@ -24,6 +24,7 @@ import { StrategyScreen } from "./components/StrategyScreen.js";
 import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
 import { SummaryScreen } from "./components/SummaryScreen.js";
 import { SavePromptScreen } from "./components/SavePromptScreen.js";
+import { StepIndicator } from "./components/StepIndicator.js";
 
 // --- CLI arg parsing ---
 
@@ -106,6 +107,19 @@ interface AppProps {
   onSavePromptSubmit: (path: string) => void;
 }
 
+const DIVIDER = "─".repeat(84);
+const SHOW_STEPS_TAGS = new Set([
+  "fetching-initial",
+  "confirm",
+  "pick-strategy",
+  "fetching",
+  "analyzing",
+  "review",
+  "summary",
+  "applying",
+  "done",
+]);
+
 function App({
   phase,
   onConfirm,
@@ -117,12 +131,33 @@ function App({
 }: AppProps) {
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1} width={90}>
-      <Box justifyContent="space-between" marginBottom={1}>
-        <Text color="magenta" bold>
-          gh-star-constellation-finder
+      {/* Banner */}
+      <Box flexDirection="column" alignItems="center" marginBottom={1}>
+        <Box justifyContent="space-between" width={84}>
+          <Text color="magenta" bold>
+            {"✦ ★ ✦  gh-star-constellation-finder  ✦ ★ ✦"}
+          </Text>
+          <Text color="gray">v1.0</Text>
+        </Box>
+        <Text color="gray" dimColor>
+          {"Organize your GitHub starred repositories with AI"}
         </Text>
-        <Text color="gray">v1.0</Text>
       </Box>
+
+      <Text color="gray" dimColor>
+        {DIVIDER}
+      </Text>
+
+      {/* Step indicator */}
+      {SHOW_STEPS_TAGS.has(phase.tag) && (
+        <Box marginTop={1} marginBottom={1}>
+          <StepIndicator phaseTag={phase.tag} />
+        </Box>
+      )}
+
+      <Text color="gray" dimColor>
+        {DIVIDER}
+      </Text>
 
       {phase.tag === "fetching-initial" && (
         <LoadingScreen analyzed={0} total={0} phase="fetching" />
@@ -383,6 +418,7 @@ async function main() {
   let onReviewComplete: (d: Map<number, ReviewDecision>) => void = () => {};
   let onReviewQuit: (d: Map<number, ReviewDecision>) => void = () => {};
   let onSummaryConfirm: (apply: boolean) => void = () => {};
+  let onSavePromptSubmit: (path: string) => void = () => {};
 
   // Promises to bridge TUI events back to async flow
   let confirmResolve: (proceed: boolean) => void;
@@ -432,6 +468,7 @@ async function main() {
         onReviewComplete={onReviewComplete}
         onReviewQuit={onReviewQuit}
         onSummaryConfirm={onSummaryConfirm}
+        onSavePromptSubmit={onSavePromptSubmit}
       />
     );
   }
