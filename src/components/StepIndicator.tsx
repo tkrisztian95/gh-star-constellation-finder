@@ -4,6 +4,7 @@ import { Box, Text } from "ink";
 const STEPS: { label: string; tags: string[] }[] = [
   { label: "Fetch", tags: ["fetching-initial"] },
   { label: "Confirm", tags: ["confirm"] },
+  { label: "Scope", tags: ["pick-scope"] },
   { label: "Strategy", tags: ["pick-strategy"] },
   { label: "Analyze", tags: ["fetching", "analyzing"] },
   { label: "Review", tags: ["review", "summary"] },

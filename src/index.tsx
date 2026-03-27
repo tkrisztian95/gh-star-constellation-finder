@@ -20,6 +20,7 @@ import type { Suggestion, ConsolidationStrategy } from "./types.js";
 
 import { LoadingScreen } from "./components/LoadingScreen.js";
 import { ConfirmScreen } from "./components/ConfirmScreen.js";
+import { ScopeScreen, type ScopeMode } from "./components/ScopeScreen.js";
 import { StrategyScreen } from "./components/StrategyScreen.js";
 import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
 import { SummaryScreen } from "./components/SummaryScreen.js";
@@ -71,9 +72,10 @@ function parseArgs(): CliArgs {
 type AppPhase =
   | { tag: "fetching-initial" }
   | { tag: "confirm"; repoCount: number }
+  | { tag: "pick-scope" }
   | { tag: "pick-strategy" }
-  | { tag: "fetching" }
-  | { tag: "analyzing"; analyzed: number; total: number }
+  | { tag: "fetching"; filterLabel?: string }
+  | { tag: "analyzing"; analyzed: number; total: number; filterLabel?: string }
   | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
   | {
       tag: "summary";
@@ -82,6 +84,7 @@ type AppPhase =
       reroutedRepos: ReroutedRepo[];
       strategy: ConsolidationStrategy;
       existingListCount: number;
+      scopeMode: ScopeMode;
     }
   | { tag: "applying"; results: MutationResult[] }
   | { tag: "done"; results: MutationResult[] }
@@ -100,6 +103,7 @@ type AppPhase =
 interface AppProps {
   phase: AppPhase;
   onConfirm: (proceed: boolean) => void;
+  onScopeSelect: (mode: ScopeMode) => void;
   onStrategySelect: (strategy: ConsolidationStrategy) => void;
   onReviewComplete: (decisions: Map<number, ReviewDecision>) => void;
   onReviewQuit: (decisions: Map<number, ReviewDecision>) => void;
@@ -111,6 +115,7 @@ const DIVIDER = "─".repeat(84);
 const SHOW_STEPS_TAGS = new Set([
   "fetching-initial",
   "confirm",
+  "pick-scope",
   "pick-strategy",
   "fetching",
   "analyzing",
@@ -123,6 +128,7 @@ const SHOW_STEPS_TAGS = new Set([
 function App({
   phase,
   onConfirm,
+  onScopeSelect,
   onStrategySelect,
   onReviewComplete,
   onReviewQuit,
@@ -167,12 +173,21 @@ function App({
         <ConfirmScreen repoCount={phase.repoCount} onConfirm={onConfirm} />
       )}
 
+      {phase.tag === "pick-scope" && <ScopeScreen onSelect={onScopeSelect} />}
+
       {phase.tag === "pick-strategy" && <StrategyScreen onSelect={onStrategySelect} />}
 
-      {phase.tag === "fetching" && <LoadingScreen analyzed={0} total={0} phase="fetching" />}
+      {phase.tag === "fetching" && (
+        <LoadingScreen analyzed={0} total={0} phase="fetching" filterLabel={phase.filterLabel} />
+      )}
 
       {phase.tag === "analyzing" && (
-        <LoadingScreen analyzed={phase.analyzed} total={phase.total} phase="analyzing" />
+        <LoadingScreen
+          analyzed={phase.analyzed}
+          total={phase.total}
+          phase="analyzing"
+          filterLabel={phase.filterLabel}
+        />
       )}
 
       {phase.tag === "review" && (
@@ -191,6 +206,7 @@ function App({
           reroutedRepos={phase.reroutedRepos}
           strategy={phase.strategy}
           existingListCount={phase.existingListCount}
+          scopeMode={phase.scopeMode}
           onConfirm={onSummaryConfirm}
         />
       )}
@@ -414,6 +430,7 @@ async function main() {
   let phase: AppPhase = { tag: "fetching-initial" };
   let setPhase: (p: AppPhase) => void = () => {};
   let onConfirm: (proceed: boolean) => void = () => {};
+  let onScopeSelect: (mode: ScopeMode) => void = () => {};
   let onStrategySelect: (strategy: ConsolidationStrategy) => void = () => {};
   let onReviewComplete: (d: Map<number, ReviewDecision>) => void = () => {};
   let onReviewQuit: (d: Map<number, ReviewDecision>) => void = () => {};
@@ -424,6 +441,11 @@ async function main() {
   let confirmResolve: (proceed: boolean) => void;
   const confirmPromise = new Promise<boolean>((resolve) => {
     confirmResolve = resolve;
+  });
+
+  let scopeResolve: (mode: ScopeMode) => void;
+  const scopePromise = new Promise<ScopeMode>((resolve) => {
+    scopeResolve = resolve;
   });
 
   let strategyResolve: (strategy: ConsolidationStrategy) => void;
@@ -455,6 +477,7 @@ async function main() {
     }, []);
 
     onConfirm = (proceed) => confirmResolve(proceed);
+    onScopeSelect = (mode) => scopeResolve(mode);
     onStrategySelect = (strategy) => strategyResolve(strategy);
     onReviewComplete = (decisions) => reviewResolve({ decisions, quit: false });
     onReviewQuit = (decisions) => reviewResolve({ decisions, quit: true });
@@ -464,6 +487,7 @@ async function main() {
       <App
         phase={currentPhase}
         onConfirm={onConfirm}
+        onScopeSelect={onScopeSelect}
         onStrategySelect={onStrategySelect}
         onReviewComplete={onReviewComplete}
         onReviewQuit={onReviewQuit}
@@ -511,14 +535,34 @@ async function main() {
     process.exit(0);
   }
 
+  // Scope selection
+  setPhase({ tag: "pick-scope" });
+  const scopeMode = await scopePromise;
+
+  // Apply unlisted-only filter
+  const filteredRepos =
+    scopeMode === "unlisted-only" ? repos.filter((r) => r.listIds.length === 0) : repos;
+
+  if (filteredRepos.length === 0) {
+    setPhase({
+      tag: "info",
+      message: "All your starred repos are already organized — nothing to do!",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    unmount();
+    process.exit(0);
+  }
+
   // Strategy selection
   setPhase({ tag: "pick-strategy" });
   const strategy = await strategyPromise;
 
+  const filterLabel = scopeMode === "unlisted-only" ? "Unlisted repos only" : undefined;
+
   // Fetch READMEs
-  setPhase({ tag: "fetching" });
+  setPhase({ tag: "fetching", filterLabel });
   const readmes = await fetchAllReadmes(
-    repos.map((r) => ({ owner: r.owner, name: r.name })),
+    filteredRepos.map((r) => ({ owner: r.owner, name: r.name })),
     token,
     cliArgs.concurrency,
   );
@@ -531,7 +575,7 @@ async function main() {
   const trace = langfuse
     ? createRunTrace(
         langfuse,
-        { repoCount: repos.length, backend: cliArgs.backend ?? "openai" },
+        { repoCount: filteredRepos.length, backend: cliArgs.backend ?? "openai" },
         generateSessionId(),
       )
     : null;
@@ -542,10 +586,10 @@ async function main() {
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
 
-  setPhase({ tag: "analyzing", analyzed: 0, total: repos.length });
+  setPhase({ tag: "analyzing", analyzed: 0, total: filteredRepos.length, filterLabel });
 
   await Promise.all(
-    repos.map(async (repo) => {
+    filteredRepos.map(async (repo) => {
       let analysis;
       if (repo.isArchived) {
         analysis = {
@@ -568,7 +612,7 @@ async function main() {
       }
       analyzedRepos.push({ repo, analysis });
       analyzed++;
-      setPhase({ tag: "analyzing", analyzed, total: repos.length });
+      setPhase({ tag: "analyzing", analyzed, total: filteredRepos.length, filterLabel });
     }),
   );
 
@@ -632,6 +676,7 @@ async function main() {
     reroutedRepos,
     strategy,
     existingListCount: lists.length,
+    scopeMode,
   });
   const apply = await summaryPromise;
 

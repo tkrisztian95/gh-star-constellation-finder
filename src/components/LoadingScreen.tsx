@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text } from 'ink';
+import React, { useState, useEffect } from "react";
+import { Box, Text } from "ink";
 
-const SPINNER_FRAMES = ['|', '/', '-', '\\'];
+const SPINNER_FRAMES = ["|", "/", "-", "\\"];
 
 interface LoadingScreenProps {
   analyzed: number;
   total: number;
-  phase: 'fetching' | 'analyzing';
+  phase: "fetching" | "analyzing";
+  filterLabel?: string;
 }
 
-export function LoadingScreen({ analyzed, total, phase }: LoadingScreenProps) {
+export function LoadingScreen({ analyzed, total, phase, filterLabel }: LoadingScreenProps) {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export function LoadingScreen({ analyzed, total, phase }: LoadingScreenProps) {
 
   return (
     <Box flexDirection="column" padding={1}>
-      {phase === 'fetching' ? (
+      {phase === "fetching" ? (
         <Text>
           <Text color="yellow">{spinner} </Text>
           <Text>Fetching starred repositories...</Text>
@@ -32,16 +33,22 @@ export function LoadingScreen({ analyzed, total, phase }: LoadingScreenProps) {
         <Text>
           <Text color="cyan">{spinner} </Text>
           <Text>
-            Analyzing{' '}
+            Analyzing{" "}
             <Text bold color="white">
               {analyzed}
             </Text>
-            {' / '}
+            {" / "}
             <Text bold color="white">
               {total}
             </Text>
-            {' repositories...'}
+            {" repositories..."}
           </Text>
+        </Text>
+      )}
+      {filterLabel && (
+        <Text color="yellow" dimColor>
+          {" "}
+          Filter: {filterLabel}
         </Text>
       )}
     </Box>
