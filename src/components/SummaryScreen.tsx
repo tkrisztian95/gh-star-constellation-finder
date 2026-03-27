@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import type { Suggestion, ConsolidationStrategy } from "../types.js";
 import type { ReroutedRepo } from "../engine/suggestionEngine.js";
 import type { ReviewDecision } from "./ReviewScreen.js";
+import type { ScopeMode } from "./ScopeScreen.js";
 
 interface SummaryScreenProps {
   suggestions: Suggestion[];
@@ -10,6 +11,7 @@ interface SummaryScreenProps {
   reroutedRepos: ReroutedRepo[];
   strategy?: ConsolidationStrategy;
   existingListCount?: number;
+  scopeMode?: ScopeMode;
   onConfirm: (apply: boolean) => void;
 }
 
@@ -25,6 +27,7 @@ export function SummaryScreen({
   reroutedRepos,
   strategy = "keep-existing",
   existingListCount = 0,
+  scopeMode,
   onConfirm,
 }: SummaryScreenProps) {
   const accepted: Suggestion[] = [];
@@ -52,6 +55,12 @@ export function SummaryScreen({
         </Text>
         <Text color="cyan">[{STRATEGY_LABELS[strategy]}]</Text>
       </Box>
+
+      {scopeMode === "unlisted-only" && (
+        <Box marginTop={1}>
+          <Text color="yellow">Scope: unlisted repos only</Text>
+        </Box>
+      )}
 
       {strategy === "recreate" && existingListCount > 0 && (
         <Box marginTop={1} borderStyle="round" borderColor="red" padding={1}>
