@@ -11,7 +11,7 @@ export function createOllamaAnalyzer(
 
   return {
     modelId: `ollama/${model}`,
-    async analyze(input: RepoInput): Promise<AnalysisResult> {
+    async analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult> {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildUserMessage(input);
 
@@ -36,6 +36,7 @@ export function createOllamaAnalyzer(
         response = await fetch(`${host}/api/chat`, {
           method: "POST",
           headers: { "content-type": "application/json" },
+          signal,
           body: JSON.stringify({
             model,
             stream: false,
@@ -46,6 +47,7 @@ export function createOllamaAnalyzer(
           }),
         });
       } catch (error: unknown) {
+        if (signal?.aborted) throw error;
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Ollama unreachable for ${input.owner}/${input.name}: ${message}`);
         return { category: "analysis-failed", killerFeature: "" };
