@@ -15,7 +15,7 @@ export function createOpenAIAnalyzer(parent?: LangfuseTrace | null): Analyzer {
 
   return {
     modelId: "openai/gpt-4o-mini",
-    async analyze(input: RepoInput): Promise<AnalysisResult> {
+    async analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult> {
       const model = "gpt-4o-mini";
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildUserMessage(input);
@@ -36,14 +36,17 @@ export function createOpenAIAnalyzer(parent?: LangfuseTrace | null): Analyzer {
         // tracing errors must not affect analysis
       }
 
-      const completion = await client.chat.completions.create({
-        model,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
-      });
+      const completion = await client.chat.completions.create(
+        {
+          model,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+        },
+        { signal },
+      );
 
       const content = completion.choices[0]?.message?.content ?? "";
 

@@ -79,7 +79,8 @@ type AppPhase =
   | { tag: "pick-scope" }
   | { tag: "pick-strategy" }
   | { tag: "fetching"; filterLabel?: string }
-  | { tag: "analyzing"; analyzed: number; total: number; filterLabel?: string }
+  | { tag: "analyzing"; analyzed: number; total: number; filterLabel?: string; stopping?: boolean }
+  | { tag: "consolidating" }
   | { tag: "interrupt-confirm"; analyzedCount: number; totalCount: number }
   | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
   | {
@@ -126,6 +127,7 @@ const SHOW_STEPS_TAGS = new Set([
   "pick-strategy",
   "fetching",
   "analyzing",
+  "consolidating",
   "interrupt-confirm",
   "review",
   "summary",
@@ -197,8 +199,15 @@ function App({
           total={phase.total}
           phase="analyzing"
           filterLabel={phase.filterLabel}
+          stopping={phase.stopping}
           onInterrupt={onAnalysisInterrupt}
         />
+      )}
+
+      {phase.tag === "consolidating" && (
+        <Box flexDirection="column" padding={1}>
+          <Text color="cyan">Consolidating categories…</Text>
+        </Box>
       )}
 
       {phase.tag === "interrupt-confirm" && (
@@ -519,6 +528,10 @@ async function main() {
     onInterruptChoice = (choice) => interruptChoiceResolve(choice);
     onAnalysisInterrupt = () => {
       interrupted = true;
+      abortController.abort();
+      if (phase.tag === "analyzing") {
+        setPhase({ ...phase, stopping: true });
+      }
     };
     onSavePromptSubmit = (path) => savePromptResolve(path);
 
@@ -626,6 +639,7 @@ async function main() {
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
+  const abortController = new AbortController();
 
   setPhase({ tag: "analyzing", analyzed: 0, total: filteredRepos.length, filterLabel });
 
@@ -649,16 +663,24 @@ async function main() {
           };
         } else {
           const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
-          analysis = await analyzer.analyze({
-            name: repo.name,
-            owner: repo.owner,
-            description: repo.description,
-            language: repo.language,
-            topics: repo.topics,
-            readme,
-            isArchived: false,
-            existingListNames,
-          });
+          try {
+            analysis = await analyzer.analyze(
+              {
+                name: repo.name,
+                owner: repo.owner,
+                description: repo.description,
+                language: repo.language,
+                topics: repo.topics,
+                readme,
+                isArchived: false,
+                existingListNames,
+              },
+              abortController.signal,
+            );
+          } catch (err) {
+            if (interrupted) return; // aborted — drop this repo silently
+            throw err;
+          }
         }
         analyzedRepos.push({ repo, analysis });
         analyzed++;
@@ -753,9 +775,11 @@ async function main() {
       const savePath = await savePromptPromise;
       if (savePath) {
         fs.writeFileSync(savePath, saveJson);
-        process.stderr.write(`Saved partial analysis to ${savePath}\n`);
       }
       unmount();
+      if (savePath) {
+        process.stderr.write(`Saved partial analysis to ${savePath}\n`);
+      }
       process.exit(0);
     }
 
@@ -763,6 +787,7 @@ async function main() {
   }
 
   // Consolidate proposed new category names to reduce list proliferation
+  setPhase({ tag: "consolidating" });
   const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
   const newCategoryNames = [
     ...new Set(

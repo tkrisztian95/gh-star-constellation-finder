@@ -46,7 +46,7 @@ export interface AnalysisResult {
 
 export interface Analyzer {
   modelId?: string;
-  analyze(input: RepoInput): Promise<AnalysisResult>;
+  analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult>;
 }
 
 export interface ConsolidationResult {

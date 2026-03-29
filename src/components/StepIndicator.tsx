@@ -3,10 +3,9 @@ import { Box, Text } from "ink";
 
 const STEPS: { label: string; tags: string[] }[] = [
   { label: "Fetch", tags: ["fetching-initial"] },
-  { label: "Confirm", tags: ["confirm"] },
-  { label: "Scope", tags: ["pick-scope"] },
-  { label: "Strategy", tags: ["pick-strategy"] },
+  { label: "Setup", tags: ["confirm", "pick-scope", "pick-strategy"] },
   { label: "Analyze", tags: ["fetching", "analyzing"] },
+  { label: "Consolidate", tags: ["consolidating"] },
   { label: "Review", tags: ["review", "summary"] },
   { label: "Apply", tags: ["applying"] },
   { label: "Done", tags: ["done"] },
