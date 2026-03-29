@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text } from "ink";
+import { Box, Text, useInput } from "ink";
 
 const SPINNER_FRAMES = ["|", "/", "-", "\\"];
 
@@ -8,9 +8,16 @@ interface LoadingScreenProps {
   total: number;
   phase: "fetching" | "analyzing";
   filterLabel?: string;
+  onInterrupt?: () => void;
 }
 
-export function LoadingScreen({ analyzed, total, phase, filterLabel }: LoadingScreenProps) {
+export function LoadingScreen({
+  analyzed,
+  total,
+  phase,
+  filterLabel,
+  onInterrupt,
+}: LoadingScreenProps) {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
@@ -20,10 +27,22 @@ export function LoadingScreen({ analyzed, total, phase, filterLabel }: LoadingSc
     return () => clearInterval(id);
   }, []);
 
+  useInput((_, key) => {
+    if (key.escape && phase === "analyzing" && onInterrupt) {
+      onInterrupt();
+    }
+  });
+
   const spinner = SPINNER_FRAMES[frame];
 
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column" padding={1} gap={1}>
+      {filterLabel && (
+        <Text color="yellow" dimColor>
+          {" "}
+          Filter: {filterLabel}
+        </Text>
+      )}
       {phase === "fetching" ? (
         <Text>
           <Text color="yellow">{spinner} </Text>
@@ -45,11 +64,14 @@ export function LoadingScreen({ analyzed, total, phase, filterLabel }: LoadingSc
           </Text>
         </Text>
       )}
-      {filterLabel && (
-        <Text color="yellow" dimColor>
-          {" "}
-          Filter: {filterLabel}
-        </Text>
+      {phase === "analyzing" && (
+        <Box>
+          <Text color="gray"> </Text>
+          <Text color="white" bold inverse>
+            {" ESC "}
+          </Text>
+          <Text color="gray"> to interrupt and continue with analyzed repos</Text>
+        </Box>
       )}
     </Box>
   );

@@ -26,6 +26,10 @@ import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js"
 import { SummaryScreen } from "./components/SummaryScreen.js";
 import { SavePromptScreen } from "./components/SavePromptScreen.js";
 import { StepIndicator } from "./components/StepIndicator.js";
+import {
+  InterruptConfirmScreen,
+  type InterruptChoice,
+} from "./components/InterruptConfirmScreen.js";
 
 // --- CLI arg parsing ---
 
@@ -71,11 +75,12 @@ function parseArgs(): CliArgs {
 
 type AppPhase =
   | { tag: "fetching-initial" }
-  | { tag: "confirm"; repoCount: number }
+  | { tag: "confirm"; repoCount: number; login: string }
   | { tag: "pick-scope" }
   | { tag: "pick-strategy" }
   | { tag: "fetching"; filterLabel?: string }
   | { tag: "analyzing"; analyzed: number; total: number; filterLabel?: string }
+  | { tag: "interrupt-confirm"; analyzedCount: number; totalCount: number }
   | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
   | {
       tag: "summary";
@@ -109,6 +114,8 @@ interface AppProps {
   onReviewQuit: (decisions: Map<number, ReviewDecision>) => void;
   onSummaryConfirm: (apply: boolean) => void;
   onSavePromptSubmit: (path: string) => void;
+  onInterruptChoice: (choice: InterruptChoice) => void;
+  onAnalysisInterrupt: () => void;
 }
 
 const DIVIDER = "─".repeat(84);
@@ -119,6 +126,7 @@ const SHOW_STEPS_TAGS = new Set([
   "pick-strategy",
   "fetching",
   "analyzing",
+  "interrupt-confirm",
   "review",
   "summary",
   "applying",
@@ -134,6 +142,8 @@ function App({
   onReviewQuit,
   onSummaryConfirm,
   onSavePromptSubmit,
+  onInterruptChoice,
+  onAnalysisInterrupt,
 }: AppProps) {
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="cyan" padding={1} width={90}>
@@ -170,7 +180,7 @@ function App({
       )}
 
       {phase.tag === "confirm" && (
-        <ConfirmScreen repoCount={phase.repoCount} onConfirm={onConfirm} />
+        <ConfirmScreen repoCount={phase.repoCount} login={phase.login} onConfirm={onConfirm} />
       )}
 
       {phase.tag === "pick-scope" && <ScopeScreen onSelect={onScopeSelect} />}
@@ -187,6 +197,15 @@ function App({
           total={phase.total}
           phase="analyzing"
           filterLabel={phase.filterLabel}
+          onInterrupt={onAnalysisInterrupt}
+        />
+      )}
+
+      {phase.tag === "interrupt-confirm" && (
+        <InterruptConfirmScreen
+          analyzedCount={phase.analyzedCount}
+          totalCount={phase.totalCount}
+          onChoice={onInterruptChoice}
         />
       )}
 
@@ -436,6 +455,8 @@ async function main() {
   let onReviewQuit: (d: Map<number, ReviewDecision>) => void = () => {};
   let onSummaryConfirm: (apply: boolean) => void = () => {};
   let onSavePromptSubmit: (path: string) => void = () => {};
+  let onInterruptChoice: (choice: InterruptChoice) => void = () => {};
+  let onAnalysisInterrupt: () => void = () => {};
 
   // Promises to bridge TUI events back to async flow
   let confirmResolve: (proceed: boolean) => void;
@@ -465,6 +486,19 @@ async function main() {
     summaryResolve = resolve;
   });
 
+  let interruptChoiceResolve: (choice: InterruptChoice) => void;
+  const interruptChoicePromise = new Promise<InterruptChoice>((resolve) => {
+    interruptChoiceResolve = resolve;
+  });
+
+  let savePromptResolve: (path: string) => void;
+  const savePromptPromise = new Promise<string>((resolve) => {
+    savePromptResolve = resolve;
+  });
+
+  // Signal from LoadingScreen ESC keypress — resolves immediately, not promise-based
+  let interrupted = false;
+
   // Reactive state management for Ink
   function ReactiveApp() {
     const [currentPhase, setCurrentPhaseInner] = useState<AppPhase>(phase);
@@ -482,6 +516,11 @@ async function main() {
     onReviewComplete = (decisions) => reviewResolve({ decisions, quit: false });
     onReviewQuit = (decisions) => reviewResolve({ decisions, quit: true });
     onSummaryConfirm = (apply) => summaryResolve(apply);
+    onInterruptChoice = (choice) => interruptChoiceResolve(choice);
+    onAnalysisInterrupt = () => {
+      interrupted = true;
+    };
+    onSavePromptSubmit = (path) => savePromptResolve(path);
 
     return (
       <App
@@ -493,6 +532,8 @@ async function main() {
         onReviewQuit={onReviewQuit}
         onSummaryConfirm={onSummaryConfirm}
         onSavePromptSubmit={onSavePromptSubmit}
+        onInterruptChoice={onInterruptChoice}
+        onAnalysisInterrupt={onAnalysisInterrupt}
       />
     );
   }
@@ -528,7 +569,7 @@ async function main() {
   }
 
   // Confirm before analysis
-  setPhase({ tag: "confirm", repoCount: repos.length });
+  setPhase({ tag: "confirm", repoCount: repos.length, login });
   const proceed = await confirmPromise;
   if (!proceed) {
     unmount();
@@ -580,7 +621,7 @@ async function main() {
       )
     : null;
 
-  // Analyze repos
+  // Analyze repos (interruptible semaphore queue — ESC stops new dispatches)
   const analyzer = createAnalyzer(cliArgs.backend, trace);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
@@ -588,33 +629,138 @@ async function main() {
 
   setPhase({ tag: "analyzing", analyzed: 0, total: filteredRepos.length, filterLabel });
 
-  await Promise.all(
-    filteredRepos.map(async (repo) => {
-      let analysis;
-      if (repo.isArchived) {
-        analysis = {
-          category: "Archived",
-          killerFeature: "(archived repository)",
-          dataQuality: "sparse" as const,
-        };
-      } else {
-        const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
-        analysis = await analyzer.analyze({
-          name: repo.name,
-          owner: repo.owner,
-          description: repo.description,
-          language: repo.language,
-          topics: repo.topics,
-          readme,
-          isArchived: false,
-          existingListNames,
-        });
+  {
+    let active = 0;
+    const concurrency = cliArgs.concurrency;
+    const pending = [...filteredRepos];
+    const inFlight: Promise<void>[] = [];
+
+    const dispatch = (): Promise<void> | null => {
+      if (interrupted || pending.length === 0) return null;
+      const repo = pending.shift()!;
+      active++;
+      const p = (async () => {
+        let analysis;
+        if (repo.isArchived) {
+          analysis = {
+            category: "Archived",
+            killerFeature: "(archived repository)",
+            dataQuality: "sparse" as const,
+          };
+        } else {
+          const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
+          analysis = await analyzer.analyze({
+            name: repo.name,
+            owner: repo.owner,
+            description: repo.description,
+            language: repo.language,
+            topics: repo.topics,
+            readme,
+            isArchived: false,
+            existingListNames,
+          });
+        }
+        analyzedRepos.push({ repo, analysis });
+        analyzed++;
+        setPhase({ tag: "analyzing", analyzed, total: filteredRepos.length, filterLabel });
+        active--;
+        // Dispatch next if not interrupted
+        if (!interrupted && pending.length > 0) {
+          inFlight.push(dispatch()!);
+        }
+      })();
+      return p;
+    };
+
+    // Seed up to `concurrency` workers
+    while (active < concurrency && pending.length > 0 && !interrupted) {
+      const p = dispatch();
+      if (p) inFlight.push(p);
+    }
+
+    // Wait for all in-flight requests to complete
+    await Promise.all(inFlight);
+  }
+
+  // Handle ESC interrupt
+  if (interrupted) {
+    // Guard: nothing analyzed → just exit
+    if (analyzedRepos.length === 0) {
+      setPhase({ tag: "interrupt-confirm", analyzedCount: 0, totalCount: filteredRepos.length });
+      await interruptChoicePromise; // only exit is available; any key exits
+      unmount();
+      process.exit(0);
+    }
+
+    setPhase({
+      tag: "interrupt-confirm",
+      analyzedCount: analyzedRepos.length,
+      totalCount: filteredRepos.length,
+    });
+    const choice = await interruptChoicePromise;
+
+    if (choice === "exit") {
+      unmount();
+      process.exit(0);
+    }
+
+    if (choice === "save") {
+      // Consolidate categories on partial results
+      const existingListNamesLowerSave = new Set(
+        existingListNames.map((n) => n.toLowerCase().trim()),
+      );
+      const newCategoryNamesSave = [
+        ...new Set(
+          analyzedRepos
+            .map((r) => r.analysis.category)
+            .filter((c) => !existingListNamesLowerSave.has(c.toLowerCase().trim())),
+        ),
+      ];
+      const { remapping: saveRemapping } = await consolidateCategories(
+        newCategoryNamesSave,
+        existingListNames,
+        undefined,
+        strategy,
+      );
+      for (const entry of analyzedRepos) {
+        const consolidated = saveRemapping.get(entry.analysis.category);
+        if (consolidated) entry.analysis.category = consolidated;
       }
-      analyzedRepos.push({ repo, analysis });
-      analyzed++;
-      setPhase({ tag: "analyzing", analyzed, total: filteredRepos.length, filterLabel });
-    }),
-  );
+      const { suggestions: saveSuggestions } = await generateSuggestions(
+        analyzedRepos,
+        lists,
+        undefined,
+        strategy,
+      );
+      const saveRunId = generateSessionId();
+      const saveErrors = analyzedRepos
+        .filter((e) => e.analysis.category === "analysis-failed")
+        .map((e) => ({ repo: e.repo.name, owner: e.repo.owner }));
+      const saveJson = buildSessionJson({
+        runId: saveRunId,
+        summary: {
+          starredCount: filteredRepos.length,
+          analyzedCount: analyzedRepos.length,
+          suggestionCount: saveSuggestions.length,
+          interrupted: true,
+          githubUser: login,
+        },
+        suggestions: saveSuggestions,
+        errors: saveErrors,
+      });
+
+      setPhase({ tag: "save-prompt", suggestions: saveSuggestions, decisions: new Map() });
+      const savePath = await savePromptPromise;
+      if (savePath) {
+        fs.writeFileSync(savePath, saveJson);
+        process.stderr.write(`Saved partial analysis to ${savePath}\n`);
+      }
+      unmount();
+      process.exit(0);
+    }
+
+    // choice === "continue": fall through to consolidation with partial analyzedRepos
+  }
 
   // Consolidate proposed new category names to reduce list proliferation
   const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
