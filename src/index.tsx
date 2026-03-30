@@ -82,7 +82,7 @@ type AppPhase =
   | { tag: "fetching-initial" }
   | { tag: "confirm"; repoCount: number; login: string; showAnalyticsNotice: boolean }
   | { tag: "pick-scope" }
-  | { tag: "pick-strategy" }
+  | { tag: "pick-strategy"; scopeMode: ScopeMode }
   | { tag: "fetching"; filterLabel?: string }
   | { tag: "analyzing"; analyzed: number; total: number; filterLabel?: string; stopping?: boolean }
   | { tag: "consolidating" }
@@ -197,7 +197,9 @@ function App({
 
       {phase.tag === "pick-scope" && <ScopeScreen onSelect={onScopeSelect} />}
 
-      {phase.tag === "pick-strategy" && <StrategyScreen onSelect={onStrategySelect} />}
+      {phase.tag === "pick-strategy" && (
+        <StrategyScreen onSelect={onStrategySelect} scopeMode={phase.scopeMode} />
+      )}
 
       {phase.tag === "fetching" && (
         <LoadingScreen analyzed={0} total={0} phase="fetching" filterLabel={phase.filterLabel} />
@@ -664,7 +666,7 @@ async function main() {
   }
 
   // Strategy selection
-  setPhase({ tag: "pick-strategy" });
+  setPhase({ tag: "pick-strategy", scopeMode });
   const strategy = await strategyPromise;
 
   track("analysis_started", {
@@ -918,6 +920,7 @@ async function main() {
     lists,
     undefined,
     strategy,
+    scopeMode,
   );
 
   track("analysis_completed", {

@@ -1,12 +1,14 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 import type { ConsolidationStrategy } from "../types.js";
+import type { ScopeMode } from "./ScopeScreen.js";
 
 interface StrategyScreenProps {
   onSelect: (strategy: ConsolidationStrategy) => void;
+  scopeMode?: ScopeMode;
 }
 
-export function StrategyScreen({ onSelect }: StrategyScreenProps) {
+export function StrategyScreen({ onSelect, scopeMode }: StrategyScreenProps) {
   useInput((input) => {
     if (input === "2") onSelect("recreate");
     else if (input === "3") onSelect("allow-rename");
@@ -32,6 +34,13 @@ export function StrategyScreen({ onSelect }: StrategyScreenProps) {
           <Text color="cyan">3)</Text> Allow rename{"   "}
           <Text color="gray">— keep lists but rename them when AI suggests a better name</Text>
         </Text>
+        {scopeMode === "unlisted-only" && (
+          <Text color="yellow">
+            {"     "}
+            Note: only empty or single-repo lists are eligible for renaming (repos already in lists
+            were not analysed)
+          </Text>
+        )}
       </Box>
       <Box marginTop={1}>
         <Text color="yellow">Select [1/2/3, Enter = 1]: </Text>
