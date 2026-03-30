@@ -2,7 +2,7 @@ import fs from "fs";
 import React, { useState, useEffect } from "react";
 import { render, Box, Text } from "ink";
 
-import { authenticate, type AuthResult } from "./github/auth.js";
+import { authenticate, AuthError, type AuthResult } from "./github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
 import { fetchAllReadmes } from "./github/readmeFetcher.js";
 import { createAnalyzer, type Backend } from "./ai/index.js";
@@ -443,12 +443,24 @@ async function runAnalyzeOnly(
   await flushTracing(langfuse);
 
   const json = buildSessionJson({ runId, summary, suggestions, errors });
+
+  track("analyze_only_run", {
+    repoCount: repos.length,
+    errorCount: errors.length,
+    modelId: analyzer.modelId ?? cliArgs.backend ?? "openai",
+    durationMs: Date.now() - startMs,
+    savedToFile: !!cliArgs.outputPath,
+  });
+
   if (cliArgs.outputPath) {
     fs.writeFileSync(cliArgs.outputPath, json);
+    track("file_saved", { context: "analyze_only" });
     process.stderr.write(`Saved analysis to ${cliArgs.outputPath}\n`);
   } else {
     process.stdout.write(json);
   }
+
+  await analyticsShutdown();
 }
 
 // --- Orchestration ---
@@ -466,8 +478,25 @@ async function main() {
     void analyticsShutdown();
   });
 
+  track("app_started", {
+    backend: cliArgs.backend ?? "openai",
+    analyzeOnly: cliArgs.analyzeOnly ?? false,
+  });
+
   // Auth
-  const { token, graphqlWithAuth, login } = await authenticate();
+  let token: string;
+  let graphqlWithAuth: AuthResult["graphqlWithAuth"];
+  let login: string;
+  try {
+    ({ token, graphqlWithAuth, login } = await authenticate());
+  } catch (err) {
+    const reason = err instanceof AuthError ? err.reason : "network_error";
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(message);
+    track("auth_failed", { reason });
+    await analyticsShutdown();
+    process.exit(1);
+  }
 
   if (cliArgs.analyzeOnly) {
     await runAnalyzeOnly(cliArgs, token, graphqlWithAuth, login);
@@ -595,6 +624,7 @@ async function main() {
   const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
 
   if (repos.length === 0) {
+    track("no_repos_found");
     setPhase({ tag: "info", message: "No starred repositories found." });
     await new Promise((resolve) => setTimeout(resolve, 1500));
     await analyticsShutdown();
@@ -608,6 +638,7 @@ async function main() {
   if (showAnalyticsNotice) writeConfig({ analyticsNoticeSeen: true });
   const proceed = await confirmPromise;
   if (!proceed) {
+    track("session_cancelled", { stage: "confirm" });
     await analyticsShutdown();
     unmount();
     process.exit(0);
@@ -845,6 +876,7 @@ async function main() {
       const savePath = await savePromptPromise;
       if (savePath) {
         fs.writeFileSync(savePath, saveJson);
+        track("file_saved", { context: "interrupt" });
       }
       await analyticsShutdown();
       unmount();
@@ -918,6 +950,11 @@ async function main() {
   const acceptedCount = Array.from(decisions.values()).filter((d) => d === "accepted").length;
 
   if (quit && acceptedCount === 0) {
+    track("suggestions_reviewed_quit", {
+      totalSuggestions: count,
+      scope: scopeMode,
+      strategy,
+    });
     await analyticsShutdown();
     unmount();
     process.exit(0);
@@ -967,12 +1004,26 @@ async function main() {
   const failed = finalResults.filter((r) => r.status === "failed").length;
   const rejectedCount = Array.from(decisions.values()).filter((d) => d === "rejected").length;
   const skippedCount = Array.from(decisions.values()).filter((d) => d === "skipped").length;
+  const failureReasons =
+    failed > 0
+      ? finalResults
+          .filter((r) => r.status === "failed")
+          .map((r) => {
+            const m = r.message.toLowerCase();
+            if (m.includes("401") || m.includes("unauthorized")) return "auth";
+            if (m.includes("rate limit") || m.includes("429")) return "rate_limit";
+            if (m.includes("not created") || m.includes("not accepted")) return "dependency";
+            return "unknown";
+          })
+      : [];
   track("suggestions_applied", {
     accepted: acceptedCount,
     rejected: rejectedCount,
     skipped: skippedCount,
     total: count,
     failed,
+    failureReasons,
+    modelId,
     strategy,
     scope: scopeMode,
   });
