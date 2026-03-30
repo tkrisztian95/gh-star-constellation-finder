@@ -617,12 +617,6 @@ async function main() {
   setPhase({ tag: "pick-scope" });
   const scopeMode = await scopePromise;
 
-  track("analysis_started", {
-    scope: scopeMode,
-    backend: cliArgs.backend ?? "openai",
-    repoCount: repos.length,
-  });
-
   // Apply unlisted-only filter
   const filteredRepos =
     scopeMode === "unlisted-only" ? repos.filter((r) => r.listIds.length === 0) : repos;
@@ -641,6 +635,15 @@ async function main() {
   // Strategy selection
   setPhase({ tag: "pick-strategy" });
   const strategy = await strategyPromise;
+
+  track("analysis_started", {
+    scope: scopeMode,
+    strategy,
+    backend: cliArgs.backend ?? "openai",
+    repoCount: repos.length,
+    filteredRepoCount: filteredRepos.length,
+    concurrency: cliArgs.concurrency,
+  });
 
   const filterLabel = scopeMode === "unlisted-only" ? "Unlisted repos only" : undefined;
 
@@ -667,9 +670,12 @@ async function main() {
 
   // Analyze repos (interruptible semaphore queue — ESC stops new dispatches)
   const analyzer = createAnalyzer(cliArgs.backend, trace);
+  const modelId = analyzer.modelId ?? cliArgs.backend ?? "openai";
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
+  let analysisErrorCount = 0;
+  const analysisStartTime = Date.now();
   const abortController = new AbortController();
 
   setPhase({ tag: "analyzing", analyzed: 0, total: filteredRepos.length, filterLabel });
@@ -713,6 +719,7 @@ async function main() {
             throw err;
           }
         }
+        if (analysis.category === "analysis-failed") analysisErrorCount++;
         analyzedRepos.push({ repo, analysis });
         analyzed++;
         setPhase({ tag: "analyzing", analyzed, total: filteredRepos.length, filterLabel });
@@ -741,7 +748,16 @@ async function main() {
     if (analyzedRepos.length === 0) {
       setPhase({ tag: "interrupt-confirm", analyzedCount: 0, totalCount: filteredRepos.length });
       await interruptChoicePromise; // only exit is available; any key exits
-      track("analysis_completed", { repoCount: 0, interrupted: true, choice: "exit" });
+      track("analysis_completed", {
+        repoCount: 0,
+        interrupted: true,
+        choice: "exit",
+        durationMs: Date.now() - analysisStartTime,
+        modelId,
+        errorCount: 0,
+        scope: scopeMode,
+        strategy,
+      });
       await analyticsShutdown();
       unmount();
       process.exit(0);
@@ -759,6 +775,11 @@ async function main() {
         repoCount: analyzedRepos.length,
         interrupted: true,
         choice: "exit",
+        durationMs: Date.now() - analysisStartTime,
+        modelId,
+        errorCount: analysisErrorCount,
+        scope: scopeMode,
+        strategy,
       });
       await analyticsShutdown();
       unmount();
@@ -770,6 +791,11 @@ async function main() {
         repoCount: analyzedRepos.length,
         interrupted: true,
         choice: "save",
+        durationMs: Date.now() - analysisStartTime,
+        modelId,
+        errorCount: analysisErrorCount,
+        scope: scopeMode,
+        strategy,
       });
       // Consolidate categories on partial results
       const existingListNamesLowerSave = new Set(
@@ -865,8 +891,12 @@ async function main() {
   track("analysis_completed", {
     repoCount: analyzedRepos.length,
     suggestionCount: count,
-    backend: cliArgs.backend ?? "openai",
     interrupted: false,
+    durationMs: Date.now() - analysisStartTime,
+    modelId,
+    errorCount: analysisErrorCount,
+    scope: scopeMode,
+    strategy,
   });
 
   if (count === 0) {
@@ -935,10 +965,16 @@ async function main() {
   setPhase({ tag: "done", results: finalResults });
 
   const failed = finalResults.filter((r) => r.status === "failed").length;
+  const rejectedCount = Array.from(decisions.values()).filter((d) => d === "rejected").length;
+  const skippedCount = Array.from(decisions.values()).filter((d) => d === "skipped").length;
   track("suggestions_applied", {
     accepted: acceptedCount,
+    rejected: rejectedCount,
+    skipped: skippedCount,
+    total: count,
     failed,
     strategy,
+    scope: scopeMode,
   });
 
   // Wait briefly for TUI to render final state
