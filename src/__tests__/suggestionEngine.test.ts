@@ -435,6 +435,65 @@ function runTests() {
     assertEqual(asRenameList(rename!).oldName, "Old List", "oldName is the unclaimed list");
   });
 
+  test("allow-rename + unlisted-only: single-repo list is eligible for rename", async () => {
+    const singleRepoList = makeList({ id: "l1", name: "Old Name", repoIds: ["existing-repo"] });
+    const analyzed = [
+      { repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("New Category") },
+      { repo: makeRepo({ id: "r2", name: "r2" }), analysis: makeAnalysis("New Category") },
+    ];
+    const { suggestions } = await generateSuggestions(
+      analyzed,
+      [singleRepoList],
+      nullReroute,
+      "allow-rename",
+      "unlisted-only",
+    );
+
+    const rename = suggestions.find((s) => s.type === "rename-list");
+    assert(rename !== undefined, "rename-list suggestion emitted for single-repo list");
+    assertEqual(asRenameList(rename!).listId, "l1", "targets the single-repo list");
+  });
+
+  test("allow-rename + unlisted-only: list with 2+ repos is NOT eligible for rename", async () => {
+    const multiRepoList = makeList({ id: "l1", name: "Old Name", repoIds: ["r-a", "r-b"] });
+    const analyzed = [
+      { repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("New Category") },
+      { repo: makeRepo({ id: "r2", name: "r2" }), analysis: makeAnalysis("New Category") },
+    ];
+    const { suggestions } = await generateSuggestions(
+      analyzed,
+      [multiRepoList],
+      nullReroute,
+      "allow-rename",
+      "unlisted-only",
+    );
+
+    const rename = suggestions.find((s) => s.type === "rename-list");
+    assert(rename === undefined, "no rename-list for list with 2+ repos in unlisted-only scope");
+
+    const create = suggestions.find((s) => s.type === "create-list");
+    assert(create !== undefined, "falls back to create-list instead");
+  });
+
+  test("allow-rename + all scope: list with 2+ repos IS eligible for rename", async () => {
+    const multiRepoList = makeList({ id: "l1", name: "Old Name", repoIds: ["r-a", "r-b"] });
+    const analyzed = [
+      { repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("New Category") },
+      { repo: makeRepo({ id: "r2", name: "r2" }), analysis: makeAnalysis("New Category") },
+    ];
+    const { suggestions } = await generateSuggestions(
+      analyzed,
+      [multiRepoList],
+      nullReroute,
+      "allow-rename",
+      "all",
+    );
+
+    const rename = suggestions.find((s) => s.type === "rename-list");
+    assert(rename !== undefined, "rename-list is proposed for multi-repo list in all scope");
+    assertEqual(asRenameList(rename!).listId, "l1", "targets the multi-repo list");
+  });
+
   test("allow-rename: keep-existing strategy does not emit rename-list", async () => {
     const existingList = makeList({ id: "l1", name: "Old AI Tools" });
     const analyzed = [

@@ -29,6 +29,7 @@ export async function generateSuggestions(
   existingLists: GitHubList[],
   rerouteOrphanReposFn: typeof rerouteOrphanRepos = rerouteOrphanRepos,
   strategy: ConsolidationStrategy = "keep-existing",
+  scopeMode: "all" | "unlisted-only" = "all",
 ): Promise<SuggestionResult> {
   const suggestions: Suggestion[] = [];
 
@@ -41,8 +42,16 @@ export async function generateSuggestions(
   // Map of lowercased category -> pending new list ID (placeholder)
   const pendingNewLists = new Map<string, string>();
 
-  // Track which existing lists are claimed by a category match
-  const claimedListIds = new Set<string>();
+  // Track which existing lists are claimed by a category match.
+  // In unlisted-only scope, repos inside lists are not analyzed, so their lists
+  // would never be claimed and could be incorrectly targeted for renaming.
+  // Pre-claim lists with 2+ repos to prevent that; lists with 0–1 repos are
+  // still eligible for renaming (single-repo lists are low-risk to rename).
+  const claimedListIds = new Set<string>(
+    scopeMode === "unlisted-only"
+      ? existingLists.filter((l) => l.repoIds.length > 1).map((l) => l.id)
+      : [],
+  );
 
   for (const { repo, analysis } of analyzedRepos) {
     if (analysis.category === "analysis-failed") continue;
