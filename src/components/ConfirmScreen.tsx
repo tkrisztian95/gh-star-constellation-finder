@@ -5,9 +5,15 @@ interface ConfirmScreenProps {
   repoCount: number;
   login: string;
   onConfirm: (proceed: boolean) => void;
+  showAnalyticsNotice?: boolean;
 }
 
-export function ConfirmScreen({ repoCount, login, onConfirm }: ConfirmScreenProps) {
+export function ConfirmScreen({
+  repoCount,
+  login,
+  onConfirm,
+  showAnalyticsNotice,
+}: ConfirmScreenProps) {
   useInput((input) => {
     if (input.toLowerCase() === "y") onConfirm(true);
     else if (input.toLowerCase() === "n" || input === "") onConfirm(false);
@@ -34,6 +40,13 @@ export function ConfirmScreen({ repoCount, login, onConfirm }: ConfirmScreenProp
         {" AI API call"}
         {repoCount !== 1 ? "s" : ""}.
       </Text>
+      {showAnalyticsNotice && (
+        <Text color="gray" dimColor>
+          {
+            "  Anonymous usage data is collected to improve this tool. Run with --no-analytics to opt out."
+          }
+        </Text>
+      )}
       <Text color="yellow">Proceed? [y/N] </Text>
     </Box>
   );
