@@ -17,6 +17,8 @@ import { generateSuggestions } from "./engine/suggestionEngine.js";
 import type { AnalyzedRepo, ReroutedRepo } from "./engine/suggestionEngine.js";
 import { applyAcceptedSuggestions, deleteAllLists, type MutationResult } from "./github/mutator.js";
 import type { Suggestion, ConsolidationStrategy } from "./types.js";
+import { readConfig, writeConfig, ensureAnalyticsId } from "./config.js";
+import { initAnalytics, track, shutdown as analyticsShutdown } from "./analytics.js";
 
 import { LoadingScreen } from "./components/LoadingScreen.js";
 import { ConfirmScreen } from "./components/ConfirmScreen.js";
@@ -39,11 +41,12 @@ interface CliArgs {
   concurrency: number;
   analyzeOnly: boolean;
   outputPath?: string;
+  noAnalytics: boolean;
 }
 
 function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
-  const result: CliArgs = { concurrency: 5, analyzeOnly: false };
+  const result: CliArgs = { concurrency: 5, analyzeOnly: false, noAnalytics: false };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--backend" && args[i + 1]) {
@@ -60,6 +63,8 @@ function parseArgs(): CliArgs {
     } else if (args[i] === "--output" && args[i + 1]) {
       result.outputPath = args[i + 1];
       i++;
+    } else if (args[i] === "--no-analytics") {
+      result.noAnalytics = true;
     }
   }
 
@@ -75,7 +80,7 @@ function parseArgs(): CliArgs {
 
 type AppPhase =
   | { tag: "fetching-initial" }
-  | { tag: "confirm"; repoCount: number; login: string }
+  | { tag: "confirm"; repoCount: number; login: string; showAnalyticsNotice: boolean }
   | { tag: "pick-scope" }
   | { tag: "pick-strategy" }
   | { tag: "fetching"; filterLabel?: string }
@@ -182,7 +187,12 @@ function App({
       )}
 
       {phase.tag === "confirm" && (
-        <ConfirmScreen repoCount={phase.repoCount} login={phase.login} onConfirm={onConfirm} />
+        <ConfirmScreen
+          repoCount={phase.repoCount}
+          login={phase.login}
+          onConfirm={onConfirm}
+          showAnalyticsNotice={phase.showAnalyticsNotice}
+        />
       )}
 
       {phase.tag === "pick-scope" && <ScopeScreen onSelect={onScopeSelect} />}
@@ -446,6 +456,16 @@ async function runAnalyzeOnly(
 async function main() {
   const cliArgs = parseArgs();
 
+  // Analytics init
+  const config = readConfig();
+  if (cliArgs.noAnalytics) writeConfig({ analyticsOptOut: true });
+  const analyticsOptOut = cliArgs.noAnalytics || config.analyticsOptOut;
+  const distinctId = analyticsOptOut ? "anonymous" : ensureAnalyticsId();
+  initAnalytics(analyticsOptOut, distinctId);
+  process.on("beforeExit", () => {
+    void analyticsShutdown();
+  });
+
   // Auth
   const { token, graphqlWithAuth, login } = await authenticate();
 
@@ -577,14 +597,18 @@ async function main() {
   if (repos.length === 0) {
     setPhase({ tag: "info", message: "No starred repositories found." });
     await new Promise((resolve) => setTimeout(resolve, 1500));
+    await analyticsShutdown();
     unmount();
     process.exit(0);
   }
 
   // Confirm before analysis
-  setPhase({ tag: "confirm", repoCount: repos.length, login });
+  const showAnalyticsNotice = !analyticsOptOut && !config.analyticsNoticeSeen;
+  setPhase({ tag: "confirm", repoCount: repos.length, login, showAnalyticsNotice });
+  if (showAnalyticsNotice) writeConfig({ analyticsNoticeSeen: true });
   const proceed = await confirmPromise;
   if (!proceed) {
+    await analyticsShutdown();
     unmount();
     process.exit(0);
   }
@@ -592,6 +616,12 @@ async function main() {
   // Scope selection
   setPhase({ tag: "pick-scope" });
   const scopeMode = await scopePromise;
+
+  track("analysis_started", {
+    scope: scopeMode,
+    backend: cliArgs.backend ?? "openai",
+    repoCount: repos.length,
+  });
 
   // Apply unlisted-only filter
   const filteredRepos =
@@ -603,6 +633,7 @@ async function main() {
       message: "All your starred repos are already organized — nothing to do!",
     });
     await new Promise((resolve) => setTimeout(resolve, 2500));
+    await analyticsShutdown();
     unmount();
     process.exit(0);
   }
@@ -710,6 +741,8 @@ async function main() {
     if (analyzedRepos.length === 0) {
       setPhase({ tag: "interrupt-confirm", analyzedCount: 0, totalCount: filteredRepos.length });
       await interruptChoicePromise; // only exit is available; any key exits
+      track("analysis_completed", { repoCount: 0, interrupted: true, choice: "exit" });
+      await analyticsShutdown();
       unmount();
       process.exit(0);
     }
@@ -722,11 +755,22 @@ async function main() {
     const choice = await interruptChoicePromise;
 
     if (choice === "exit") {
+      track("analysis_completed", {
+        repoCount: analyzedRepos.length,
+        interrupted: true,
+        choice: "exit",
+      });
+      await analyticsShutdown();
       unmount();
       process.exit(0);
     }
 
     if (choice === "save") {
+      track("analysis_completed", {
+        repoCount: analyzedRepos.length,
+        interrupted: true,
+        choice: "save",
+      });
       // Consolidate categories on partial results
       const existingListNamesLowerSave = new Set(
         existingListNames.map((n) => n.toLowerCase().trim()),
@@ -776,6 +820,7 @@ async function main() {
       if (savePath) {
         fs.writeFileSync(savePath, saveJson);
       }
+      await analyticsShutdown();
       unmount();
       if (savePath) {
         process.stderr.write(`Saved partial analysis to ${savePath}\n`);
@@ -817,12 +862,20 @@ async function main() {
     strategy,
   );
 
+  track("analysis_completed", {
+    repoCount: analyzedRepos.length,
+    suggestionCount: count,
+    backend: cliArgs.backend ?? "openai",
+    interrupted: false,
+  });
+
   if (count === 0) {
     setPhase({
       tag: "info",
       message: "No suggestions generated — all repos are already well organized!",
     });
     await new Promise((resolve) => setTimeout(resolve, 1500));
+    await analyticsShutdown();
     unmount();
     process.exit(0);
   }
@@ -835,6 +888,7 @@ async function main() {
   const acceptedCount = Array.from(decisions.values()).filter((d) => d === "accepted").length;
 
   if (quit && acceptedCount === 0) {
+    await analyticsShutdown();
     unmount();
     process.exit(0);
   }
@@ -854,6 +908,7 @@ async function main() {
   if (!apply || acceptedCount === 0) {
     setPhase({ tag: "info", message: "No changes applied." });
     await new Promise((resolve) => setTimeout(resolve, 1500));
+    await analyticsShutdown();
     unmount();
     process.exit(0);
   }
@@ -879,11 +934,17 @@ async function main() {
 
   setPhase({ tag: "done", results: finalResults });
 
+  const failed = finalResults.filter((r) => r.status === "failed").length;
+  track("suggestions_applied", {
+    accepted: acceptedCount,
+    failed,
+    strategy,
+  });
+
   // Wait briefly for TUI to render final state
   await new Promise((resolve) => setTimeout(resolve, 500));
+  await analyticsShutdown();
   unmount();
-
-  const failed = finalResults.filter((r) => r.status === "failed").length;
 
   if (failed > 0) {
     process.exit(1);

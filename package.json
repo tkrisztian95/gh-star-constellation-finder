@@ -24,6 +24,7 @@
     "ink-text-input": "^6.0.0",
     "langfuse": "^3.38.6",
     "openai": "^4.0.0",
+    "posthog-node": "^5.28.8",
     "react": "^18.2.0",
     "zod": "^3.22.0"
   },
