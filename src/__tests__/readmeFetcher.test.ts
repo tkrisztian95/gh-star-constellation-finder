@@ -156,8 +156,16 @@ function runTests() {
   test("does not duplicate content when Features section is within prefix", () => {
     const readme = "# Repo\n\n## Features\n- Cool\n";
     const result = preprocessReadme(readme);
-    const count = (result.match(/## Features/g) || []).length;
-    assert(count <= 1, "Features section should not appear more than once");
+    const count = (result.match(/- Cool/g) || []).length;
+    assert(count === 1, "Features section content should not be duplicated");
+  });
+
+  test("does not append section content already captured in prefix", () => {
+    // Section heading within first 1500 chars — content should NOT be duplicated
+    const withinPrefix = "Some intro text.\n\n## What is it?\n\nA great tool.\n";
+    const result = preprocessReadme(withinPrefix);
+    const count = (result.match(/A great tool/g) || []).length;
+    assert(count === 1, "section content within prefix should appear exactly once");
   });
 
   // 3.8 Output capped at README_MAX_LENGTH with [truncated] marker

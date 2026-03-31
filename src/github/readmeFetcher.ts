@@ -41,13 +41,16 @@ export function preprocessReadme(raw: string): string {
   // Extract prefix (first 1500 chars)
   const prefix = text.slice(0, PREFIX_LENGTH);
 
-  // Find first Features/About/Key Features/What is it? section
+  // Find first Features/About/Key Features/What is it? section that starts
+  // beyond the prefix window (sections already in the prefix are not appended).
   // Use (?:^|\n) without m-flag so $ only matches end of string, avoiding
   // the lazy quantifier stopping at each line end with multiline $ matching.
-  const sectionMatch = text.match(
-    /(?:^|\n)#{1,3}\s+(?:Features|Key Features|About|What is it\?)[^\n]*\n([\s\S]*?)(?=(?:^|\n)#{1,3}\s|$)/i,
-  );
-  const sectionContent = sectionMatch ? sectionMatch[1].slice(0, SECTION_LENGTH) : "";
+  const sectionRegex =
+    /(?:^|\n)#{1,3}\s+(?:Features|Key Features|About|What is it\?)[^\n]*\n([\s\S]*?)(?=(?:^|\n)#{1,3}\s|$)/i;
+  const sectionMatch = sectionRegex.exec(text);
+  const sectionStartsInPrefix = sectionMatch !== null && (sectionMatch.index ?? 0) < PREFIX_LENGTH;
+  const sectionContent =
+    sectionMatch && !sectionStartsInPrefix ? sectionMatch[1].slice(0, SECTION_LENGTH) : "";
 
   const assembled = sectionContent ? prefix + "\n\n" + sectionContent : prefix;
 
