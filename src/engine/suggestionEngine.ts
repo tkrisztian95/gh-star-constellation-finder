@@ -209,8 +209,20 @@ export async function generateSuggestions(
     }
   }
 
-  // Available targets: existing list names + pending lists with >= 2 members
-  const availableTargets: string[] = existingLists.map((l) => l.name);
+  // Build map of listId -> newName for lists already renamed in the allow-rename phase.
+  // Orphan rerouting must see the new names so the AI doesn't route unrelated repos
+  // into a list that has already been repurposed.
+  const pendingRenameById = new Map<string, string>();
+  for (const s of suggestions) {
+    if (s.type === "rename-list") {
+      pendingRenameById.set(s.listId, s.newName);
+    }
+  }
+
+  // Available targets: existing list names (using new name if pending rename) + pending lists with >= 2 members
+  const availableTargets: string[] = existingLists.map(
+    (l) => pendingRenameById.get(l.id) ?? l.name,
+  );
   for (const s of suggestions) {
     if (
       s.type === "create-list" &&
@@ -225,6 +237,13 @@ export async function generateSuggestions(
   const rerouteMap = await rerouteOrphanReposFn(orphans, availableTargets, parent);
 
   // Build lookup maps for re-routing
+  // Also support lookup by new name for lists that have a pending rename
+  const existingListsByNewName = new Map<string, GitHubList>();
+  for (const [listId, newName] of pendingRenameById) {
+    const list = existingLists.find((l) => l.id === listId);
+    if (list) existingListsByNewName.set(newName.toLowerCase().trim(), list);
+  }
+
   const pendingListNameToId = new Map<string, string>();
   for (const s of suggestions) {
     if (
@@ -262,13 +281,18 @@ export async function generateSuggestions(
 
     if (!targetListName) continue; // drop
 
-    const existingTarget = existingListsByName.get(targetListName.toLowerCase().trim());
+    const normalizedTarget = targetListName.toLowerCase().trim();
+    const existingTarget =
+      existingListsByName.get(normalizedTarget) ?? existingListsByNewName.get(normalizedTarget);
     if (existingTarget) {
+      // If this list has a pending rename, use the rename: prefix so the applied
+      // suggestion resolves against the correct (renamed) list name.
+      const renamedTo = pendingRenameById.get(existingTarget.id);
       patchedSuggestions.push({
         ...s,
         type: "move-to-list",
-        targetListId: existingTarget.id,
-        targetListName: existingTarget.name,
+        targetListId: renamedTo ? `rename:${existingTarget.id}` : existingTarget.id,
+        targetListName: renamedTo ?? existingTarget.name,
         isPendingCreate: false,
       });
     } else {
