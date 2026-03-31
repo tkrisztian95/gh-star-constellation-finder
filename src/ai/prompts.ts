@@ -92,17 +92,29 @@ export function buildUserMessage(input: RepoInput): string {
   ].join("\n");
 }
 
+export interface ExistingListContext {
+  name: string;
+  topics: string[];
+}
+
 export function buildConsolidationPrompt(
   proposedNames: string[],
-  existingListNames: string[] = [],
+  existingLists: ExistingListContext[] = [],
   maxLists: number = 32,
   strategy: ConsolidationStrategy = "keep-existing",
 ): string {
   const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
-  const existingCount = existingListNames.length;
+  const existingCount = existingLists.length;
   const budget = maxLists - existingCount;
   const existingSection =
-    existingCount > 0 ? existingListNames.map((n) => `- "${n}"`).join("\n") : "(none)";
+    existingCount > 0
+      ? existingLists
+          .map((l) => {
+            const topicStr = l.topics.length > 0 ? ` [topics: ${l.topics.join(", ")}]` : "";
+            return `- "${l.name}"${topicStr}`;
+          })
+          .join("\n")
+      : "(none)";
 
   const renameHint =
     strategy === "allow-rename"
