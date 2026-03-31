@@ -1,0 +1,254 @@
+import { authenticate, AuthError } from "../github/auth.js";
+import type { AuthResult } from "../github/auth.js";
+import { fetchStarredRepos, fetchUserLists } from "../github/starFetcher.js";
+import { fetchAllReadmes } from "../github/readmeFetcher.js";
+import { createAnalyzer, resolveBackend } from "../ai/index.js";
+import {
+  createLangfuseClient,
+  createRunTrace,
+  generateSessionId,
+  flushTracing,
+} from "../ai/tracing.js";
+import type { Repo } from "../types.js";
+import { readConfig, writeConfig, ensureAnalyticsId } from "../config.js";
+import { initAnalytics, track, shutdown as analyticsShutdown } from "../analytics.js";
+
+import { parseArgs } from "../cli/args.js";
+import { runAnalyzeOnly } from "../cli/modes.js";
+import { setupTui } from "./tui.js";
+import { runAnalysis, handleInterrupt } from "./analysis.js";
+import { runReviewPhase } from "./review.js";
+import { runApplyPhase } from "./apply.js";
+
+export async function main() {
+  const cliArgs = parseArgs();
+
+  // Analytics init
+  const config = readConfig();
+  if (cliArgs.noAnalytics) writeConfig({ analyticsOptOut: true });
+  const analyticsOptOut = cliArgs.noAnalytics || config.analyticsOptOut;
+  const distinctId = analyticsOptOut ? "anonymous" : ensureAnalyticsId();
+  initAnalytics(analyticsOptOut, distinctId);
+  process.on("beforeExit", () => {
+    void analyticsShutdown();
+  });
+
+  const backend = resolveBackend(cliArgs.backend);
+  track("app_started", { backend, analyzeOnly: cliArgs.analyzeOnly ?? false });
+
+  // Auth
+  let token: string;
+  let graphqlWithAuth: AuthResult["graphqlWithAuth"];
+  let login: string;
+  try {
+    ({ token, graphqlWithAuth, login } = await authenticate());
+  } catch (err) {
+    const reason = err instanceof AuthError ? err.reason : "network_error";
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(message);
+    track("auth_failed", { reason });
+    await analyticsShutdown();
+    process.exit(1);
+  }
+
+  if (cliArgs.analyzeOnly) {
+    await runAnalyzeOnly(cliArgs, token, graphqlWithAuth, login);
+    process.exit(0);
+  }
+
+  // TUI setup
+  const interruptedRef = { value: false };
+  const abortController = new AbortController();
+  const tui = setupTui({ interruptedRef, abortController });
+
+  // Fetch stars + lists
+  let allRepos: Repo[];
+  let lists: Awaited<ReturnType<typeof fetchUserLists>>;
+  try {
+    [allRepos, lists] = await Promise.all([
+      fetchStarredRepos(graphqlWithAuth),
+      fetchUserLists(graphqlWithAuth),
+    ]);
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : String(err);
+    const message =
+      raw.includes("<html") || raw.includes("<!DOCTYPE")
+        ? raw
+            .replace(/<[^>]*>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 200)
+        : raw;
+    tui.setPhase({ tag: "error", message });
+    track("fetch_failed", { message });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await analyticsShutdown();
+    tui.unmount();
+    process.exit(1);
+  }
+
+  // Derive listIds (Repository.lists field doesn't exist in GitHub's API)
+  const repoListIds = new Map<string, string[]>();
+  for (const list of lists) {
+    for (const repoId of list.repoIds) {
+      const ids = repoListIds.get(repoId) ?? [];
+      ids.push(list.id);
+      repoListIds.set(repoId, ids);
+    }
+  }
+  for (const repo of allRepos) {
+    repo.listIds = repoListIds.get(repo.id) ?? [];
+  }
+
+  const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
+
+  if (repos.length === 0) {
+    track("no_repos_found");
+    tui.setPhase({ tag: "info", message: "No starred repositories found." });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await analyticsShutdown();
+    tui.unmount();
+    process.exit(0);
+  }
+
+  // Confirm → scope → strategy
+  const showAnalyticsNotice = !analyticsOptOut && !config.analyticsNoticeSeen;
+  tui.setPhase({ tag: "confirm", repoCount: repos.length, login, showAnalyticsNotice });
+  if (showAnalyticsNotice) writeConfig({ analyticsNoticeSeen: true });
+  const proceed = await tui.confirmPromise;
+  if (!proceed) {
+    track("session_cancelled", { stage: "confirm" });
+    await analyticsShutdown();
+    tui.unmount();
+    process.exit(0);
+  }
+
+  tui.setPhase({ tag: "pick-scope" });
+  const scopeMode = await tui.scopePromise;
+
+  const filteredRepos =
+    scopeMode === "unlisted-only" ? repos.filter((r) => r.listIds.length === 0) : repos;
+
+  if (filteredRepos.length === 0) {
+    tui.setPhase({
+      tag: "info",
+      message: "All your starred repos are already organized — nothing to do!",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await analyticsShutdown();
+    tui.unmount();
+    process.exit(0);
+  }
+
+  tui.setPhase({ tag: "pick-strategy", scopeMode });
+  const strategy = await tui.strategyPromise;
+
+  track("analysis_started", {
+    scope: scopeMode,
+    strategy,
+    backend,
+    repoCount: repos.length,
+    filteredRepoCount: filteredRepos.length,
+    concurrency: cliArgs.concurrency,
+  });
+
+  const filterLabel = scopeMode === "unlisted-only" ? "Unlisted repos only" : undefined;
+
+  // Fetch READMEs
+  tui.setPhase({ tag: "fetching", filterLabel });
+  const readmes = await fetchAllReadmes(
+    filteredRepos.map((r) => ({ owner: r.owner, name: r.name })),
+    token,
+    cliArgs.concurrency,
+  );
+
+  // Set up Langfuse tracing (no-op when credentials are absent)
+  const langfuse = createLangfuseClient();
+  process.on("beforeExit", () => {
+    flushTracing(langfuse);
+  });
+  const trace = langfuse
+    ? createRunTrace(
+        langfuse,
+        { repoCount: filteredRepos.length, backend, filter: scopeMode, mode: strategy },
+        generateSessionId(),
+      )
+    : null;
+
+  // Analyze
+  const analyzer = createAnalyzer(cliArgs.backend, trace);
+  const existingListNames = lists.map((l) => l.name);
+
+  const { analyzedRepos, analysisErrorCount, analysisStartTime } = await runAnalysis({
+    filteredRepos,
+    readmes,
+    analyzer,
+    existingListNames,
+    abortController,
+    interruptedRef,
+    filterLabel,
+    concurrency: cliArgs.concurrency,
+    setPhase: tui.setPhase,
+  });
+
+  // Handle ESC interrupt
+  if (interruptedRef.value) {
+    await handleInterrupt({
+      analyzedRepos,
+      filteredRepos,
+      existingListNames,
+      lists,
+      strategy,
+      trace,
+      login,
+      modelId: analyzer.modelId ?? backend,
+      analysisStartTime,
+      analysisErrorCount,
+      scopeMode,
+      setPhase: tui.setPhase,
+      interruptChoicePromise: tui.interruptChoicePromise,
+      savePromptPromise: tui.savePromptPromise,
+      unmount: tui.unmount,
+    });
+  }
+
+  // Consolidation → suggestions → review → summary
+  const { suggestions, count, sessionRunId, decisions, acceptedCount } = await runReviewPhase({
+    analyzedRepos,
+    lists,
+    existingListNames,
+    strategy,
+    scopeMode,
+    trace,
+    allRepos,
+    setPhase: tui.setPhase,
+    reviewPromise: tui.reviewPromise,
+    summaryPromise: tui.summaryPromise,
+    savePromptPromise: tui.savePromptPromise,
+    unmount: tui.unmount,
+    modelId: analyzer.modelId ?? backend,
+    analysisStartTime,
+    analysisErrorCount,
+    login,
+  });
+
+  // Apply mutations + save
+  await runApplyPhase({
+    suggestions,
+    decisions,
+    acceptedCount,
+    count,
+    strategy,
+    scopeMode,
+    lists,
+    graphqlWithAuth,
+    setPhase: tui.setPhase,
+    savePromptPromise: tui.savePromptPromise,
+    unmount: tui.unmount,
+    allRepos,
+    analyzedRepos,
+    sessionRunId,
+    login,
+    modelId: analyzer.modelId ?? backend,
+  });
+}
