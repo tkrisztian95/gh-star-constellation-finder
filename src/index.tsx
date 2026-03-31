@@ -419,6 +419,7 @@ async function runAnalyzeOnly(
     existingListNames,
     undefined,
     "allow-rename",
+    trace,
   );
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);
@@ -434,6 +435,8 @@ async function runAnalyzeOnly(
     lists,
     undefined,
     "allow-rename",
+    undefined,
+    trace,
   );
 
   const errors = analyzedRepos
@@ -889,6 +892,7 @@ async function main() {
         existingListNames,
         undefined,
         strategy,
+        trace,
       );
       for (const entry of analyzedRepos) {
         const consolidated = saveRemapping.get(entry.analysis.category);
@@ -899,6 +903,8 @@ async function main() {
         lists,
         undefined,
         strategy,
+        undefined,
+        trace,
       );
       const saveRunId = generateSessionId();
       const saveErrors = analyzedRepos
@@ -954,6 +960,7 @@ async function main() {
     existingListNames,
     undefined,
     strategy,
+    trace,
   );
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);
@@ -971,6 +978,7 @@ async function main() {
     undefined,
     strategy,
     scopeMode,
+    trace,
   );
 
   track("analysis_completed", {

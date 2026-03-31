@@ -7,6 +7,7 @@ import type {
   ScopeMode,
 } from "../types.js";
 import { rerouteOrphanRepos } from "../ai/consolidator.js";
+import type { LangfuseTrace } from "../ai/tracing.js";
 
 export interface AnalyzedRepo {
   repo: Repo;
@@ -32,6 +33,7 @@ export async function generateSuggestions(
   rerouteOrphanReposFn: typeof rerouteOrphanRepos = rerouteOrphanRepos,
   strategy: ConsolidationStrategy = "keep-existing",
   scopeMode: ScopeMode = "all",
+  parent?: LangfuseTrace | null,
 ): Promise<SuggestionResult> {
   const suggestions: Suggestion[] = [];
 
@@ -220,7 +222,7 @@ export async function generateSuggestions(
     }
   }
 
-  const rerouteMap = await rerouteOrphanReposFn(orphans, availableTargets);
+  const rerouteMap = await rerouteOrphanReposFn(orphans, availableTargets, parent);
 
   // Build lookup maps for re-routing
   const pendingListNameToId = new Map<string, string>();

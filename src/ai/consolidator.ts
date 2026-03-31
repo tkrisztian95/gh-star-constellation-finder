@@ -3,6 +3,7 @@ import { buildConsolidationPrompt, buildReroutingPrompt } from "./prompts.js";
 import type { ExistingListContext } from "./prompts.js";
 import type { ConsolidationResult } from "./types.js";
 import type { ConsolidationStrategy } from "../types.js";
+import type { LangfuseTrace } from "./tracing.js";
 
 const GITHUB_MAX_LISTS = 32;
 
@@ -103,23 +104,64 @@ async function consolidateViaOpenAI(
   existingLists: ExistingListContext[],
   maxLists: number,
   strategy: ConsolidationStrategy,
+  parent?: LangfuseTrace | null,
 ): Promise<ConsolidationResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY not set");
 
+  const model = "gpt-4o-mini";
   const client = new OpenAI({ apiKey });
-  const completion = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "user",
-        content: buildConsolidationPrompt(proposedNames, existingLists, maxLists, strategy),
-      },
-    ],
-  });
+  const prompt = buildConsolidationPrompt(proposedNames, existingLists, maxLists, strategy);
+
+  let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+  try {
+    if (parent) {
+      generation = parent.generation({
+        name: "consolidate-categories",
+        model,
+        input: [{ role: "user", content: prompt }],
+      });
+    }
+  } catch {
+    // tracing errors must not affect consolidation
+  }
+
+  let completion: Awaited<ReturnType<typeof client.chat.completions.create>>;
+  try {
+    completion = await client.chat.completions.create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [{ role: "user", content: prompt }],
+    });
+  } catch (err: unknown) {
+    try {
+      if (generation) {
+        generation.end({
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } catch {
+      // tracing errors must not affect consolidation
+    }
+    throw err;
+  }
 
   const content = completion.choices[0]?.message?.content ?? "{}";
+
+  try {
+    if (generation) {
+      generation.end({
+        output: content,
+        usage: completion.usage
+          ? { input: completion.usage.prompt_tokens, output: completion.usage.completion_tokens }
+          : undefined,
+      });
+    }
+  } catch {
+    // tracing errors must not affect consolidation
+  }
+
   const remapping = parseRemapping(content, proposedNames);
   return buildResult(remapping, proposedNames, existingLists, maxLists);
 }
@@ -129,33 +171,84 @@ async function consolidateViaOllama(
   existingLists: ExistingListContext[],
   maxLists: number,
   strategy: ConsolidationStrategy,
+  parent?: LangfuseTrace | null,
 ): Promise<ConsolidationResult> {
   const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
   const model = "llama3";
+  const prompt = buildConsolidationPrompt(proposedNames, existingLists, maxLists, strategy);
 
-  const response = await fetch(`${host}/api/chat`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      messages: [
-        {
-          role: "user",
-          content: buildConsolidationPrompt(proposedNames, existingLists, maxLists, strategy),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Ollama consolidation error: HTTP ${response.status}`);
+  let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+  try {
+    if (parent) {
+      generation = parent.generation({
+        name: "consolidate-categories",
+        model,
+        input: [{ role: "user", content: prompt }],
+      });
+    }
+  } catch {
+    // tracing errors must not affect consolidation
   }
 
-  const body = (await response.json()) as { message?: { content?: string } };
-  const content = body.message?.content ?? "{}";
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  const remapping = parseRemapping(jsonMatch ? jsonMatch[0] : content, proposedNames);
+  let response: Response;
+  try {
+    response = await fetch(`${host}/api/chat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model,
+        stream: false,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+  } catch (err: unknown) {
+    try {
+      if (generation) {
+        generation.end({
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } catch {
+      // tracing errors must not affect consolidation
+    }
+    throw err;
+  }
+
+  if (!response.ok) {
+    const message = `HTTP ${response.status}`;
+    try {
+      if (generation) generation.end({ level: "ERROR", statusMessage: message });
+    } catch {
+      // tracing errors must not affect consolidation
+    }
+    throw new Error(`Ollama consolidation error: ${message}`);
+  }
+
+  const body = (await response.json()) as {
+    message?: { content?: string };
+    prompt_eval_count?: number;
+    eval_count?: number;
+  };
+  const raw = body.message?.content ?? "{}";
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  const content = jsonMatch ? jsonMatch[0] : raw;
+
+  try {
+    if (generation) {
+      generation.end({
+        output: content,
+        usage:
+          body.prompt_eval_count !== undefined
+            ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
+            : undefined,
+      });
+    }
+  } catch {
+    // tracing errors must not affect consolidation
+  }
+
+  const remapping = parseRemapping(content, proposedNames);
   return buildResult(remapping, proposedNames, existingLists, maxLists);
 }
 
@@ -187,6 +280,7 @@ export async function consolidateCategories(
   existingLists: ExistingListContext[] = [],
   maxLists: number = GITHUB_MAX_LISTS,
   strategy: ConsolidationStrategy = "keep-existing",
+  parent?: LangfuseTrace | null,
 ): Promise<ConsolidationResult> {
   if (proposedNames.length < 2) {
     return identityResult(proposedNames);
@@ -204,12 +298,14 @@ export async function consolidateCategories(
           effectiveExistingLists,
           effectiveMaxLists,
           strategy,
+          parent,
         )
       : await consolidateViaOpenAI(
           proposedNames,
           effectiveExistingLists,
           effectiveMaxLists,
           strategy,
+          parent,
         );
   } catch (err) {
     const warning = `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`;
@@ -245,6 +341,7 @@ function nullRerouteMap(orphanCategories: string[]): Map<string, string | null> 
 export async function rerouteOrphanRepos(
   orphans: { category: string }[],
   availableTargets: string[],
+  parent?: LangfuseTrace | null,
 ): Promise<Map<string, string | null>> {
   if (orphans.length === 0 || availableTargets.length === 0) {
     return nullRerouteMap(orphans.map((o) => o.category));
@@ -253,6 +350,20 @@ export async function rerouteOrphanRepos(
   const orphanCategories = orphans.map((o) => o.category);
   const prompt = buildReroutingPrompt(orphans, availableTargets);
   const useOllama = !process.env.OPENAI_API_KEY && !!process.env.OLLAMA_HOST;
+
+  let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+  try {
+    if (parent) {
+      const model = useOllama ? (process.env.OLLAMA_MODEL ?? "llama3") : "gpt-4o-mini";
+      generation = parent.generation({
+        name: "reroute-orphan-repos",
+        model,
+        input: [{ role: "user", content: prompt }],
+      });
+    }
+  } catch {
+    // tracing errors must not affect rerouting
+  }
 
   try {
     let content: string;
@@ -270,10 +381,27 @@ export async function rerouteOrphanRepos(
         }),
       });
       if (!response.ok) throw new Error(`Ollama rerouting error: HTTP ${response.status}`);
-      const body = (await response.json()) as { message?: { content?: string } };
+      const body = (await response.json()) as {
+        message?: { content?: string };
+        prompt_eval_count?: number;
+        eval_count?: number;
+      };
       const raw = body.message?.content ?? "{}";
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       content = jsonMatch ? jsonMatch[0] : raw;
+      try {
+        if (generation) {
+          generation.end({
+            output: content,
+            usage:
+              body.prompt_eval_count !== undefined
+                ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
+                : undefined,
+          });
+        }
+      } catch {
+        // tracing errors must not affect rerouting
+      }
     } else {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) throw new Error("OPENAI_API_KEY not set");
@@ -284,10 +412,35 @@ export async function rerouteOrphanRepos(
         messages: [{ role: "user", content: prompt }],
       });
       content = completion.choices[0]?.message?.content ?? "{}";
+      try {
+        if (generation) {
+          generation.end({
+            output: content,
+            usage: completion.usage
+              ? {
+                  input: completion.usage.prompt_tokens,
+                  output: completion.usage.completion_tokens,
+                }
+              : undefined,
+          });
+        }
+      } catch {
+        // tracing errors must not affect rerouting
+      }
     }
 
     return parseReroutingResponse(content, orphanCategories);
-  } catch {
+  } catch (err: unknown) {
+    try {
+      if (generation) {
+        generation.end({
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } catch {
+      // tracing errors must not affect rerouting
+    }
     return nullRerouteMap(orphanCategories);
   }
 }

@@ -36,17 +36,32 @@ export function createOpenAIAnalyzer(parent?: LangfuseTrace | null): Analyzer {
         // tracing errors must not affect analysis
       }
 
-      const completion = await client.chat.completions.create(
-        {
-          model,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage },
-          ],
-        },
-        { signal },
-      );
+      let completion: Awaited<ReturnType<typeof client.chat.completions.create>>;
+      try {
+        completion = await client.chat.completions.create(
+          {
+            model,
+            response_format: { type: "json_object" },
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMessage },
+            ],
+          },
+          { signal },
+        );
+      } catch (err: unknown) {
+        try {
+          if (generation) {
+            generation.end({
+              level: "ERROR",
+              statusMessage: err instanceof Error ? err.message : String(err),
+            });
+          }
+        } catch {
+          // tracing errors must not affect analysis
+        }
+        throw err;
+      }
 
       const content = completion.choices[0]?.message?.content ?? "";
 

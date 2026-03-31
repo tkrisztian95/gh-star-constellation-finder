@@ -50,20 +50,41 @@ export function createOllamaAnalyzer(
         if (signal?.aborted) throw error;
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Ollama unreachable for ${input.owner}/${input.name}: ${message}`);
+        try {
+          if (generation) generation.end({ level: "ERROR", statusMessage: message });
+        } catch {
+          // tracing errors must not affect analysis
+        }
         return { category: "analysis-failed", killerFeature: "" };
       }
 
       if (!response.ok) {
-        console.error(`Ollama error for ${input.owner}/${input.name}: HTTP ${response.status}`);
+        const message = `HTTP ${response.status}`;
+        console.error(`Ollama error for ${input.owner}/${input.name}: ${message}`);
+        try {
+          if (generation) generation.end({ level: "ERROR", statusMessage: message });
+        } catch {
+          // tracing errors must not affect analysis
+        }
         return { category: "analysis-failed", killerFeature: "" };
       }
 
-      const body = (await response.json()) as { message?: { content?: string } };
+      const body = (await response.json()) as {
+        message?: { content?: string };
+        prompt_eval_count?: number;
+        eval_count?: number;
+      };
       const content = body.message?.content ?? "";
 
       try {
         if (generation) {
-          generation.end({ output: content });
+          generation.end({
+            output: content,
+            usage:
+              body.prompt_eval_count !== undefined
+                ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
+                : undefined,
+          });
         }
       } catch {
         // tracing errors must not affect analysis
