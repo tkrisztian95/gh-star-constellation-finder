@@ -5,7 +5,7 @@ import { render, Box, Text } from "ink";
 import { authenticate, AuthError, type AuthResult } from "./github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
 import { fetchAllReadmes, computeDataQuality } from "./github/readmeFetcher.js";
-import { createAnalyzer, type Backend } from "./ai/index.js";
+import { createAnalyzer, resolveBackend, type Backend } from "./ai/index.js";
 import {
   createLangfuseClient,
   createRunTrace,
@@ -362,15 +362,13 @@ async function runAnalyzeOnly(
     cliArgs.concurrency,
   );
 
+  const backend = resolveBackend(cliArgs.backend);
+
   // Set up Langfuse tracing (no-op when credentials are absent)
   const langfuse = createLangfuseClient();
   const langfuseSessionId = generateSessionId();
   const trace = langfuse
-    ? createRunTrace(
-        langfuse,
-        { repoCount: repos.length, backend: cliArgs.backend ?? "openai" },
-        langfuseSessionId,
-      )
+    ? createRunTrace(langfuse, { repoCount: repos.length, backend }, langfuseSessionId)
     : null;
 
   const analyzer = createAnalyzer(cliArgs.backend, trace);
@@ -462,7 +460,7 @@ async function runAnalyzeOnly(
   track("analyze_only_run", {
     repoCount: repos.length,
     errorCount: errors.length,
-    modelId: analyzer.modelId ?? cliArgs.backend ?? "openai",
+    modelId: analyzer.modelId ?? backend,
     durationMs: Date.now() - startMs,
     savedToFile: !!cliArgs.outputPath,
   });
@@ -493,8 +491,10 @@ async function main() {
     void analyticsShutdown();
   });
 
+  const backend = resolveBackend(cliArgs.backend);
+
   track("app_started", {
-    backend: cliArgs.backend ?? "openai",
+    backend,
     analyzeOnly: cliArgs.analyzeOnly ?? false,
   });
 
@@ -705,7 +705,7 @@ async function main() {
   track("analysis_started", {
     scope: scopeMode,
     strategy,
-    backend: cliArgs.backend ?? "openai",
+    backend,
     repoCount: repos.length,
     filteredRepoCount: filteredRepos.length,
     concurrency: cliArgs.concurrency,
@@ -731,7 +731,7 @@ async function main() {
         langfuse,
         {
           repoCount: filteredRepos.length,
-          backend: cliArgs.backend ?? "openai",
+          backend,
           filter: scopeMode,
           mode: strategy,
         },
@@ -741,7 +741,7 @@ async function main() {
 
   // Analyze repos (interruptible semaphore queue — ESC stops new dispatches)
   const analyzer = createAnalyzer(cliArgs.backend, trace);
-  const modelId = analyzer.modelId ?? cliArgs.backend ?? "openai";
+  const modelId = analyzer.modelId ?? backend;
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;

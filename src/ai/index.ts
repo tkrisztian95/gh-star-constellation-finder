@@ -5,8 +5,12 @@ import { createOllamaAnalyzer } from "./ollamaAnalyzer.js";
 
 export type Backend = "openai" | "ollama";
 
+export function resolveBackend(backend?: Backend): Backend {
+  return backend ?? detectBackend();
+}
+
 export function createAnalyzer(backend?: Backend, trace?: LangfuseTrace | null): Analyzer {
-  const resolved = backend ?? detectBackend();
+  const resolved = resolveBackend(backend);
 
   if (resolved === "ollama") {
     return createOllamaAnalyzer(undefined, trace);
