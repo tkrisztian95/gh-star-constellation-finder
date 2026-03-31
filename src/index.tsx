@@ -615,10 +615,30 @@ async function main() {
   const { unmount } = render(<ReactiveApp />);
 
   // Fetch stars + lists
-  const [allRepos, lists] = await Promise.all([
-    fetchStarredRepos(graphqlWithAuth),
-    fetchUserLists(graphqlWithAuth),
-  ]);
+  let allRepos: Repo[];
+  let lists: Awaited<ReturnType<typeof fetchUserLists>>;
+  try {
+    [allRepos, lists] = await Promise.all([
+      fetchStarredRepos(graphqlWithAuth),
+      fetchUserLists(graphqlWithAuth),
+    ]);
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : String(err);
+    const message =
+      raw.includes("<html") || raw.includes("<!DOCTYPE")
+        ? raw
+            .replace(/<[^>]*>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 200)
+        : raw;
+    setPhase({ tag: "error", message });
+    track("fetch_failed", { message });
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await analyticsShutdown();
+    unmount();
+    process.exit(1);
+  }
 
   // Derive listIds from fetched lists (Repository.lists field doesn't exist in GitHub's API)
   const repoListIds = new Map<string, string[]>();
