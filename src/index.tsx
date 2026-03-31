@@ -16,7 +16,7 @@ import { consolidateCategories } from "./ai/consolidator.js";
 import { generateSuggestions } from "./engine/suggestionEngine.js";
 import type { AnalyzedRepo, ReroutedRepo } from "./engine/suggestionEngine.js";
 import { applyAcceptedSuggestions, deleteAllLists, type MutationResult } from "./github/mutator.js";
-import type { Suggestion, ConsolidationStrategy } from "./types.js";
+import type { Repo, Suggestion, ConsolidationStrategy } from "./types.js";
 import { readConfig, writeConfig, ensureAnalyticsId } from "./config.js";
 import { initAnalytics, track, shutdown as analyticsShutdown } from "./analytics.js";
 
@@ -96,7 +96,7 @@ type AppPhase =
     }
   | { tag: "consolidating" }
   | { tag: "interrupt-confirm"; analyzedCount: number; totalCount: number }
-  | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
+  | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[]; repos: Repo[] }
   | {
       tag: "summary";
       suggestions: Suggestion[];
@@ -240,6 +240,7 @@ function App({
         <ReviewScreen
           suggestions={phase.suggestions}
           mergeWarnings={phase.mergeWarnings}
+          repos={phase.repos}
           onComplete={onReviewComplete}
           onQuit={onReviewQuit}
         />
@@ -964,7 +965,7 @@ async function main() {
   }
 
   // Enter TUI review
-  setPhase({ tag: "review", suggestions, mergeWarnings });
+  setPhase({ tag: "review", suggestions, mergeWarnings, repos: allRepos });
 
   const { decisions, quit } = await reviewPromise;
 
