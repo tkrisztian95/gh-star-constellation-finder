@@ -212,10 +212,10 @@ export async function consolidateCategories(
           strategy,
         );
   } catch (err) {
-    console.warn(
-      `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`,
-    );
-    return identityResult(proposedNames);
+    const warning = `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`;
+    const result = identityResult(proposedNames);
+    result.mergeWarnings.push(warning);
+    return result;
   }
 }
 

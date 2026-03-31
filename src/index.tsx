@@ -317,13 +317,15 @@ interface SessionJsonInput {
   errors: { repo: string; owner: string }[];
   decisions?: SessionDecision[];
   mutationResults?: MutationResult[];
+  repoReadmes?: Record<string, string>;
 }
 
 function buildSessionJson(input: SessionJsonInput): string {
-  const { runId, summary, suggestions, errors, decisions, mutationResults } = input;
+  const { runId, summary, suggestions, errors, decisions, mutationResults, repoReadmes } = input;
   const obj: Record<string, unknown> = { runId, summary, suggestions, errors };
   if (decisions !== undefined) obj.decisions = decisions;
   if (mutationResults !== undefined) obj.mutationResults = mutationResults;
+  if (repoReadmes !== undefined) obj.repoReadmes = repoReadmes;
   return JSON.stringify(obj, null, 2) + "\n";
 }
 
@@ -380,6 +382,7 @@ async function runAnalyzeOnly(
   await Promise.all(
     repos.map(async (repo) => {
       let analysis;
+      let readme = "";
       if (repo.isArchived) {
         analysis = {
           category: "Archived",
@@ -387,7 +390,7 @@ async function runAnalyzeOnly(
           dataQuality: "sparse" as const,
         };
       } else {
-        const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
+        readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
         analysis = await analyzer.analyze({
           name: repo.name,
           owner: repo.owner,
@@ -399,7 +402,7 @@ async function runAnalyzeOnly(
           existingListNames,
         });
       }
-      analyzedRepos.push({ repo, analysis });
+      analyzedRepos.push({ repo, analysis, readme });
     }),
   );
 
@@ -744,6 +747,7 @@ async function main() {
           currentRepo: `${repo.owner}/${repo.name}`,
         });
         let analysis;
+        let readme = "";
         if (repo.isArchived) {
           analysis = {
             category: "Archived",
@@ -751,7 +755,7 @@ async function main() {
             dataQuality: "sparse" as const,
           };
         } else {
-          const readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
+          readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
           try {
             analysis = await analyzer.analyze(
               {
@@ -772,7 +776,7 @@ async function main() {
           }
         }
         if (analysis.category === "analysis-failed") analysisErrorCount++;
-        analyzedRepos.push({ repo, analysis });
+        analyzedRepos.push({ repo, analysis, readme });
         analyzed++;
         setPhase({ tag: "analyzing", analyzed, total: filteredRepos.length, filterLabel });
         active--;
@@ -880,6 +884,10 @@ async function main() {
       const saveErrors = analyzedRepos
         .filter((e) => e.analysis.category === "analysis-failed")
         .map((e) => ({ repo: e.repo.name, owner: e.repo.owner }));
+      const saveRepoReadmes: Record<string, string> = {};
+      for (const { repo, readme } of analyzedRepos) {
+        if (readme) saveRepoReadmes[`${repo.owner}/${repo.name}`] = readme;
+      }
       const saveJson = buildSessionJson({
         runId: saveRunId,
         summary: {
@@ -891,6 +899,7 @@ async function main() {
         },
         suggestions: saveSuggestions,
         errors: saveErrors,
+        repoReadmes: saveRepoReadmes,
       });
 
       setPhase({ tag: "save-prompt", suggestions: saveSuggestions, decisions: new Map() });
@@ -934,6 +943,8 @@ async function main() {
   }
 
   // Generate suggestions (re-routes singleton-category repos via AI)
+  const sessionRunId = generateSessionId();
+
   const { suggestions, count, reroutedRepos } = await generateSuggestions(
     analyzedRepos,
     lists,
@@ -995,10 +1006,40 @@ async function main() {
   const apply = await summaryPromise;
 
   if (!apply || acceptedCount === 0) {
-    setPhase({ tag: "info", message: "No changes applied." });
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setPhase({ tag: "save-prompt", suggestions, decisions, mutationResults: undefined });
+    const noChangesSavePath = await savePromptPromise;
     await analyticsShutdown();
     unmount();
+    if (noChangesSavePath) {
+      const decisionsArray = Array.from(decisions.entries()).map(([suggestionIndex, decision]) => ({
+        suggestionIndex,
+        decision,
+      }));
+      const noChangesErrors = analyzedRepos
+        .filter((e) => e.analysis.category === "analysis-failed")
+        .map((e) => ({ repo: e.repo.name, owner: e.repo.owner }));
+      const noChangesJson = buildSessionJson({
+        runId: sessionRunId,
+        summary: {
+          starredCount: allRepos.length,
+          analyzedCount: analyzedRepos.length,
+          suggestionCount: suggestions.length,
+          githubUser: login,
+        },
+        suggestions,
+        errors: noChangesErrors,
+        decisions: decisionsArray,
+      });
+      try {
+        fs.writeFileSync(noChangesSavePath, noChangesJson);
+        track("file_saved", { context: "interactive_no_changes" });
+        process.stderr.write(`Saved session to ${noChangesSavePath}\n`);
+      } catch (err) {
+        process.stderr.write(
+          `Error writing file: ${err instanceof Error ? err.message : String(err)}\n`,
+        );
+      }
+    }
     process.exit(0);
   }
 
@@ -1052,8 +1093,43 @@ async function main() {
 
   // Wait briefly for TUI to render final state
   await new Promise((resolve) => setTimeout(resolve, 500));
+
+  setPhase({ tag: "save-prompt", suggestions, decisions, mutationResults: finalResults });
+  const doneSavePath = await savePromptPromise;
   await analyticsShutdown();
   unmount();
+
+  if (doneSavePath) {
+    const decisionsArray = Array.from(decisions.entries()).map(([suggestionIndex, decision]) => ({
+      suggestionIndex,
+      decision,
+    }));
+    const interactiveErrors = analyzedRepos
+      .filter((e) => e.analysis.category === "analysis-failed")
+      .map((e) => ({ repo: e.repo.name, owner: e.repo.owner }));
+    const interactiveJson = buildSessionJson({
+      runId: sessionRunId,
+      summary: {
+        starredCount: allRepos.length,
+        analyzedCount: analyzedRepos.length,
+        suggestionCount: suggestions.length,
+        githubUser: login,
+      },
+      suggestions,
+      errors: interactiveErrors,
+      decisions: decisionsArray,
+      mutationResults: finalResults,
+    });
+    try {
+      fs.writeFileSync(doneSavePath, interactiveJson);
+      track("file_saved", { context: "interactive" });
+      process.stderr.write(`Saved session to ${doneSavePath}\n`);
+    } catch (err) {
+      process.stderr.write(
+        `Error writing file: ${err instanceof Error ? err.message : String(err)}\n`,
+      );
+    }
+  }
 
   if (failed > 0) {
     process.exit(1);
