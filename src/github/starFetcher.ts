@@ -1,6 +1,6 @@
-import { graphql } from '@octokit/graphql';
-import type { Repo, GitHubList } from '../types.js';
-import { STARRED_REPOSITORIES_QUERY, USER_LISTS_QUERY } from '../graphql/queries.js';
+import { graphql } from "@octokit/graphql";
+import type { Repo, GitHubList } from "../types.js";
+import { STARRED_REPOSITORIES_QUERY, USER_LISTS_QUERY } from "../graphql/queries.js";
 
 interface GraphQLPageInfo {
   hasNextPage: boolean;
@@ -46,7 +46,7 @@ function mapRepo(node: GraphQLRepo): Repo {
     id: node.id,
     name: node.name,
     owner: node.owner.login,
-    description: node.description ?? '',
+    description: node.description ?? "",
     language: node.primaryLanguage?.name ?? null,
     isArchived: node.isArchived,
     stargazerCount: node.stargazerCount,
@@ -55,17 +55,17 @@ function mapRepo(node: GraphQLRepo): Repo {
   };
 }
 
-async function checkRateLimit(graphqlWithAuth: typeof graphql): Promise<void> {
+async function checkRateLimit(): Promise<void> {
   // @octokit/graphql doesn't expose headers directly; we use a raw fetch check
   const token = process.env.GITHUB_TOKEN;
   if (!token) return;
 
-  const response = await fetch('https://api.github.com/rate_limit', {
+  const response = await fetch("https://api.github.com/rate_limit", {
     headers: { authorization: `token ${token}` },
   });
 
-  const remaining = parseInt(response.headers.get('x-ratelimit-remaining') ?? '999', 10);
-  const reset = parseInt(response.headers.get('x-ratelimit-reset') ?? '0', 10);
+  const remaining = parseInt(response.headers.get("x-ratelimit-remaining") ?? "999", 10);
+  const reset = parseInt(response.headers.get("x-ratelimit-reset") ?? "0", 10);
 
   if (remaining < 50) {
     const waitMs = Math.max(0, reset * 1000 - Date.now());
@@ -77,21 +77,19 @@ async function checkRateLimit(graphqlWithAuth: typeof graphql): Promise<void> {
   }
 }
 
-export async function fetchStarredRepos(
-  graphqlWithAuth: typeof graphql
-): Promise<Repo[]> {
+export async function fetchStarredRepos(graphqlWithAuth: typeof graphql): Promise<Repo[]> {
   const repos: Repo[] = [];
   let cursor: string | null = null;
   let pageCount = 0;
 
   while (true) {
     if (pageCount > 0 && pageCount % 5 === 0) {
-      await checkRateLimit(graphqlWithAuth);
+      await checkRateLimit();
     }
 
     const result: StarredReposResponse = await graphqlWithAuth<StarredReposResponse>(
       STARRED_REPOSITORIES_QUERY,
-      { cursor }
+      { cursor },
     );
 
     const { nodes, pageInfo }: { nodes: GraphQLRepo[]; pageInfo: GraphQLPageInfo } =
@@ -106,17 +104,15 @@ export async function fetchStarredRepos(
   return repos;
 }
 
-export async function fetchUserLists(
-  graphqlWithAuth: typeof graphql
-): Promise<GitHubList[]> {
+export async function fetchUserLists(graphqlWithAuth: typeof graphql): Promise<GitHubList[]> {
   const result = await graphqlWithAuth<UserListsResponse>(USER_LISTS_QUERY);
 
   return result.viewer.lists.nodes.map((list) => ({
     id: list.id,
     name: list.name,
-    description: list.description ?? '',
+    description: list.description ?? "",
     repoIds: list.items.nodes
-      .filter((item): item is { id: string } => typeof item.id === 'string')
+      .filter((item): item is { id: string } => typeof item.id === "string")
       .map((item) => item.id),
   }));
 }
