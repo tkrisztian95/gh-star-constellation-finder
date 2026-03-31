@@ -69,6 +69,7 @@ export function enforcebudget(
   const winner = sorted[0][0]; // largest group's canonical name
 
   const updatedRemapping = new Map(remapping);
+  const budgetMerged: { orig: string; canonical: string }[] = [];
 
   // Keep top `budget` groups as-is, merge the rest into the winner
   for (let i = budget; i < sorted.length; i++) {
@@ -76,8 +77,20 @@ export function enforcebudget(
     for (const orig of originalNames) {
       updatedRemapping.set(orig, winner);
       if (canonical !== winner) {
-        extraWarnings.push(`"${orig}" (was "${canonical}") merged into "${winner}"`);
+        budgetMerged.push({ orig, canonical });
       }
+    }
+  }
+
+  const SUMMARY_THRESHOLD = 3;
+  if (budgetMerged.length > SUMMARY_THRESHOLD) {
+    extraWarnings.push(
+      `${budgetMerged.length} categories force-merged into "${winner}" (list budget exhausted)`,
+    );
+  } else {
+    for (const { orig, canonical } of budgetMerged) {
+      const wasClause = canonical !== orig ? ` (was "${canonical}")` : "";
+      extraWarnings.push(`"${orig}"${wasClause} merged into "${winner}"`);
     }
   }
 
