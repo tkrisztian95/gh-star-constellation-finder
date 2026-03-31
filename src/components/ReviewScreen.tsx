@@ -1,12 +1,40 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { Suggestion, CreateListSuggestion, MoveToListSuggestion } from "../types.js";
+import type { Repo, Suggestion, CreateListSuggestion, MoveToListSuggestion } from "../types.js";
 
 function isRepoSuggestion(s: Suggestion): s is CreateListSuggestion | MoveToListSuggestion {
   return s.type === "create-list" || s.type === "move-to-list";
 }
 
 export type ReviewDecision = "accepted" | "skipped" | "rejected";
+
+export function deriveIncomingRepos(
+  suggestions: Suggestion[],
+  listId: string,
+): MoveToListSuggestion[] {
+  return suggestions.filter(
+    (s) => s.type === "move-to-list" && s.targetListId === "rename:" + listId,
+  ) as MoveToListSuggestion[];
+}
+
+export function deriveExistingUnanalyzed(
+  repos: Repo[],
+  listId: string,
+  incomingRepoIds: Set<string>,
+): Repo[] {
+  return repos.filter((r) => r.listIds.includes(listId) && !incomingRepoIds.has(r.id));
+}
+
+export function deriveRenameDecision(
+  suggestions: Suggestion[],
+  decisions: Map<number, ReviewDecision>,
+  targetListId: string,
+): ReviewDecision | undefined {
+  const renameIdx = suggestions.findIndex(
+    (s) => s.type === "rename-list" && "rename:" + s.listId === targetListId,
+  );
+  return renameIdx >= 0 ? decisions.get(renameIdx) : undefined;
+}
 
 interface QuitConfirmProps {
   acceptedCount: number;
@@ -31,6 +59,7 @@ function QuitConfirmPrompt({ acceptedCount, onConfirm }: QuitConfirmProps) {
 interface ReviewScreenProps {
   suggestions: Suggestion[];
   mergeWarnings: string[];
+  repos: Repo[];
   onComplete: (decisions: Map<number, ReviewDecision>) => void;
   onQuit: (decisions: Map<number, ReviewDecision>) => void;
 }
@@ -38,6 +67,7 @@ interface ReviewScreenProps {
 export function ReviewScreen({
   suggestions,
   mergeWarnings,
+  repos,
   onComplete,
   onQuit,
 }: ReviewScreenProps) {
@@ -158,6 +188,55 @@ export function ReviewScreen({
             <Text color="gray">
               Accepting renames the list. Rejecting creates a new list with the new name instead.
             </Text>
+            {(() => {
+              const incomingRepos = deriveIncomingRepos(suggestions, current.listId);
+              const incomingRepoIds = new Set(incomingRepos.map((s) => s.repo.id));
+              const existingUnanalyzed = deriveExistingUnanalyzed(
+                repos,
+                current.listId,
+                incomingRepoIds,
+              );
+              return (
+                <>
+                  {incomingRepos.length > 0 && (
+                    <Box flexDirection="column" marginTop={1}>
+                      <Text color="gray" dimColor>
+                        Moving in if accepted:
+                      </Text>
+                      {incomingRepos.slice(0, 5).map((s, i) => (
+                        <Text key={i} color="gray" dimColor>
+                          {"  "}
+                          {s.repo.owner}/{s.repo.name}
+                        </Text>
+                      ))}
+                      {incomingRepos.length > 5 && (
+                        <Text color="gray" dimColor>
+                          {"  "}…and {incomingRepos.length - 5} more
+                        </Text>
+                      )}
+                    </Box>
+                  )}
+                  {existingUnanalyzed.length > 0 && (
+                    <Box flexDirection="column" marginTop={1}>
+                      <Text color="gray" dimColor>
+                        Already in list (not analyzed):
+                      </Text>
+                      {existingUnanalyzed.slice(0, 5).map((r, i) => (
+                        <Text key={i} color="gray" dimColor>
+                          {"  "}
+                          {r.owner}/{r.name}
+                        </Text>
+                      ))}
+                      {existingUnanalyzed.length > 5 && (
+                        <Text color="gray" dimColor>
+                          {"  "}…and {existingUnanalyzed.length - 5} more
+                        </Text>
+                      )}
+                    </Box>
+                  )}
+                </>
+              );
+            })()}
           </Box>
         ) : repoSuggestion ? (
           <>
@@ -204,6 +283,24 @@ export function ReviewScreen({
             </Text>
           </Text>
         </Box>
+        {current.type === "move-to-list" &&
+          current.targetListId?.startsWith("rename:") &&
+          (() => {
+            const renameDecision = deriveRenameDecision(
+              suggestions,
+              decisions,
+              current.targetListId!,
+            );
+            if (renameDecision === "rejected" || renameDecision === "skipped") {
+              return (
+                <Text color="gray" dimColor>
+                  Rename was declined — repo will be added to a newly created list '
+                  {current.targetListName}' instead
+                </Text>
+              );
+            }
+            return null;
+          })()}
       </Box>
 
       {showQuitConfirm && (
