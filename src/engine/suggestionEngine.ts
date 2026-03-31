@@ -11,6 +11,7 @@ import { rerouteOrphanRepos } from "../ai/consolidator.js";
 export interface AnalyzedRepo {
   repo: Repo;
   analysis: AnalysisResult;
+  readme?: string;
 }
 
 export interface ReroutedRepo {
