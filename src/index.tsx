@@ -22,11 +22,13 @@ import { initAnalytics, track, shutdown as analyticsShutdown } from "./analytics
 
 import { LoadingScreen } from "./components/LoadingScreen.js";
 import { ConfirmScreen } from "./components/ConfirmScreen.js";
-import { ScopeScreen, type ScopeMode } from "./components/ScopeScreen.js";
+import { ScopeScreen } from "./components/ScopeScreen.js";
+import type { ScopeMode } from "./types.js";
 import { StrategyScreen } from "./components/StrategyScreen.js";
 import { ReviewScreen, type ReviewDecision } from "./components/ReviewScreen.js";
 import { SummaryScreen } from "./components/SummaryScreen.js";
 import { SavePromptScreen } from "./components/SavePromptScreen.js";
+import { ConsolidatingScreen } from "./components/ConsolidatingScreen.js";
 import { StepIndicator } from "./components/StepIndicator.js";
 import {
   InterruptConfirmScreen,
@@ -84,7 +86,14 @@ type AppPhase =
   | { tag: "pick-scope" }
   | { tag: "pick-strategy"; scopeMode: ScopeMode }
   | { tag: "fetching"; filterLabel?: string }
-  | { tag: "analyzing"; analyzed: number; total: number; filterLabel?: string; stopping?: boolean }
+  | {
+      tag: "analyzing";
+      analyzed: number;
+      total: number;
+      filterLabel?: string;
+      stopping?: boolean;
+      currentRepo?: string;
+    }
   | { tag: "consolidating" }
   | { tag: "interrupt-confirm"; analyzedCount: number; totalCount: number }
   | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[] }
@@ -212,15 +221,12 @@ function App({
           phase="analyzing"
           filterLabel={phase.filterLabel}
           stopping={phase.stopping}
+          currentRepo={phase.currentRepo}
           onInterrupt={onAnalysisInterrupt}
         />
       )}
 
-      {phase.tag === "consolidating" && (
-        <Box flexDirection="column" padding={1}>
-          <Text color="cyan">Consolidating categories…</Text>
-        </Box>
-      )}
+      {phase.tag === "consolidating" && <ConsolidatingScreen />}
 
       {phase.tag === "interrupt-confirm" && (
         <InterruptConfirmScreen
@@ -696,7 +702,12 @@ async function main() {
   const trace = langfuse
     ? createRunTrace(
         langfuse,
-        { repoCount: filteredRepos.length, backend: cliArgs.backend ?? "openai" },
+        {
+          repoCount: filteredRepos.length,
+          backend: cliArgs.backend ?? "openai",
+          filter: scopeMode,
+          mode: strategy,
+        },
         generateSessionId(),
       )
     : null;
@@ -724,6 +735,13 @@ async function main() {
       const repo = pending.shift()!;
       active++;
       const p = (async () => {
+        setPhase({
+          tag: "analyzing",
+          analyzed,
+          total: filteredRepos.length,
+          filterLabel,
+          currentRepo: `${repo.owner}/${repo.name}`,
+        });
         let analysis;
         if (repo.isArchived) {
           analysis = {
@@ -759,7 +777,7 @@ async function main() {
         active--;
         // Dispatch next if not interrupted
         if (!interrupted && pending.length > 0) {
-          inFlight.push(dispatch()!);
+          await dispatch()!;
         }
       })();
       return p;

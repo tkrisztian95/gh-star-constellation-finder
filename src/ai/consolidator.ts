@@ -31,9 +31,7 @@ export function buildMergeWarnings(
   for (const name of proposedNames) {
     const canonical = remapping.get(name);
     if (canonical && canonical !== name) {
-      warnings.push(
-        `"${name}" merged into "${canonical}" to stay within the ${GITHUB_MAX_LISTS}-list GitHub limit`,
-      );
+      warnings.push(`"${name}" merged into "${canonical}"`);
     }
   }
   return warnings;
@@ -78,9 +76,7 @@ export function enforcebudget(
     for (const orig of originalNames) {
       updatedRemapping.set(orig, winner);
       if (canonical !== winner) {
-        extraWarnings.push(
-          `"${orig}" (was "${canonical}") merged into "${winner}" — GitHub list budget exceeded`,
-        );
+        extraWarnings.push(`"${orig}" (was "${canonical}") merged into "${winner}"`);
       }
     }
   }

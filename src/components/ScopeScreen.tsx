@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 
-export type ScopeMode = "all" | "unlisted-only";
+import type { ScopeMode } from "../types.js";
 
 interface ScopeScreenProps {
   onSelect: (mode: ScopeMode) => void;

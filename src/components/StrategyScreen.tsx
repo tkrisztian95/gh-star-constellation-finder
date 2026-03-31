@@ -1,7 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { ConsolidationStrategy } from "../types.js";
-import type { ScopeMode } from "./ScopeScreen.js";
+import type { ConsolidationStrategy, ScopeMode } from "../types.js";
 
 interface StrategyScreenProps {
   onSelect: (strategy: ConsolidationStrategy) => void;

@@ -1,9 +1,8 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { Suggestion, ConsolidationStrategy } from "../types.js";
+import type { Suggestion, ConsolidationStrategy, ScopeMode } from "../types.js";
 import type { ReroutedRepo } from "../engine/suggestionEngine.js";
 import type { ReviewDecision } from "./ReviewScreen.js";
-import type { ScopeMode } from "./ScopeScreen.js";
 
 interface SummaryScreenProps {
   suggestions: Suggestion[];

@@ -4,6 +4,7 @@ import type {
   AnalysisResult,
   Suggestion,
   ConsolidationStrategy,
+  ScopeMode,
 } from "../types.js";
 import { rerouteOrphanRepos } from "../ai/consolidator.js";
 
@@ -29,7 +30,7 @@ export async function generateSuggestions(
   existingLists: GitHubList[],
   rerouteOrphanReposFn: typeof rerouteOrphanRepos = rerouteOrphanRepos,
   strategy: ConsolidationStrategy = "keep-existing",
-  scopeMode: "all" | "unlisted-only" = "all",
+  scopeMode: ScopeMode = "all",
 ): Promise<SuggestionResult> {
   const suggestions: Suggestion[] = [];
 
