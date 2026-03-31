@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { buildConsolidationPrompt, buildReroutingPrompt } from "./prompts.js";
+import type { ExistingListContext } from "./prompts.js";
 import type { ConsolidationResult } from "./types.js";
 import type { ConsolidationStrategy } from "../types.js";
 
@@ -99,7 +100,7 @@ export function enforcebudget(
 
 async function consolidateViaOpenAI(
   proposedNames: string[],
-  existingListNames: string[],
+  existingLists: ExistingListContext[],
   maxLists: number,
   strategy: ConsolidationStrategy,
 ): Promise<ConsolidationResult> {
@@ -113,19 +114,19 @@ async function consolidateViaOpenAI(
     messages: [
       {
         role: "user",
-        content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists, strategy),
+        content: buildConsolidationPrompt(proposedNames, existingLists, maxLists, strategy),
       },
     ],
   });
 
   const content = completion.choices[0]?.message?.content ?? "{}";
   const remapping = parseRemapping(content, proposedNames);
-  return buildResult(remapping, proposedNames, existingListNames, maxLists);
+  return buildResult(remapping, proposedNames, existingLists, maxLists);
 }
 
 async function consolidateViaOllama(
   proposedNames: string[],
-  existingListNames: string[],
+  existingLists: ExistingListContext[],
   maxLists: number,
   strategy: ConsolidationStrategy,
 ): Promise<ConsolidationResult> {
@@ -141,7 +142,7 @@ async function consolidateViaOllama(
       messages: [
         {
           role: "user",
-          content: buildConsolidationPrompt(proposedNames, existingListNames, maxLists, strategy),
+          content: buildConsolidationPrompt(proposedNames, existingLists, maxLists, strategy),
         },
       ],
     }),
@@ -155,18 +156,18 @@ async function consolidateViaOllama(
   const content = body.message?.content ?? "{}";
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   const remapping = parseRemapping(jsonMatch ? jsonMatch[0] : content, proposedNames);
-  return buildResult(remapping, proposedNames, existingListNames, maxLists);
+  return buildResult(remapping, proposedNames, existingLists, maxLists);
 }
 
 function buildResult(
   remapping: Map<string, string>,
   proposedNames: string[],
-  existingListNames: string[],
+  existingLists: ExistingListContext[],
   maxLists: number,
 ): ConsolidationResult {
   const warnings = buildMergeWarnings(remapping, proposedNames);
-  const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
-  const budget = maxLists - existingListNames.length;
+  const existingListNamesLower = new Set(existingLists.map((l) => l.name.toLowerCase().trim()));
+  const budget = maxLists - existingLists.length;
 
   const { remapping: finalRemapping, extraWarnings } = enforcebudget(
     remapping,
@@ -183,7 +184,7 @@ function buildResult(
 
 export async function consolidateCategories(
   proposedNames: string[],
-  existingListNames: string[] = [],
+  existingLists: ExistingListContext[] = [],
   maxLists: number = GITHUB_MAX_LISTS,
   strategy: ConsolidationStrategy = "keep-existing",
 ): Promise<ConsolidationResult> {
@@ -191,7 +192,7 @@ export async function consolidateCategories(
     return identityResult(proposedNames);
   }
 
-  const effectiveExistingNames = strategy === "recreate" ? [] : existingListNames;
+  const effectiveExistingLists = strategy === "recreate" ? [] : existingLists;
   const effectiveMaxLists = strategy === "recreate" ? GITHUB_MAX_LISTS : maxLists;
 
   const useOllama = !process.env.OPENAI_API_KEY && !!process.env.OLLAMA_HOST;
@@ -200,13 +201,13 @@ export async function consolidateCategories(
     return useOllama
       ? await consolidateViaOllama(
           proposedNames,
-          effectiveExistingNames,
+          effectiveExistingLists,
           effectiveMaxLists,
           strategy,
         )
       : await consolidateViaOpenAI(
           proposedNames,
-          effectiveExistingNames,
+          effectiveExistingLists,
           effectiveMaxLists,
           strategy,
         );
