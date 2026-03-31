@@ -1,4 +1,5 @@
 import { Langfuse } from "langfuse";
+import type { ScopeMode, ConsolidationStrategy } from "../types.js";
 
 // Derived span/trace types — avoids depending on named internal exports from langfuse
 export type LangfuseTrace = ReturnType<Langfuse["trace"]>;
@@ -26,7 +27,12 @@ export function generateSessionId(): string {
 
 export function createRunTrace(
   langfuse: Langfuse,
-  metadata: { repoCount: number; backend: string },
+  metadata: {
+    repoCount: number;
+    backend: string;
+    filter?: ScopeMode;
+    mode?: ConsolidationStrategy;
+  },
   sessionId: string,
 ): LangfuseTrace {
   return langfuse.trace({ name: "constellation-run", metadata, sessionId });

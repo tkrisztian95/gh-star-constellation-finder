@@ -22,6 +22,8 @@ export interface AnalysisResult {
   killerFeature: string;
 }
 
+export type ScopeMode = "all" | "unlisted-only";
+
 export type ConsolidationStrategy = "keep-existing" | "recreate" | "allow-rename";
 
 export interface CreateListSuggestion {

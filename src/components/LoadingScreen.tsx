@@ -9,6 +9,7 @@ interface LoadingScreenProps {
   phase: "fetching" | "analyzing";
   filterLabel?: string;
   stopping?: boolean;
+  currentRepo?: string;
   onInterrupt?: () => void;
 }
 
@@ -18,6 +19,7 @@ export function LoadingScreen({
   phase,
   filterLabel,
   stopping,
+  currentRepo,
   onInterrupt,
 }: LoadingScreenProps) {
   const [frame, setFrame] = useState(0);
@@ -56,24 +58,32 @@ export function LoadingScreen({
           <Text>Stopping analysis, waiting for in-flight requests to complete…</Text>
         </Text>
       ) : (
-        <Text>
-          <Text color="cyan">{spinner} </Text>
-          {analyzed === 0 ? (
-            <Text>Analyzing repositories...</Text>
-          ) : (
-            <Text>
-              {"Analyzing "}
-              <Text bold color="white">
-                {analyzed}
+        <Box flexDirection="column" gap={0}>
+          <Text>
+            <Text color="cyan">{spinner} </Text>
+            {analyzed === 0 ? (
+              <Text>Analyzing repositories...</Text>
+            ) : (
+              <Text>
+                {"Analyzing "}
+                <Text bold color="white">
+                  {analyzed}
+                </Text>
+                {" / "}
+                <Text bold color="white">
+                  {total}
+                </Text>
+                {" repositories..."}
               </Text>
-              {" / "}
-              <Text bold color="white">
-                {total}
-              </Text>
-              {" repositories..."}
+            )}
+          </Text>
+          {currentRepo && (
+            <Text color="gray" dimColor>
+              {"  "}
+              {currentRepo}
             </Text>
           )}
-        </Text>
+        </Box>
       )}
       {phase === "analyzing" && (
         <Box>
