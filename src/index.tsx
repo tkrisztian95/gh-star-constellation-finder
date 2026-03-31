@@ -4,7 +4,7 @@ import { render, Box, Text } from "ink";
 
 import { authenticate, AuthError, type AuthResult } from "./github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "./github/starFetcher.js";
-import { fetchAllReadmes } from "./github/readmeFetcher.js";
+import { fetchAllReadmes, computeDataQuality } from "./github/readmeFetcher.js";
 import { createAnalyzer, type Backend } from "./ai/index.js";
 import {
   createLangfuseClient,
@@ -317,15 +317,13 @@ interface SessionJsonInput {
   errors: { repo: string; owner: string }[];
   decisions?: SessionDecision[];
   mutationResults?: MutationResult[];
-  repoReadmes?: Record<string, string>;
 }
 
 function buildSessionJson(input: SessionJsonInput): string {
-  const { runId, summary, suggestions, errors, decisions, mutationResults, repoReadmes } = input;
+  const { runId, summary, suggestions, errors, decisions, mutationResults } = input;
   const obj: Record<string, unknown> = { runId, summary, suggestions, errors };
   if (decisions !== undefined) obj.decisions = decisions;
   if (mutationResults !== undefined) obj.mutationResults = mutationResults;
-  if (repoReadmes !== undefined) obj.repoReadmes = repoReadmes;
   return JSON.stringify(obj, null, 2) + "\n";
 }
 
@@ -401,7 +399,9 @@ async function runAnalyzeOnly(
           isArchived: false,
           existingListNames,
         });
+        analysis.dataQuality = computeDataQuality(readme);
       }
+      repo.readme = readme;
       analyzedRepos.push({ repo, analysis, readme });
     }),
   );
@@ -797,7 +797,9 @@ async function main() {
             if (interrupted) return; // aborted — drop this repo silently
             throw err;
           }
+          analysis.dataQuality = computeDataQuality(readme);
         }
+        repo.readme = readme;
         if (analysis.category === "analysis-failed") analysisErrorCount++;
         analyzedRepos.push({ repo, analysis, readme });
         analyzed++;
@@ -910,10 +912,6 @@ async function main() {
       const saveErrors = analyzedRepos
         .filter((e) => e.analysis.category === "analysis-failed")
         .map((e) => ({ repo: e.repo.name, owner: e.repo.owner }));
-      const saveRepoReadmes: Record<string, string> = {};
-      for (const { repo, readme } of analyzedRepos) {
-        if (readme) saveRepoReadmes[`${repo.owner}/${repo.name}`] = readme;
-      }
       const saveJson = buildSessionJson({
         runId: saveRunId,
         summary: {
@@ -925,7 +923,6 @@ async function main() {
         },
         suggestions: saveSuggestions,
         errors: saveErrors,
-        repoReadmes: saveRepoReadmes,
       });
 
       setPhase({ tag: "save-prompt", suggestions: saveSuggestions, decisions: new Map() });
