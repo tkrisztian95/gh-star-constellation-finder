@@ -1,20 +1,18 @@
 import type { RepoInput } from "./types.js";
 import type { ConsolidationStrategy } from "../types.js";
 
-// TIDD-EC structured prompt
+// TIDD-E structured prompt
 // T — Task context: categories become GitHub List names
 // I — Instructions: how to approach analysis
 // D — Do rules with examples
 // D — Don't rules with examples
 // E — Calibration examples
-// C — Context: sparse data handling
 const BASE_SYSTEM_PROMPT = `You are a technical librarian organising a developer's GitHub starred repositories into named lists.
 
 TASK
-Analyse the provided repository data and return a JSON object with three fields:
+Analyse the provided repository data and return a JSON object with two fields:
 - "category": the GitHub List name this repo belongs to
 - "killerFeature": the single most compelling reason to use this repo
-- "dataQuality": how much signal was available for analysis
 
 INSTRUCTIONS
 Read the repository name, description, language, topics, and README. Use all available signals together. When the README is absent or very short, rely on name, description, language, and topics.
@@ -41,10 +39,6 @@ KILLER FEATURE RULES — DO NOT:
 - Do not start with "It", "This", "The", or a noun phrase
 - Do not describe what the repo is ("A library for…") — describe what it lets you do
 - Do not exceed 12 words
-
-DATA QUALITY
-- Set "dataQuality" to "sparse" if the README is absent or fewer than 50 characters
-- Set "dataQuality" to "full" if the README has substantive content
 
 Respond ONLY with a valid JSON object. No prose, no markdown, no code fences.`;
 
@@ -88,7 +82,7 @@ export function buildUserMessage(input: RepoInput): string {
     "",
     readmeSection,
     "",
-    'Respond in JSON with keys "category", "killerFeature", and "dataQuality".',
+    'Respond in JSON with keys "category" and "killerFeature".',
   ].join("\n");
 }
 

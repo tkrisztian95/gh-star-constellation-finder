@@ -3,7 +3,6 @@ import { z } from "zod";
 export const responseSchema = z.object({
   category: z.string(),
   killerFeature: z.string(),
-  dataQuality: z.enum(["full", "sparse"]).optional(),
 });
 
 export function parseAnalysisResponse(
@@ -41,7 +40,7 @@ export interface RepoInput {
 export interface AnalysisResult {
   category: string;
   killerFeature: string;
-  dataQuality?: "full" | "sparse";
+  dataQuality?: "full" | "sparse" | "truncated";
 }
 
 export interface Analyzer {

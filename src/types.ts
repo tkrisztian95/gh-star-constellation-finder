@@ -8,6 +8,7 @@ export interface Repo {
   topics: string[];
   listIds: string[];
   isArchived: boolean;
+  readme?: string;
 }
 
 export interface GitHubList {
@@ -20,6 +21,7 @@ export interface GitHubList {
 export interface AnalysisResult {
   category: string;
   killerFeature: string;
+  dataQuality?: "full" | "sparse" | "truncated";
 }
 
 export type ScopeMode = "all" | "unlisted-only";

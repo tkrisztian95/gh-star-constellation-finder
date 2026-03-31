@@ -61,6 +61,13 @@ export function preprocessReadme(raw: string): string {
   return assembled;
 }
 
+export function computeDataQuality(readme: string): "full" | "sparse" | "truncated" {
+  const trimmed = readme.trim();
+  if (trimmed.length < 50) return "sparse";
+  if (trimmed.endsWith("... [truncated]")) return "truncated";
+  return "full";
+}
+
 async function fetchReadme(owner: string, repo: string, token: string): Promise<string> {
   let response: Response;
   try {
