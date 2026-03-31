@@ -102,7 +102,7 @@ export async function runAnalyzeOnly(
   ];
   const { remapping } = await consolidateCategories(
     newCategoryNames,
-    existingListNames,
+    existingListNames.map((name) => ({ name, topics: [] })),
     undefined,
     "allow-rename",
     trace,

@@ -134,7 +134,10 @@ function runTests() {
 
   tests.push(
     test("consolidateCategories: returns identity for single proposed name", async () => {
-      const result = await consolidateCategories(["CLI Tools"], ["Existing 1"]);
+      const result = await consolidateCategories(
+        ["CLI Tools"],
+        [{ name: "Existing 1", topics: [] }],
+      );
       assertEqual(result.remapping.get("CLI Tools"), "CLI Tools", "identity remapping");
       assertEqual(result.mergeWarnings.length, 0, "no warnings");
     }),
