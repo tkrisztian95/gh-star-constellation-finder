@@ -71,7 +71,7 @@ export async function runReviewPhase({
   ];
   const { remapping, mergeWarnings } = await consolidateCategories(
     newCategoryNames,
-    existingListNames,
+    existingListNames.map((name) => ({ name, topics: [] })),
     undefined,
     strategy,
     trace,

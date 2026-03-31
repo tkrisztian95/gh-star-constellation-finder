@@ -219,7 +219,7 @@ export async function handleInterrupt({
     ];
     const { remapping } = await consolidateCategories(
       newCategoryNames,
-      existingListNames,
+      existingListNames.map((name) => ({ name, topics: [] })),
       undefined,
       strategy,
       trace,

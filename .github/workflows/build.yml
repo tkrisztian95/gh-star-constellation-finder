@@ -20,5 +20,8 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Type check
+        run: bun run typecheck
+
       - name: Build
         run: bun build src/index.tsx --target=bun

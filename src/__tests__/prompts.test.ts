@@ -57,7 +57,11 @@ function runTests() {
   test("buildConsolidationPrompt partial account: correct budget computed", () => {
     const prompt = buildConsolidationPrompt(
       ["CLI Tools", "Vector Databases"],
-      ["React Hooks", "GraphQL Clients", "LLM Tools"],
+      [
+        { name: "React Hooks", topics: [] },
+        { name: "GraphQL Clients", topics: [] },
+        { name: "LLM Tools", topics: [] },
+      ],
       32,
     );
     assert(prompt.includes("already has 3"), "should show 3 existing lists");
@@ -66,7 +70,7 @@ function runTests() {
   });
 
   test("buildConsolidationPrompt zero budget: instructs no new lists", () => {
-    const thirtyTwo = Array.from({ length: 32 }, (_, i) => `List ${i + 1}`);
+    const thirtyTwo = Array.from({ length: 32 }, (_, i) => ({ name: `List ${i + 1}`, topics: [] }));
     const prompt = buildConsolidationPrompt(["New Category"], thirtyTwo, 32);
     assert(prompt.includes("already has 32"), "should show 32 existing lists");
     assert(prompt.includes("at most 0 distinct new"), "should state budget of 0");
