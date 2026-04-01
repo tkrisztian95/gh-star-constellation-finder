@@ -2,7 +2,7 @@ import { authenticate, AuthError } from "../github/auth.js";
 import type { AuthResult } from "../github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "../github/starFetcher.js";
 import { fetchAllReadmes } from "../github/readmeFetcher.js";
-import { createAnalyzer, resolveBackend } from "../ai/index.js";
+import { createProvider, resolveBackend } from "../ai/index.js";
 import {
   createLangfuseClient,
   createRunTrace,
@@ -176,7 +176,7 @@ export async function main() {
     : null;
 
   // Analyze
-  const analyzer = createAnalyzer(cliArgs.backend, trace);
+  const analyzer = createProvider(cliArgs.backend, trace);
   const existingListNames = lists.map((l) => l.name);
 
   const { analyzedRepos, analysisErrorCount, analysisStartTime } = await runAnalysis({

@@ -12,7 +12,7 @@ import { buildSessionJson } from "../session/json.js";
 import type { Repo, ConsolidationStrategy, ScopeMode } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
-import type { createAnalyzer } from "../ai/index.js";
+import type { AIProvider } from "../ai/index.js";
 
 export interface AnalysisResult {
   analyzedRepos: AnalyzedRepo[];
@@ -23,7 +23,7 @@ export interface AnalysisResult {
 export interface RunAnalysisParams {
   filteredRepos: Repo[];
   readmes: Map<string, string>;
-  analyzer: ReturnType<typeof createAnalyzer>;
+  analyzer: AIProvider;
   existingListNames: string[];
   abortController: AbortController;
   interruptedRef: { value: boolean };
