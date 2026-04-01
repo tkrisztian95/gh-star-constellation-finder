@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import { consolidateCategories } from "../ai/consolidator.js";
+import { consolidateCategories, rerouteOrphanRepos } from "./consolidationCoordinator.js";
 import { generateSuggestions } from "../engine/suggestionEngine.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { computeDataQuality } from "../github/readmeFetcher.js";
@@ -137,6 +137,7 @@ export interface HandleInterruptParams {
   interruptChoicePromise: Promise<InterruptChoice>;
   savePromptPromise: Promise<string>;
   unmount: () => void;
+  provider: AIProvider;
 }
 
 // Returns only if the user chose "continue"; otherwise calls process.exit()
@@ -156,6 +157,7 @@ export async function handleInterrupt({
   interruptChoicePromise,
   savePromptPromise,
   unmount,
+  provider,
 }: HandleInterruptParams): Promise<void> {
   if (analyzedRepos.length === 0) {
     setPhase({ tag: "interrupt-confirm", analyzedCount: 0, totalCount: filteredRepos.length });
@@ -222,6 +224,7 @@ export async function handleInterrupt({
     ];
     const { remapping } = await consolidateCategories(
       newCategoryNames,
+      provider,
       existingListNames.map((name) => ({ name, topics: [] })),
       undefined,
       strategy,
@@ -231,10 +234,15 @@ export async function handleInterrupt({
       const consolidated = remapping.get(entry.analysis.category);
       if (consolidated) entry.analysis.category = consolidated;
     }
+    const boundReroute = (
+      orphans: { category: string }[],
+      availableTargets: string[],
+      parent?: Parameters<typeof rerouteOrphanRepos>[3],
+    ) => rerouteOrphanRepos(orphans, availableTargets, provider, parent);
     const { suggestions } = await generateSuggestions(
       analyzedRepos,
       lists,
-      undefined,
+      boundReroute,
       strategy,
       undefined,
       trace,

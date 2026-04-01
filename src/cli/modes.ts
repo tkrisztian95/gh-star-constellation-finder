@@ -10,7 +10,10 @@ import {
   generateSessionId,
   flushTracing,
 } from "../ai/tracing.js";
-import { consolidateCategories } from "../ai/consolidator.js";
+import {
+  consolidateCategories,
+  rerouteOrphanRepos,
+} from "../orchestration/consolidationCoordinator.js";
 import { generateSuggestions } from "../engine/suggestionEngine.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
@@ -102,6 +105,7 @@ export async function runAnalyzeOnly(
   ];
   const { remapping } = await consolidateCategories(
     newCategoryNames,
+    analyzer,
     existingListNames.map((name) => ({ name, topics: [] })),
     undefined,
     "allow-rename",
@@ -116,10 +120,15 @@ export async function runAnalyzeOnly(
 
   const runId = generateSessionId();
 
+  const boundReroute = (
+    orphans: { category: string }[],
+    availableTargets: string[],
+    parent?: Parameters<typeof rerouteOrphanRepos>[3],
+  ) => rerouteOrphanRepos(orphans, availableTargets, analyzer, parent);
   const { suggestions } = await generateSuggestions(
     analyzedRepos,
     lists,
-    undefined,
+    boundReroute,
     "allow-rename",
     undefined,
     trace,

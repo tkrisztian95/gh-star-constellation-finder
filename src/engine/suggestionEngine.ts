@@ -6,8 +6,13 @@ import type {
   ConsolidationStrategy,
   ScopeMode,
 } from "../types.js";
-import { rerouteOrphanRepos } from "../ai/consolidator.js";
 import type { LangfuseTrace } from "../ai/tracing.js";
+
+export type RerouteOrphansFn = (
+  orphans: { category: string }[],
+  availableTargets: string[],
+  parent?: LangfuseTrace | null,
+) => Promise<Map<string, string | null>>;
 
 export interface AnalyzedRepo {
   repo: Repo;
@@ -30,7 +35,7 @@ export interface SuggestionResult {
 export async function generateSuggestions(
   analyzedRepos: AnalyzedRepo[],
   existingLists: GitHubList[],
-  rerouteOrphanReposFn: typeof rerouteOrphanRepos = rerouteOrphanRepos,
+  rerouteOrphanReposFn: RerouteOrphansFn,
   strategy: ConsolidationStrategy = "keep-existing",
   scopeMode: ScopeMode = "all",
   parent?: LangfuseTrace | null,

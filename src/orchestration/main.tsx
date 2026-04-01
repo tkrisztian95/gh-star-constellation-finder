@@ -209,6 +209,7 @@ export async function main() {
       interruptChoicePromise: tui.interruptChoicePromise,
       savePromptPromise: tui.savePromptPromise,
       unmount: tui.unmount,
+      provider: analyzer,
     });
   }
 
@@ -230,6 +231,7 @@ export async function main() {
     analysisStartTime,
     analysisErrorCount,
     login,
+    provider: analyzer,
   });
 
   // Apply mutations + save
