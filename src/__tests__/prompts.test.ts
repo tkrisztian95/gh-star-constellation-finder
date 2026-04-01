@@ -82,6 +82,31 @@ function runTests() {
     assert(prompt.includes('"Go CLI Tools"'), "should include second proposed name");
   });
 
+  // buildConsolidationPrompt — distributionContext
+
+  test("buildConsolidationPrompt: DISTRIBUTION CONTEXT section present when distributionContext provided", () => {
+    const ctx = "CLI Tools: 15 repos, top topics: cli, terminal";
+    const prompt = buildConsolidationPrompt(["CLI Tools"], [], 32, "keep-existing", ctx);
+    assert(prompt.includes("DISTRIBUTION CONTEXT"), "should contain DISTRIBUTION CONTEXT header");
+    assert(prompt.includes(ctx), "should contain the distribution context content");
+  });
+
+  test("buildConsolidationPrompt: no DISTRIBUTION CONTEXT section when distributionContext omitted", () => {
+    const prompt = buildConsolidationPrompt(["CLI Tools"], [], 32);
+    assert(
+      !prompt.includes("DISTRIBUTION CONTEXT"),
+      "should NOT contain DISTRIBUTION CONTEXT header",
+    );
+  });
+
+  test("buildConsolidationPrompt: DISTRIBUTION CONTEXT appears before NOW PROCESS THIS INPUT", () => {
+    const ctx = "CLI Tools: 3 repos, top topics: cli";
+    const prompt = buildConsolidationPrompt(["CLI Tools"], [], 32, "keep-existing", ctx);
+    const ctxIdx = prompt.indexOf("DISTRIBUTION CONTEXT");
+    const inputIdx = prompt.indexOf("NOW PROCESS THIS INPUT");
+    assert(ctxIdx < inputIdx, "DISTRIBUTION CONTEXT must appear before NOW PROCESS THIS INPUT");
+  });
+
   // buildReroutingPrompt
 
   test("buildReroutingPrompt includes orphan categories in output", () => {

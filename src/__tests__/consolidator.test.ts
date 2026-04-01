@@ -4,6 +4,7 @@ import {
   rerouteOrphanRepos,
 } from "../orchestration/consolidationCoordinator.js";
 import type { AIProvider } from "../ai/types.js";
+import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 
 function assert(condition: boolean, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -24,6 +25,39 @@ function makeThrowingProvider(): AIProvider {
     complete: async () => {
       throw new Error("mock provider error");
     },
+  };
+}
+
+function makeRecordingProvider(responses: string[]): AIProvider & { calls: string[] } {
+  const calls: string[] = [];
+  let idx = 0;
+  return {
+    modelId: "mock-recording",
+    calls,
+    analyze: async () => ({ category: "Test", killerFeature: "" }),
+    complete: async (prompt: string) => {
+      calls.push(prompt);
+      const response = responses[idx] ?? "{}";
+      idx++;
+      return response;
+    },
+  };
+}
+
+function makeAnalyzedRepo(category: string, name = "repo"): AnalyzedRepo {
+  return {
+    repo: {
+      id: name,
+      name,
+      owner: "owner",
+      description: "a repo",
+      language: "TypeScript",
+      topics: ["ts"],
+      stargazerCount: 1,
+      listIds: [],
+      isArchived: false,
+    },
+    analysis: { category, killerFeature: "does stuff" },
   };
 }
 
@@ -208,6 +242,72 @@ function runTests() {
       );
       assertEqual(result.get("Rust HTTP Client"), null, "null fallback for first orphan");
       assertEqual(result.get("Go CLI Tool"), null, "null fallback for second orphan");
+    }),
+  );
+
+  // --- Pass 0: distribution summary with analyzedRepos ---
+
+  tests.push(
+    test("consolidateCategories with analyzedRepos: distributionContext reaches Pass 2 prompt (2 provider calls only)", async () => {
+      const pass1Response = JSON.stringify({
+        "CLI Tools": "CLI Tools",
+        "Vector Databases": "Vector Databases",
+      });
+      const pass2Response = JSON.stringify({
+        "CLI Tools": "CLI Tools",
+        "Vector Databases": "Vector Databases",
+      });
+      const provider = makeRecordingProvider([pass1Response, pass2Response]);
+
+      const analyzedRepos = [
+        makeAnalyzedRepo("CLI Tools", "ripgrep"),
+        makeAnalyzedRepo("Vector Databases", "qdrant"),
+      ];
+      await consolidateCategories(
+        ["CLI Tools", "Vector Databases"],
+        provider,
+        [],
+        32,
+        "keep-existing",
+        null,
+        analyzedRepos,
+      );
+
+      assertEqual(
+        provider.calls.length,
+        2,
+        `expected 2 provider calls (Pass 1 + Pass 2 only), got ${provider.calls.length}`,
+      );
+      assert(
+        provider.calls[1].includes("DISTRIBUTION CONTEXT"),
+        "Pass 2 prompt should contain DISTRIBUTION CONTEXT",
+      );
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories without analyzedRepos: Pass 0 does NOT run (no extra provider call)", async () => {
+      const pass1Response = JSON.stringify({
+        "CLI Tools": "CLI Tools",
+        "Vector Databases": "Vector Databases",
+      });
+      const pass2Response = JSON.stringify({
+        "CLI Tools": "CLI Tools",
+        "Vector Databases": "Vector Databases",
+      });
+      const provider = makeRecordingProvider([pass1Response, pass2Response]);
+
+      await consolidateCategories(["CLI Tools", "Vector Databases"], provider, [], 32);
+
+      assertEqual(
+        provider.calls.length,
+        2,
+        `expected 2 provider calls (Pass 1 + Pass 2 only), got ${provider.calls.length}`,
+      );
+      assert(
+        !provider.calls[1].includes("DISTRIBUTION CONTEXT"),
+        "Pass 2 prompt should NOT contain DISTRIBUTION CONTEXT when no analyzedRepos",
+      );
     }),
   );
 

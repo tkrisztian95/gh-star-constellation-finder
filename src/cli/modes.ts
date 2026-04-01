@@ -110,6 +110,7 @@ export async function runAnalyzeOnly(
     undefined,
     "allow-rename",
     trace,
+    analyzedRepos,
   );
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);

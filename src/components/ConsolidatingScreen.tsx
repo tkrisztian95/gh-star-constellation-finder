@@ -3,7 +3,11 @@ import { Box, Text } from "ink";
 
 const SPINNER_FRAMES = ["|", "/", "-", "\\"];
 
-export function ConsolidatingScreen() {
+interface ConsolidatingScreenProps {
+  subStep?: string;
+}
+
+export function ConsolidatingScreen({ subStep }: ConsolidatingScreenProps) {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
@@ -17,7 +21,7 @@ export function ConsolidatingScreen() {
     <Box flexDirection="column" padding={1}>
       <Text>
         <Text color="cyan">{SPINNER_FRAMES[frame]} </Text>
-        <Text>Consolidating categories…</Text>
+        <Text>{subStep ?? "Consolidating categories…"}</Text>
       </Text>
     </Box>
   );
