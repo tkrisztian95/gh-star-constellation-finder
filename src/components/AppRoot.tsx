@@ -123,7 +123,7 @@ export function App({
         />
       )}
 
-      {phase.tag === "consolidating" && <ConsolidatingScreen />}
+      {phase.tag === "consolidating" && <ConsolidatingScreen subStep={phase.subStep} />}
 
       {phase.tag === "interrupt-confirm" && (
         <InterruptConfirmScreen

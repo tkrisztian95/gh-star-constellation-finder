@@ -16,6 +16,7 @@ import {
   parseReroutingResponse,
   nullRerouteMap,
 } from "../ai/consolidatorDelegator.js";
+import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 
 export async function consolidateCategories(
   proposedNames: string[],
@@ -24,6 +25,8 @@ export async function consolidateCategories(
   maxLists: number = GITHUB_MAX_LISTS,
   strategy: ConsolidationStrategy = "keep-existing",
   parent?: LangfuseTrace | null,
+  analyzedRepos?: AnalyzedRepo[],
+  onSubStep?: (message: string) => void,
 ): Promise<ConsolidationResult> {
   if (proposedNames.length < 2) {
     return identityResult(proposedNames);
@@ -33,6 +36,36 @@ export async function consolidateCategories(
   const effectiveMaxLists = strategy === "recreate" ? GITHUB_MAX_LISTS : maxLists;
 
   try {
+    // Build distribution context deterministically from analyzedRepos
+    let distributionContext: string | undefined;
+    if (analyzedRepos && analyzedRepos.length > 0) {
+      const categoryMap = new Map<string, { count: number; topicFreq: Map<string, number> }>();
+      for (const { repo, analysis } of analyzedRepos) {
+        const cat = analysis.category;
+        let entry = categoryMap.get(cat);
+        if (!entry) {
+          entry = { count: 0, topicFreq: new Map() };
+          categoryMap.set(cat, entry);
+        }
+        entry.count++;
+        for (const topic of repo.topics) {
+          entry.topicFreq.set(topic, (entry.topicFreq.get(topic) ?? 0) + 1);
+        }
+      }
+      const lines: string[] = [];
+      for (const [cat, { count, topicFreq }] of categoryMap) {
+        const topTopics = [...topicFreq.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([t]) => t);
+        const topicsStr = topTopics.length > 0 ? topTopics.join(", ") : "(none)";
+        lines.push(`${cat}: ${count} repos, top topics: ${topicsStr}`);
+      }
+      if (lines.length > 0) distributionContext = lines.join("\n");
+    }
+
+    onSubStep?.("Consolidating categories…");
+
     // Pass 1: merge language/platform qualifier variants only (no budget pressure)
     const pass1Map = await (async () => {
       const prompt = buildLanguageQualifierPrompt(proposedNames);
@@ -54,6 +87,7 @@ export async function consolidateCategories(
         effectiveExistingLists,
         effectiveMaxLists,
         strategy,
+        distributionContext,
       );
       const content = await provider.complete(prompt, "consolidate-categories", parent);
       const remapping = parseRemapping(content, deduplicatedNames);

@@ -229,6 +229,7 @@ export async function handleInterrupt({
       undefined,
       strategy,
       trace,
+      analyzedRepos,
     );
     for (const entry of analyzedRepos) {
       const consolidated = remapping.get(entry.analysis.category);

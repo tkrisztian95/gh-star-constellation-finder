@@ -17,7 +17,7 @@ export type AppPhase =
       stopping?: boolean;
       currentRepo?: string;
     }
-  | { tag: "consolidating" }
+  | { tag: "consolidating"; subStep?: string }
   | { tag: "interrupt-confirm"; analyzedCount: number; totalCount: number }
   | { tag: "review"; suggestions: Suggestion[]; mergeWarnings: string[]; repos: Repo[] }
   | {

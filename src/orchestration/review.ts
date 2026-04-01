@@ -79,6 +79,8 @@ export async function runReviewPhase({
     undefined,
     strategy,
     trace,
+    analyzedRepos,
+    (msg) => setPhase({ tag: "consolidating", subStep: msg }),
   );
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);

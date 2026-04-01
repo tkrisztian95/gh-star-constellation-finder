@@ -96,6 +96,7 @@ export function buildConsolidationPrompt(
   existingLists: ExistingListContext[] = [],
   maxLists: number = 32,
   strategy: ConsolidationStrategy = "keep-existing",
+  distributionContext?: string,
 ): string {
   const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
   const existingCount = existingLists.length;
@@ -127,8 +128,8 @@ Map every proposed name to a canonical name. Names that cover the same concrete 
 LIST BUDGET
 The developer already has ${existingCount} GitHub list(s). GitHub enforces a hard limit of ${maxLists} lists total.
 You are consolidating ${proposedNames.length} input(s) into at most ${budget} distinct new canonical name(s)${compressionInfo}.
-If the proposed names would result in more than ${budget} distinct new names, merge the least-specific categories into broader ones until you are within budget.
-Prefer merging new proposals over inventing vague umbrella names. When merging, prefer the more specific surviving name.
+If the proposed names would result in more than ${budget} distinct new names, merge the least-specific or lowest-count categories into broader ones until you are within budget.
+Prefer merging new proposals over inventing vague umbrella names. When merging, prefer the more specific surviving name. When distribution data is available, prefer absorbing low-count categories (≤3 repos) into semantically related larger ones before merging two large categories.
 Do NOT produce a canonical name that is semantically identical to an existing list.
 ${renameHint}
 EXISTING LISTS
@@ -146,6 +147,7 @@ MERGE WHEN
 - Names are synonyms for the same domain ("Vector Databases" and "Embedding Stores" → "Vector Databases")
 - One name is a strict subset of another ("React Hooks" under "React State Management" → "React State Management")
 - Budget pressure requires it (see LIST BUDGET above)
+- Distribution data shows a category has ≤3 repos and its topics overlap with a significantly larger related category
 
 DO NOT MERGE WHEN
 - Domains are related but distinct ("HTTP Clients" and "API Gateways" are different things)
@@ -153,7 +155,7 @@ DO NOT MERGE WHEN
 - You are uncertain — map each to itself
 
 PROCESS
-Before writing JSON, mentally group the names by domain. Choose the best canonical name for each group. Verify the number of distinct new names does not exceed ${budget}. Then produce the mapping.
+Before writing JSON, mentally group the names by domain. If distribution context is available, flag categories with ≤3 repos — these are the first candidates for absorption into semantically related larger categories, especially under budget pressure. When merging, use the higher-count group's name as the canonical name unless the lower-count group's name is strictly more specific. Verify the number of distinct new names does not exceed ${budget}. Then produce the mapping.
 
 EXAMPLES
 
@@ -184,7 +186,19 @@ Output: {
   "CSS Animation Libraries": "CSS Animation Libraries"
 }
 
-NOW PROCESS THIS INPUT
+${
+  distributionContext
+    ? `DISTRIBUTION CONTEXT
+Repo counts and representative topics per proposed category. Use this to:
+- Identify low-count categories (≤3 repos) as prime absorption candidates
+- Prefer the higher-count group's name when two categories merge
+- Treat shared topics as supporting evidence for a merge, not a trigger for one
+
+${distributionContext}
+
+`
+    : ""
+}NOW PROCESS THIS INPUT
 [${nameList}]
 
 Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
