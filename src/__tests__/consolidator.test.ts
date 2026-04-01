@@ -1,9 +1,9 @@
+import { buildMergeWarnings, enforcebudget } from "../ai/consolidatorDelegator.js";
 import {
   consolidateCategories,
-  buildMergeWarnings,
-  enforcebudget,
   rerouteOrphanRepos,
-} from "../ai/consolidator.js";
+} from "../orchestration/consolidationCoordinator.js";
+import type { AIProvider } from "../ai/types.js";
 
 function assert(condition: boolean, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -13,6 +13,18 @@ function assertEqual<T>(actual: T, expected: T, message: string): void {
   if (actual !== expected) {
     throw new Error(`${message}: expected ${String(expected)}, got ${String(actual)}`);
   }
+}
+
+function makeThrowingProvider(): AIProvider {
+  return {
+    modelId: "mock-throwing",
+    analyze: async () => {
+      throw new Error("mock provider error");
+    },
+    complete: async () => {
+      throw new Error("mock provider error");
+    },
+  };
 }
 
 function runTests() {
@@ -134,39 +146,32 @@ function runTests() {
 
   tests.push(
     test("consolidateCategories: returns identity for single proposed name", async () => {
-      const result = await consolidateCategories(
-        ["CLI Tools"],
-        [{ name: "Existing 1", topics: [] }],
-      );
+      const result = await consolidateCategories(["CLI Tools"], makeThrowingProvider(), [
+        { name: "Existing 1", topics: [] },
+      ]);
       assertEqual(result.remapping.get("CLI Tools"), "CLI Tools", "identity remapping");
       assertEqual(result.mergeWarnings.length, 0, "no warnings");
     }),
   );
 
   tests.push(
-    test("consolidateCategories: falls back to identity on API error", async () => {
-      // With no OPENAI_API_KEY and no OLLAMA_HOST, the consolidator throws and falls back
-      const savedKey = process.env.OPENAI_API_KEY;
-      const savedHost = process.env.OLLAMA_HOST;
-      delete process.env.OPENAI_API_KEY;
-      delete process.env.OLLAMA_HOST;
-      try {
-        const result = await consolidateCategories(["CLI Tools", "Vector Databases"], []);
-        assertEqual(
-          result.remapping.get("CLI Tools"),
-          "CLI Tools",
-          "identity fallback for CLI Tools",
-        );
-        assertEqual(
-          result.remapping.get("Vector Databases"),
-          "Vector Databases",
-          "identity fallback for VDB",
-        );
-        assertEqual(result.mergeWarnings.length, 0, "no warnings on fallback");
-      } finally {
-        if (savedKey !== undefined) process.env.OPENAI_API_KEY = savedKey;
-        if (savedHost !== undefined) process.env.OLLAMA_HOST = savedHost;
-      }
+    test("consolidateCategories: falls back to identity on provider error", async () => {
+      const result = await consolidateCategories(
+        ["CLI Tools", "Vector Databases"],
+        makeThrowingProvider(),
+        [],
+      );
+      assertEqual(
+        result.remapping.get("CLI Tools"),
+        "CLI Tools",
+        "identity fallback for CLI Tools",
+      );
+      assertEqual(
+        result.remapping.get("Vector Databases"),
+        "Vector Databases",
+        "identity fallback for VDB",
+      );
+      assert(result.mergeWarnings.length > 0, "warning present on fallback");
     }),
   );
 
@@ -174,35 +179,35 @@ function runTests() {
 
   tests.push(
     test("rerouteOrphanRepos: returns null map when no orphans provided", async () => {
-      const result = await rerouteOrphanRepos([], ["HTTP Clients", "CLI Tools"]);
+      const result = await rerouteOrphanRepos(
+        [],
+        ["HTTP Clients", "CLI Tools"],
+        makeThrowingProvider(),
+      );
       assertEqual(result.size, 0, "empty map for empty orphans");
     }),
   );
 
   tests.push(
     test("rerouteOrphanRepos: returns null map when no available targets", async () => {
-      const result = await rerouteOrphanRepos([{ category: "Rust HTTP Client" }], []);
+      const result = await rerouteOrphanRepos(
+        [{ category: "Rust HTTP Client" }],
+        [],
+        makeThrowingProvider(),
+      );
       assertEqual(result.get("Rust HTTP Client"), null, "null when no targets");
     }),
   );
 
   tests.push(
-    test("rerouteOrphanRepos: falls back to null map on API error (no credentials)", async () => {
-      const savedKey = process.env.OPENAI_API_KEY;
-      const savedHost = process.env.OLLAMA_HOST;
-      delete process.env.OPENAI_API_KEY;
-      delete process.env.OLLAMA_HOST;
-      try {
-        const result = await rerouteOrphanRepos(
-          [{ category: "Rust HTTP Client" }, { category: "Go CLI Tool" }],
-          ["HTTP Clients", "CLI Tools"],
-        );
-        assertEqual(result.get("Rust HTTP Client"), null, "null fallback for first orphan");
-        assertEqual(result.get("Go CLI Tool"), null, "null fallback for second orphan");
-      } finally {
-        if (savedKey !== undefined) process.env.OPENAI_API_KEY = savedKey;
-        if (savedHost !== undefined) process.env.OLLAMA_HOST = savedHost;
-      }
+    test("rerouteOrphanRepos: falls back to null map on provider error", async () => {
+      const result = await rerouteOrphanRepos(
+        [{ category: "Rust HTTP Client" }, { category: "Go CLI Tool" }],
+        ["HTTP Clients", "CLI Tools"],
+        makeThrowingProvider(),
+      );
+      assertEqual(result.get("Rust HTTP Client"), null, "null fallback for first orphan");
+      assertEqual(result.get("Go CLI Tool"), null, "null fallback for second orphan");
     }),
   );
 

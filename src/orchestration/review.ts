@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import { consolidateCategories } from "../ai/consolidator.js";
+import { consolidateCategories, rerouteOrphanRepos } from "./consolidationCoordinator.js";
 import { generateSuggestions } from "../engine/suggestionEngine.js";
 import type { AnalyzedRepo, ReroutedRepo } from "../engine/suggestionEngine.js";
 import { generateSessionId } from "../ai/tracing.js";
@@ -11,6 +11,7 @@ import { buildSessionJson } from "../session/json.js";
 import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
+import type { AIProvider } from "../ai/types.js";
 
 export interface ReviewPhaseResult {
   suggestions: Suggestion[];
@@ -38,6 +39,7 @@ export interface ReviewPhaseParams {
   analysisStartTime: number;
   analysisErrorCount: number;
   login: string;
+  provider: AIProvider;
 }
 
 // Returns only if the user confirmed to apply changes; otherwise calls process.exit()
@@ -58,6 +60,7 @@ export async function runReviewPhase({
   analysisStartTime,
   analysisErrorCount,
   login,
+  provider,
 }: ReviewPhaseParams): Promise<ReviewPhaseResult> {
   // Consolidate proposed new category names to reduce list proliferation
   setPhase({ tag: "consolidating" });
@@ -71,6 +74,7 @@ export async function runReviewPhase({
   ];
   const { remapping, mergeWarnings } = await consolidateCategories(
     newCategoryNames,
+    provider,
     existingListNames.map((name) => ({ name, topics: [] })),
     undefined,
     strategy,
@@ -83,10 +87,16 @@ export async function runReviewPhase({
 
   const sessionRunId = generateSessionId();
 
+  const boundReroute = (
+    orphans: { category: string }[],
+    availableTargets: string[],
+    parent?: Parameters<typeof rerouteOrphanRepos>[3],
+  ) => rerouteOrphanRepos(orphans, availableTargets, provider, parent);
+
   const { suggestions, count, reroutedRepos } = await generateSuggestions(
     analyzedRepos,
     lists,
-    undefined,
+    boundReroute,
     strategy,
     scopeMode,
     trace,
