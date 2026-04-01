@@ -95,6 +95,8 @@ export async function runApplyPhase({
     scope: scopeMode,
   });
 
+  track("run_completed", { interrupted: false, scope: scopeMode, strategy, modelId });
+
   // Wait briefly for TUI to render final state
   await new Promise((resolve) => setTimeout(resolve, 500));
 

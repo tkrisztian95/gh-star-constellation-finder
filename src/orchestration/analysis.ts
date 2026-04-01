@@ -170,6 +170,7 @@ export async function handleInterrupt({
       scope: scopeMode,
       strategy,
     });
+    track("run_completed", { interrupted: true, scope: scopeMode, strategy, modelId });
     await analyticsShutdown();
     unmount();
     process.exit(0);
@@ -193,6 +194,7 @@ export async function handleInterrupt({
       scope: scopeMode,
       strategy,
     });
+    track("run_completed", { interrupted: true, scope: scopeMode, strategy, modelId });
     await analyticsShutdown();
     unmount();
     process.exit(0);
@@ -209,6 +211,7 @@ export async function handleInterrupt({
       scope: scopeMode,
       strategy,
     });
+    track("run_completed", { interrupted: true, scope: scopeMode, strategy, modelId });
     const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
     const newCategoryNames = [
       ...new Set(

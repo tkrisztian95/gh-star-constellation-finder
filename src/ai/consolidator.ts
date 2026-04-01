@@ -1,5 +1,9 @@
 import OpenAI from "openai";
-import { buildConsolidationPrompt, buildReroutingPrompt } from "./prompts.js";
+import {
+  buildConsolidationPrompt,
+  buildLanguageQualifierPrompt,
+  buildReroutingPrompt,
+} from "./prompts.js";
 import type { ExistingListContext } from "./prompts.js";
 import type { ConsolidationResult } from "./types.js";
 import type { ConsolidationStrategy } from "../types.js";
@@ -16,7 +20,14 @@ function identityResult(names: string[]): ConsolidationResult {
 }
 
 function parseRemapping(json: string, proposedNames: string[]): Map<string, string> {
-  const raw = JSON.parse(json) as Record<string, unknown>;
+  // Strip BOM, leading/trailing whitespace, and optional markdown fences that
+  // some models (or Bun's stricter JSC JSON.parse) would otherwise reject.
+  const sanitized = json
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/```\s*$/, "");
+  const raw = JSON.parse(sanitized) as Record<string, unknown>;
   const result = new Map<string, string>();
   for (const name of proposedNames) {
     const mapped = raw[name];
@@ -198,6 +209,7 @@ async function consolidateViaOllama(
       body: JSON.stringify({
         model,
         stream: false,
+        options: { num_ctx: 8192 },
         messages: [{ role: "user", content: prompt }],
       }),
     });
@@ -275,6 +287,82 @@ function buildResult(
   };
 }
 
+async function runDeduplicationPass(
+  proposedNames: string[],
+  useOllama: boolean,
+  parent?: LangfuseTrace | null,
+): Promise<Map<string, string>> {
+  const prompt = buildLanguageQualifierPrompt(proposedNames);
+
+  let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+  try {
+    if (parent) {
+      const model = useOllama ? "llama3" : "gpt-4o-mini";
+      generation = parent.generation({
+        name: "deduplicate-language-qualifiers",
+        model,
+        input: [{ role: "user", content: prompt }],
+      });
+    }
+  } catch {
+    // tracing errors must not affect deduplication
+  }
+
+  try {
+    let content: string;
+
+    if (useOllama) {
+      const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
+      const response = await fetch(`${host}/api/chat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: "llama3",
+          stream: false,
+          options: { num_ctx: 8192 },
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (!response.ok) throw new Error(`Ollama error: HTTP ${response.status}`);
+      const body = (await response.json()) as { message?: { content?: string } };
+      const raw = body.message?.content ?? "{}";
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      content = jsonMatch ? jsonMatch[0] : raw;
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new Error("OPENAI_API_KEY not set");
+      const client = new OpenAI({ apiKey });
+      const completion = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }],
+      });
+      content = completion.choices[0]?.message?.content ?? "{}";
+    }
+
+    try {
+      if (generation) generation.end({ output: content });
+    } catch {
+      // tracing errors must not affect deduplication
+    }
+
+    return parseRemapping(content, proposedNames);
+  } catch (err) {
+    try {
+      if (generation) {
+        generation.end({
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } catch {
+      // tracing errors must not affect deduplication
+    }
+    // Safe fallback: pass all names through unchanged; pass 2 will still run
+    return new Map(proposedNames.map((n) => [n, n]));
+  }
+}
+
 export async function consolidateCategories(
   proposedNames: string[],
   existingLists: ExistingListContext[] = [],
@@ -292,21 +380,39 @@ export async function consolidateCategories(
   const useOllama = !process.env.OPENAI_API_KEY && !!process.env.OLLAMA_HOST;
 
   try {
-    return useOllama
+    // Pass 1: merge language/platform qualifier variants only (no budget pressure)
+    const pass1Map = await runDeduplicationPass(proposedNames, useOllama, parent);
+    const deduplicatedNames = [...new Set(proposedNames.map((n) => pass1Map.get(n) ?? n))];
+
+    // Pass 2: budget-aware consolidation on the reduced set
+    const pass2Result = useOllama
       ? await consolidateViaOllama(
-          proposedNames,
+          deduplicatedNames,
           effectiveExistingLists,
           effectiveMaxLists,
           strategy,
           parent,
         )
       : await consolidateViaOpenAI(
-          proposedNames,
+          deduplicatedNames,
           effectiveExistingLists,
           effectiveMaxLists,
           strategy,
           parent,
         );
+
+    // Compose: original → pass1 deduped → pass2 final
+    const composedRemapping = new Map<string, string>();
+    for (const name of proposedNames) {
+      const deduped = pass1Map.get(name) ?? name;
+      const final = pass2Result.remapping.get(deduped) ?? deduped;
+      composedRemapping.set(name, final);
+    }
+
+    return {
+      remapping: composedRemapping,
+      mergeWarnings: [...buildMergeWarnings(pass1Map, proposedNames), ...pass2Result.mergeWarnings],
+    };
   } catch (err) {
     const warning = `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`;
     const result = identityResult(proposedNames);
@@ -377,6 +483,7 @@ export async function rerouteOrphanRepos(
         body: JSON.stringify({
           model,
           stream: false,
+          options: { num_ctx: 8192 },
           messages: [{ role: "user", content: prompt }],
         }),
       });
