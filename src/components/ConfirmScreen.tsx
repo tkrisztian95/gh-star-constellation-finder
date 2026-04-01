@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 
 interface ConfirmScreenProps {
   repoCount: number;
+  listCount: number;
   login: string;
   onConfirm: (proceed: boolean) => void;
   showAnalyticsNotice?: boolean;
@@ -10,6 +11,7 @@ interface ConfirmScreenProps {
 
 export function ConfirmScreen({
   repoCount,
+  listCount,
   login,
   onConfirm,
   showAnalyticsNotice,
@@ -26,7 +28,11 @@ export function ConfirmScreen({
         <Text bold color="cyan">
           {repoCount}
         </Text>{" "}
-        starred repo{repoCount !== 1 ? "s" : ""} for{" "}
+        starred repo{repoCount !== 1 ? "s" : ""} and{" "}
+        <Text bold color="cyan">
+          {listCount}
+        </Text>{" "}
+        list{listCount !== 1 ? "s" : ""} for{" "}
         <Text bold color="magenta">
           @{login}
         </Text>

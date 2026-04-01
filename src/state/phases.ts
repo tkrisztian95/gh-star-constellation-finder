@@ -5,9 +5,15 @@ import type { MutationResult } from "../github/mutator.js";
 
 export type AppPhase =
   | { tag: "fetching-initial" }
-  | { tag: "confirm"; repoCount: number; login: string; showAnalyticsNotice: boolean }
+  | {
+      tag: "confirm";
+      repoCount: number;
+      listCount: number;
+      login: string;
+      showAnalyticsNotice: boolean;
+    }
   | { tag: "pick-scope" }
-  | { tag: "pick-strategy"; scopeMode: ScopeMode }
+  | { tag: "pick-strategy"; scopeMode: ScopeMode; hasLists: boolean }
   | { tag: "fetching"; filterLabel?: string }
   | {
       tag: "analyzing";
