@@ -317,7 +317,7 @@ async function runDeduplicationPass(
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          model: "llama3",
+          model: process.env.OLLAMA_MODEL ?? "llama3",
           stream: false,
           options: { num_ctx: 8192 },
           messages: [{ role: "user", content: prompt }],
@@ -333,7 +333,7 @@ async function runDeduplicationPass(
       if (!apiKey) throw new Error("OPENAI_API_KEY not set");
       const client = new OpenAI({ apiKey });
       const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
         response_format: { type: "json_object" },
         messages: [{ role: "user", content: prompt }],
       });
@@ -514,7 +514,7 @@ export async function rerouteOrphanRepos(
       if (!apiKey) throw new Error("OPENAI_API_KEY not set");
       const client = new OpenAI({ apiKey });
       const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
         response_format: { type: "json_object" },
         messages: [{ role: "user", content: prompt }],
       });
