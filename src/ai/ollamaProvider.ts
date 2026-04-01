@@ -1,21 +1,33 @@
 import type { LangfuseTrace } from "./tracing.js";
 import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
-import { buildSystemPrompt, buildUserMessage } from "./prompts.js";
+import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
+import {
+  endGenerationSafe,
+  parseOllamaResponseBody,
+  ANALYSIS_FAILED_RESULT,
+  type OllamaResponse,
+} from "./ollamaUtils.js";
 
+/**
+ * Creates an Ollama AIProvider instance.
+ * @param model - Model name (default: env OLLAMA_MODEL or 'llama3')
+ * @param trace - Optional LangfuseTrace for tracing
+ * @param host - Ollama host (default: env OLLAMA_HOST or 'http://localhost:11434')
+ */
 export function createOllamaProvider(
-  model = process.env.OLLAMA_MODEL ?? "llama3",
+  model: string = process.env.OLLAMA_MODEL ?? "llama3",
   trace?: LangfuseTrace | null,
+  host: string = process.env.OLLAMA_HOST ?? "http://localhost:11434",
 ): AIProvider {
-  const host = process.env.OLLAMA_HOST ?? "http://localhost:11434";
-
   return {
     modelId: `ollama/${model}`,
 
     async analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult> {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
-      const userMessage = buildUserMessage(input);
+      const userMessage = buildAnalyzeRepoPrompt(input);
 
+      // Start tracing if enabled
       let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
       try {
         if (trace) {
@@ -32,6 +44,7 @@ export function createOllamaProvider(
         // tracing errors must not affect analysis
       }
 
+      // Make Ollama API call
       let response: Response;
       try {
         response = await fetch(`${host}/api/chat`, {
@@ -50,48 +63,37 @@ export function createOllamaProvider(
       } catch (error: unknown) {
         if (signal?.aborted) throw error;
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`Ollama unreachable for ${input.owner}/${input.name}: ${message}`);
-        try {
-          if (generation) generation.end({ level: "ERROR", statusMessage: message });
-        } catch {
-          // tracing errors must not affect analysis
+        // Use robust logging if available, fallback to console
+        if (typeof console !== "undefined") {
+          console.error(`Ollama unreachable for ${input.owner}/${input.name}: ${message}`);
         }
-        return { category: "analysis-failed", killerFeature: "" };
+        endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
+        return ANALYSIS_FAILED_RESULT;
       }
 
       if (!response.ok) {
         const message = `HTTP ${response.status}`;
-        console.error(`Ollama error for ${input.owner}/${input.name}: ${message}`);
-        try {
-          if (generation) generation.end({ level: "ERROR", statusMessage: message });
-        } catch {
-          // tracing errors must not affect analysis
+        if (typeof console !== "undefined") {
+          console.error(`Ollama error for ${input.owner}/${input.name}: ${message}`);
         }
-        return { category: "analysis-failed", killerFeature: "" };
+        endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
+        return ANALYSIS_FAILED_RESULT;
       }
 
-      const body = (await response.json()) as {
-        message?: { content?: string };
-        prompt_eval_count?: number;
-        eval_count?: number;
-      };
-      const content = body.message?.content ?? "";
+      // Parse response body with type safety
+      const body = (await response.json()) as OllamaResponse;
+      const content = parseOllamaResponseBody(body);
 
-      try {
-        if (generation) {
-          generation.end({
-            output: content,
-            usage:
-              body.prompt_eval_count !== undefined
-                ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
-                : undefined,
-          });
-        }
-      } catch {
-        // tracing errors must not affect analysis
-      }
+      // End tracing with output/usage if enabled
+      endGenerationSafe(generation, {
+        output: content,
+        usage:
+          body.prompt_eval_count !== undefined
+            ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
+            : undefined,
+      });
 
-      return parseAnalysisResponse(content, "analysis-failed");
+      return parseAnalysisResponse(content, ANALYSIS_FAILED_RESULT.category);
     },
 
     async complete(
@@ -99,6 +101,7 @@ export function createOllamaProvider(
       generationName: string,
       parent?: LangfuseTrace | null,
     ): Promise<string> {
+      // Start tracing if enabled
       let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
       try {
         if (parent) {
@@ -112,6 +115,7 @@ export function createOllamaProvider(
         // tracing errors must not affect consolidation
       }
 
+      // Make Ollama API call (with options for context window)
       let response: Response;
       try {
         response = await fetch(`${host}/api/chat`, {
@@ -125,51 +129,31 @@ export function createOllamaProvider(
           }),
         });
       } catch (err: unknown) {
-        try {
-          if (generation) {
-            generation.end({
-              level: "ERROR",
-              statusMessage: err instanceof Error ? err.message : String(err),
-            });
-          }
-        } catch {
-          // tracing errors must not affect consolidation
-        }
+        endGenerationSafe(generation, {
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
         throw err;
       }
 
       if (!response.ok) {
         const message = `HTTP ${response.status}`;
-        try {
-          if (generation) generation.end({ level: "ERROR", statusMessage: message });
-        } catch {
-          // tracing errors must not affect consolidation
-        }
+        endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
         throw new Error(`Ollama consolidation error: ${message}`);
       }
 
-      const body = (await response.json()) as {
-        message?: { content?: string };
-        prompt_eval_count?: number;
-        eval_count?: number;
-      };
-      const raw = body.message?.content ?? "{}";
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const content = jsonMatch ? jsonMatch[0] : raw;
+      // Parse response body with type safety
+      const body = (await response.json()) as OllamaResponse;
+      const content = parseOllamaResponseBody(body);
 
-      try {
-        if (generation) {
-          generation.end({
-            output: content,
-            usage:
-              body.prompt_eval_count !== undefined
-                ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
-                : undefined,
-          });
-        }
-      } catch {
-        // tracing errors must not affect consolidation
-      }
+      // End tracing with output/usage if enabled
+      endGenerationSafe(generation, {
+        output: content,
+        usage:
+          body.prompt_eval_count !== undefined
+            ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
+            : undefined,
+      });
 
       return content;
     },

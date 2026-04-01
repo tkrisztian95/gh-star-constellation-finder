@@ -4,13 +4,15 @@
   "description": "AI-powered TUI to organize GitHub stars into native lists.",
   "type": "module",
   "scripts": {
+    "build": "bun build src/index.tsx --target=bun",
     "start": "bun run src/index.tsx",
     "dev": "bun run src/index.tsx",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
