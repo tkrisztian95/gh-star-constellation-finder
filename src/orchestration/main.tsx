@@ -9,7 +9,7 @@ import {
   generateSessionId,
   flushTracing,
 } from "../ai/tracing.js";
-import type { Repo } from "../types.js";
+import type { Repo, ScopeMode, ConsolidationStrategy } from "../types.js";
 import { readConfig, writeConfig, ensureAnalyticsId } from "../config.js";
 import { initAnalytics, track, shutdown as analyticsShutdown } from "../analytics.js";
 
@@ -113,7 +113,13 @@ export async function main() {
 
   // Confirm → scope → strategy
   const showAnalyticsNotice = !analyticsOptOut && !config.analyticsNoticeSeen;
-  tui.setPhase({ tag: "confirm", repoCount: repos.length, login, showAnalyticsNotice });
+  tui.setPhase({
+    tag: "confirm",
+    repoCount: repos.length,
+    listCount: lists.length,
+    login,
+    showAnalyticsNotice,
+  });
   if (showAnalyticsNotice) writeConfig({ analyticsNoticeSeen: true });
   const proceed = await tui.confirmPromise;
   if (!proceed) {
@@ -123,8 +129,13 @@ export async function main() {
     process.exit(0);
   }
 
-  tui.setPhase({ tag: "pick-scope" });
-  const scopeMode = await tui.scopePromise;
+  let scopeMode: ScopeMode;
+  if (lists.length > 0) {
+    tui.setPhase({ tag: "pick-scope" });
+    scopeMode = await tui.scopePromise;
+  } else {
+    scopeMode = "all";
+  }
 
   const filteredRepos =
     scopeMode === "unlisted-only" ? repos.filter((r) => r.listIds.length === 0) : repos;
@@ -140,8 +151,13 @@ export async function main() {
     process.exit(0);
   }
 
-  tui.setPhase({ tag: "pick-strategy", scopeMode });
-  const strategy = await tui.strategyPromise;
+  let strategy: ConsolidationStrategy;
+  if (lists.length > 0) {
+    tui.setPhase({ tag: "pick-strategy", scopeMode, hasLists: true });
+    strategy = await tui.strategyPromise;
+  } else {
+    strategy = "keep-existing";
+  }
 
   track("analysis_started", {
     scope: scopeMode,

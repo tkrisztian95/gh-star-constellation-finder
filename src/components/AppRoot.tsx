@@ -95,6 +95,7 @@ export function App({
       {phase.tag === "confirm" && (
         <ConfirmScreen
           repoCount={phase.repoCount}
+          listCount={phase.listCount}
           login={phase.login}
           onConfirm={onConfirm}
           showAnalyticsNotice={phase.showAnalyticsNotice}
@@ -104,7 +105,11 @@ export function App({
       {phase.tag === "pick-scope" && <ScopeScreen onSelect={onScopeSelect} />}
 
       {phase.tag === "pick-strategy" && (
-        <StrategyScreen onSelect={onStrategySelect} scopeMode={phase.scopeMode} />
+        <StrategyScreen
+          onSelect={onStrategySelect}
+          scopeMode={phase.scopeMode}
+          hasLists={phase.hasLists}
+        />
       )}
 
       {phase.tag === "fetching" && (

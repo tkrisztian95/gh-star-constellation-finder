@@ -50,7 +50,11 @@ export function LoadingScreen({
       {phase === "fetching" ? (
         <Text>
           <Text color="yellow">{spinner} </Text>
-          <Text>Fetching starred repositories...</Text>
+          <Text>
+            {total === 0
+              ? "Fetching starred repositories and lists..."
+              : "Fetching starred repositories..."}
+          </Text>
         </Text>
       ) : stopping ? (
         <Text>
