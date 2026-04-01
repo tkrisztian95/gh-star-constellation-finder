@@ -154,8 +154,17 @@ DO NOT MERGE WHEN
 - Merging would require a vague umbrella name
 - You are uncertain — map each to itself
 
+OUTPUT COMPLETENESS
+- Every key in the input array must appear exactly once in the output JSON. No omissions.
+- The output must contain exactly ${proposedNames.length} keys.
+- Do NOT use "...", ellipsis, or any placeholder to abbreviate the output. Every entry must be written out in full.
+- Do NOT wrap the output in markdown code fences or add any prose before or after the JSON object.
+- The output must be parseable by JSON.parse() without any modification.
+
 PROCESS
-Before writing JSON, mentally group the names by domain. If distribution context is available, flag categories with ≤3 repos — these are the first candidates for absorption into semantically related larger categories, especially under budget pressure. When merging, use the higher-count group's name as the canonical name unless the lower-count group's name is strictly more specific. Verify the number of distinct new names does not exceed ${budget}. Then produce the mapping.
+Before writing JSON, mentally group the names by domain. If distribution context is available, flag categories with ≤3 repos — these are the first candidates for absorption into semantically related larger categories, especially under budget pressure. When merging, use the higher-count group's name as the canonical name unless the lower-count group's name is strictly more specific. Verify the number of distinct new canonical names does not exceed ${budget}.
+Before writing the JSON, count how many keys the input array contains and confirm it equals ${proposedNames.length}. After writing the JSON, count how many keys your output contains and confirm it also equals ${proposedNames.length}. If either count is wrong, fix it before returning.
+Then produce the mapping.
 
 EXAMPLES
 
