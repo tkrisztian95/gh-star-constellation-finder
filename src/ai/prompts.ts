@@ -100,6 +100,10 @@ export function buildConsolidationPrompt(
   const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
   const existingCount = existingLists.length;
   const budget = maxLists - existingCount;
+  const compressionInfo =
+    budget > 0 && proposedNames.length > budget
+      ? ` (~${Math.ceil(proposedNames.length / budget)}:1 compression)`
+      : "";
   const existingSection =
     existingCount > 0
       ? existingLists
@@ -122,7 +126,7 @@ Map every proposed name to a canonical name. Names that cover the same concrete 
 
 LIST BUDGET
 The developer already has ${existingCount} GitHub list(s). GitHub enforces a hard limit of ${maxLists} lists total.
-You may produce at most ${budget} distinct new canonical name(s) in your output.
+You are consolidating ${proposedNames.length} input(s) into at most ${budget} distinct new canonical name(s)${compressionInfo}.
 If the proposed names would result in more than ${budget} distinct new names, merge the least-specific categories into broader ones until you are within budget.
 Prefer merging new proposals over inventing vague umbrella names. When merging, prefer the more specific surviving name.
 Do NOT produce a canonical name that is semantically identical to an existing list.
@@ -178,6 +182,58 @@ Output: {
   "Terminal Emulators": "Terminal Emulators",
   "Shell Dotfiles": "Shell Dotfiles",
   "CSS Animation Libraries": "CSS Animation Libraries"
+}
+
+NOW PROCESS THIS INPUT
+[${nameList}]
+
+Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
+}
+
+export function buildLanguageQualifierPrompt(proposedNames: string[]): string {
+  const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
+  return `You are a technical librarian deduplicating GitHub List category names.
+
+TASK
+Map every proposed name to a canonical name. Merge names ONLY when two or more of them share the same underlying technical domain AND differ only by a language, runtime, framework, or platform qualifier. All other names must map to themselves exactly.
+
+QUALIFIER EXAMPLES
+Language: Rust, Go, Python, Java, JavaScript, TypeScript, Ruby, PHP, C#, Swift, Kotlin, Clojure, Elixir, Haskell
+Runtime/platform: Node, Docker, Spring, Spring Boot, React, Vue, Angular, Next.js, Kubernetes, AWS, Rails, Bash, PowerShell
+
+MERGE WHEN
+- Two or more names share a domain and differ only by qualifier: "Rust CLI Tools" + "Go CLI Tools" + "Python CLI Scripts" → "CLI Tools"
+- A qualifier-prefixed name and a bare name cover the same domain: "Docker Container Orchestration" + "Container Orchestration" → "Container Orchestration"
+
+DO NOT MERGE WHEN
+- Only one name exists for that domain — leave it as-is (never strip a qualifier from a singleton)
+- The qualifier is the defining trait: "Rust Memory Management", "Java Garbage Collection" stay as-is
+- Names cover different domains despite a shared qualifier: "Docker CLI Tools" and "Docker Networking" are different domains
+- You are uncertain — map to itself
+
+RULES
+- Every input name must appear exactly once as a key
+- Do not invent canonical names not derivable from the inputs themselves
+- Do not merge based on semantic similarity — only merge on qualifier patterns
+
+EXAMPLES
+
+Input: "Rust CLI Tools", "Go CLI Tools", "Python CLI Scripts", "GraphQL Clients", "REST Clients", "Docker Networking"
+Output: {
+  "Rust CLI Tools": "CLI Tools",
+  "Go CLI Tools": "CLI Tools",
+  "Python CLI Scripts": "CLI Tools",
+  "GraphQL Clients": "GraphQL Clients",
+  "REST Clients": "REST Clients",
+  "Docker Networking": "Docker Networking"
+}
+
+Input: "Kubernetes Cluster Management", "Container Orchestration", "Java Frameworks", "Spring Boot Frameworks"
+Output: {
+  "Kubernetes Cluster Management": "Kubernetes Cluster Management",
+  "Container Orchestration": "Container Orchestration",
+  "Java Frameworks": "Java Frameworks",
+  "Spring Boot Frameworks": "Spring Boot Frameworks"
 }
 
 NOW PROCESS THIS INPUT
