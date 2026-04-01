@@ -8,6 +8,34 @@
 
 `gh-star-constellation-finder` is an AI-powered Terminal User Interface (TUI) designed to rescue your GitHub stars from the "void." It analyzes your repositories using local or OpenAI models, proposing smart categorizations for your **native GitHub lists** based on actual code intent, health, and project depth.
 
+## How it Works
+
+```mermaid
+flowchart TD
+    A([Start]) --> B[Authenticate\nGitHub PAT]
+    B --> C[Fetch Starred Repos\n& Existing Lists]
+    C --> D{Mode?}
+
+    D -->|Interactive| E[Choose Scope & Strategy\nTUI prompt]
+    D -->|--analyze-only| F[Skip TUI setup]
+
+    E & F --> G[Fetch READMEs\nconcurrently]
+    G --> H[AI Analysis\nper repo in parallel]
+    H --> I[Category Consolidation\ndedup + budget enforcement]
+    I --> J[Generate Suggestions\ncreate / move / rename / delete]
+
+    J --> K{Mode?}
+
+    K -->|--analyze-only| L[(JSON Output\nstdout or file)]
+    K -->|Interactive| M[Review Suggestions\naccept / skip / reject each]
+
+    M --> N[Summary Preview\ndiff of accepted changes]
+    N --> O[Apply to GitHub\nGraphQL mutations]
+    O --> P[Save Session JSON\noptional]
+
+    P & L --> Z([Done])
+```
+
 ## ✨ Key Features
 
 * **TUI-First Experience:** A beautiful, keyboard-driven interface built with [Ink](https://github.com/vadimdemedes/ink).
