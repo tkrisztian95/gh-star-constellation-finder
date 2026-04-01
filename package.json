@@ -13,6 +13,7 @@
     "format:check": "prettier --check src",
     "prepare": "husky",
     "typecheck": "tsc --noEmit"
+    ,"test": "bun run src/__tests__/*.test.ts"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
