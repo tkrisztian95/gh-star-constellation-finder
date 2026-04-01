@@ -1,4 +1,8 @@
-import { buildUserMessage, buildConsolidationPrompt, buildReroutingPrompt } from "../ai/prompts.js";
+import {
+  buildAnalyzeRepoPrompt,
+  buildConsolidationPrompt,
+  buildReroutingPrompt,
+} from "../ai/prompts.js";
 import type { RepoInput } from "../ai/types.js";
 
 function makeInput(overrides: Partial<RepoInput> = {}): RepoInput {
@@ -36,12 +40,12 @@ function runTests() {
   console.log("prompts tests\n");
 
   test("buildUserMessage includes Archived: no for active repos", () => {
-    const msg = buildUserMessage(makeInput({ isArchived: false }));
+    const msg = buildAnalyzeRepoPrompt(makeInput({ isArchived: false }));
     assert(msg.includes("Archived: no"), 'should contain "Archived: no"');
   });
 
   test("buildUserMessage includes Archived: yes for archived repos", () => {
-    const msg = buildUserMessage(makeInput({ isArchived: true }));
+    const msg = buildAnalyzeRepoPrompt(makeInput({ isArchived: true }));
     assert(msg.includes("Archived: yes"), 'should contain "Archived: yes"');
   });
 

@@ -60,7 +60,7 @@ Common false matches to avoid:
 ${nameList}`;
 }
 
-export function buildUserMessage(input: RepoInput): string {
+export function buildAnalyzeRepoPrompt(input: RepoInput): string {
   const readmeContent = input.readme?.trim() ?? "";
   const readmeLength = readmeContent.length;
 
@@ -239,6 +239,11 @@ RULES
 - Do not invent canonical names not derivable from the inputs themselves
 - Do not merge based on semantic similarity — only merge on qualifier patterns
 
+OUTPUT COMPLETENESS
+- Do NOT use "...", ellipsis, or any placeholder to abbreviate the output. Every entry must be written out in full.
+- Do NOT wrap the output in markdown code fences or add any prose before or after the JSON object.
+- The output must be parseable by JSON.parse() without any modification.
+
 EXAMPLES
 
 Input: "Rust CLI Tools", "Go CLI Tools", "Python CLI Scripts", "GraphQL Clients", "REST Clients", "Docker Networking"
@@ -287,6 +292,11 @@ RULES
 - Only map to a target from the AVAILABLE TARGETS list. Do not invent new names.
 - A "reasonable semantic match" means the orphan's domain clearly belongs in the target list (e.g. "Rust HTTP Client" → "HTTP Clients").
 - If in doubt, return null — a dropped suggestion is better than a wrong assignment.
+
+OUTPUT COMPLETENESS
+- Do NOT use "...", ellipsis, or any placeholder to abbreviate the output. Every entry must be written out in full.
+- Do NOT wrap the output in markdown code fences or add any prose before or after the JSON object.
+- The output must be parseable by JSON.parse() without any modification.
 
 Return ONLY a valid JSON object mapping each orphan category to a target list name string, or null. No prose, no markdown, no code fences.`;
 }

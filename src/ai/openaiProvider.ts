@@ -2,16 +2,31 @@ import OpenAI from "openai";
 import type { LangfuseTrace } from "./tracing.js";
 import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
-import { buildSystemPrompt, buildUserMessage } from "./prompts.js";
+import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
+import {
+  endGenerationSafe,
+  parseOpenAIContent,
+  ANALYSIS_FAILED_RESULT,
+  type OpenAICompletion,
+} from "./openaiUtils.js";
 
-export function createOpenAIProvider(trace?: LangfuseTrace | null): AIProvider {
-  const apiKey = process.env.OPENAI_API_KEY;
+/**
+ * Creates an OpenAI AIProvider instance.
+ * @param trace - Optional LangfuseTrace for tracing
+ * @param apiKey - OpenAI API key (default: env OPENAI_API_KEY)
+ * @param model - Model name (default: env OPENAI_MODEL or 'gpt-4o-mini')
+ */
+export function createOpenAIProvider(
+  trace?: LangfuseTrace | null,
+  apiKey: string = process.env.OPENAI_API_KEY!,
+  model: string = process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+): AIProvider {
   if (!apiKey) {
-    console.error("Error: OPENAI_API_KEY is required for the openai backend");
+    if (typeof console !== "undefined") {
+      console.error("Error: OPENAI_API_KEY is required for the openai backend");
+    }
     process.exit(1);
   }
-
-  const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
   const client = new OpenAI({ apiKey });
 
   return {
@@ -19,8 +34,9 @@ export function createOpenAIProvider(trace?: LangfuseTrace | null): AIProvider {
 
     async analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult> {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
-      const userMessage = buildUserMessage(input);
+      const userMessage = buildAnalyzeRepoPrompt(input);
 
+      // Start tracing if enabled
       let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
       try {
         if (trace) {
@@ -37,9 +53,10 @@ export function createOpenAIProvider(trace?: LangfuseTrace | null): AIProvider {
         // tracing errors must not affect analysis
       }
 
-      let completion: Awaited<ReturnType<typeof client.chat.completions.create>>;
+      // Make OpenAI API call
+      let completion: OpenAICompletion;
       try {
-        completion = await client.chat.completions.create(
+        completion = (await client.chat.completions.create(
           {
             model,
             response_format: { type: "json_object" },
@@ -49,40 +66,29 @@ export function createOpenAIProvider(trace?: LangfuseTrace | null): AIProvider {
             ],
           },
           { signal },
-        );
+        )) as OpenAICompletion;
       } catch (err: unknown) {
-        try {
-          if (generation) {
-            generation.end({
-              level: "ERROR",
-              statusMessage: err instanceof Error ? err.message : String(err),
-            });
-          }
-        } catch {
-          // tracing errors must not affect analysis
-        }
+        endGenerationSafe(generation, {
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
         throw err;
       }
 
-      const content = completion.choices[0]?.message?.content ?? "";
+      const content = parseOpenAIContent(completion);
 
-      try {
-        if (generation) {
-          generation.end({
-            output: content,
-            usage: completion.usage
-              ? {
-                  input: completion.usage.prompt_tokens,
-                  output: completion.usage.completion_tokens,
-                }
-              : undefined,
-          });
-        }
-      } catch {
-        // tracing errors must not affect analysis
-      }
+      // End tracing with output/usage if enabled
+      endGenerationSafe(generation, {
+        output: content,
+        usage: completion.usage
+          ? {
+              input: completion.usage.prompt_tokens,
+              output: completion.usage.completion_tokens,
+            }
+          : undefined,
+      });
 
-      return parseAnalysisResponse(content);
+      return parseAnalysisResponse(content, ANALYSIS_FAILED_RESULT.category);
     },
 
     async complete(
@@ -90,6 +96,7 @@ export function createOpenAIProvider(trace?: LangfuseTrace | null): AIProvider {
       generationName: string,
       parent?: LangfuseTrace | null,
     ): Promise<string> {
+      // Start tracing if enabled
       let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
       try {
         if (parent) {
@@ -103,44 +110,34 @@ export function createOpenAIProvider(trace?: LangfuseTrace | null): AIProvider {
         // tracing errors must not affect consolidation
       }
 
-      let completion: Awaited<ReturnType<typeof client.chat.completions.create>>;
+      // Make OpenAI API call
+      let completion: OpenAICompletion;
       try {
-        completion = await client.chat.completions.create({
+        completion = (await client.chat.completions.create({
           model,
           response_format: { type: "json_object" },
           messages: [{ role: "user", content: prompt }],
-        });
+        })) as OpenAICompletion;
       } catch (err: unknown) {
-        try {
-          if (generation) {
-            generation.end({
-              level: "ERROR",
-              statusMessage: err instanceof Error ? err.message : String(err),
-            });
-          }
-        } catch {
-          // tracing errors must not affect consolidation
-        }
+        endGenerationSafe(generation, {
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
         throw err;
       }
 
-      const content = completion.choices[0]?.message?.content ?? "{}";
+      const content = parseOpenAIContent(completion) || "{}";
 
-      try {
-        if (generation) {
-          generation.end({
-            output: content,
-            usage: completion.usage
-              ? {
-                  input: completion.usage.prompt_tokens,
-                  output: completion.usage.completion_tokens,
-                }
-              : undefined,
-          });
-        }
-      } catch {
-        // tracing errors must not affect consolidation
-      }
+      // End tracing with output/usage if enabled
+      endGenerationSafe(generation, {
+        output: content,
+        usage: completion.usage
+          ? {
+              input: completion.usage.prompt_tokens,
+              output: completion.usage.completion_tokens,
+            }
+          : undefined,
+      });
 
       return content;
     },
