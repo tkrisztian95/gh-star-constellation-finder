@@ -3,7 +3,7 @@ import fs from "fs";
 import type { AuthResult } from "../github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "../github/starFetcher.js";
 import { fetchAllReadmes, computeDataQuality } from "../github/readmeFetcher.js";
-import { createAnalyzer, resolveBackend } from "../ai/index.js";
+import { createProvider, resolveBackend } from "../ai/index.js";
 import {
   createLangfuseClient,
   createRunTrace,
@@ -59,7 +59,7 @@ export async function runAnalyzeOnly(
     ? createRunTrace(langfuse, { repoCount: repos.length, backend }, langfuseSessionId)
     : null;
 
-  const analyzer = createAnalyzer(cliArgs.backend, trace);
+  const analyzer = createProvider(cliArgs.backend, trace);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
 

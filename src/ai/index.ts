@@ -1,7 +1,7 @@
 import type { LangfuseTrace } from "./tracing.js";
-import type { Analyzer } from "./types.js";
-import { createOpenAIAnalyzer } from "./openaiAnalyzer.js";
-import { createOllamaAnalyzer } from "./ollamaAnalyzer.js";
+import type { AIProvider } from "./types.js";
+import { createOpenAIProvider } from "./openaiProvider.js";
+import { createOllamaProvider } from "./ollamaProvider.js";
 
 export type Backend = "openai" | "ollama";
 
@@ -9,14 +9,14 @@ export function resolveBackend(backend?: Backend): Backend {
   return backend ?? detectBackend();
 }
 
-export function createAnalyzer(backend?: Backend, trace?: LangfuseTrace | null): Analyzer {
+export function createProvider(backend?: Backend, trace?: LangfuseTrace | null): AIProvider {
   const resolved = resolveBackend(backend);
 
   if (resolved === "ollama") {
-    return createOllamaAnalyzer(undefined, trace);
+    return createOllamaProvider(undefined, trace);
   }
 
-  return createOpenAIAnalyzer(trace);
+  return createOpenAIProvider(trace);
 }
 
 function detectBackend(): Backend {
@@ -25,4 +25,4 @@ function detectBackend(): Backend {
   return "openai";
 }
 
-export type { Analyzer, RepoInput, AnalysisResult } from "./types.js";
+export type { AIProvider, RepoInput, AnalysisResult } from "./types.js";

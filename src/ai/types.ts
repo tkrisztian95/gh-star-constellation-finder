@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { LangfuseTrace } from "./tracing.js";
 
 export const responseSchema = z.object({
   category: z.string(),
@@ -43,12 +44,13 @@ export interface AnalysisResult {
   dataQuality?: "full" | "sparse" | "truncated";
 }
 
-export interface Analyzer {
-  modelId?: string;
-  analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult>;
-}
-
 export interface ConsolidationResult {
   remapping: Map<string, string>;
   mergeWarnings: string[];
+}
+
+export interface AIProvider {
+  modelId: string;
+  analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult>;
+  complete(prompt: string, generationName: string, parent?: LangfuseTrace | null): Promise<string>;
 }
