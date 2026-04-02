@@ -186,7 +186,13 @@ export async function main() {
   const trace = langfuse
     ? createRunTrace(
         langfuse,
-        { repoCount: filteredRepos.length, backend, filter: scopeMode, mode: strategy },
+        {
+          repoCount: filteredRepos.length,
+          listsCount: lists.length,
+          backend,
+          filter: scopeMode,
+          mode: strategy,
+        },
         generateSessionId(),
       )
     : null;

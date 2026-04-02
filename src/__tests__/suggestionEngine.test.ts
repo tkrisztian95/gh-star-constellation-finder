@@ -494,6 +494,73 @@ function runTests() {
     assertEqual(asRenameList(rename!).listId, "l1", "targets the multi-repo list");
   });
 
+  // --- "Other" bucket protection tests ---
+
+  test("Other bucket: single repo assigned to Other is never rerouted", async () => {
+    // "Other" is a singleton but is protected — should produce suggestions, not be dropped
+    const { suggestions, reroutedRepos } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1", name: "odd-repo" }), analysis: makeAnalysis("Other") }],
+      [],
+      nullReroute,
+    );
+    assertEqual(suggestions.length, 1, "Other singleton is not dropped");
+    assertEqual(suggestions[0].type, "create-list", "Other produces create-list");
+    assertEqual(
+      (suggestions[0] as CreateListSuggestion).targetListName,
+      "Other",
+      "targets Other list",
+    );
+    assertEqual(reroutedRepos.length, 0, "Other is not recorded as rerouted");
+  });
+
+  test("Other bucket: repos assigned to Other get create-list and move-to-list suggestions", async () => {
+    const analyzed = [
+      { repo: makeRepo({ id: "r1", name: "repo1" }), analysis: makeAnalysis("Other") },
+      { repo: makeRepo({ id: "r2", name: "repo2" }), analysis: makeAnalysis("Other") },
+    ];
+    const { suggestions } = await generateSuggestions(analyzed, [], nullReroute);
+    const createCount = suggestions.filter((s) => s.type === "create-list").length;
+    const moveCount = suggestions.filter((s) => s.type === "move-to-list").length;
+    assertEqual(createCount, 1, "one create-list for Other");
+    assertEqual(moveCount, 1, "one move-to-list for Other");
+    for (const s of suggestions) {
+      if (s.type === "create-list" || s.type === "move-to-list") {
+        assertEqual(s.targetListName, "Other", "all target Other list");
+      }
+    }
+  });
+
+  test("Other bucket: existing Other list is never a rename candidate", async () => {
+    const otherList = makeList({ id: "l-other", name: "Other" });
+    const analyzed = [
+      { repo: makeRepo({ id: "r1", name: "r1" }), analysis: makeAnalysis("New Category") },
+      { repo: makeRepo({ id: "r2", name: "r2" }), analysis: makeAnalysis("New Category") },
+    ];
+    const { suggestions } = await generateSuggestions(
+      analyzed,
+      [otherList],
+      nullReroute,
+      "allow-rename",
+    );
+    const renameSuggestions = suggestions.filter((s) => s.type === "rename-list");
+    assert(
+      renameSuggestions.every((s) => asRenameList(s).listId !== "l-other"),
+      "Other list is never a rename target",
+    );
+  });
+
+  test("Other bucket: uncategorizable repo assigned to Other goes to existing Other list", async () => {
+    const otherList = makeList({ id: "l-other", name: "Other" });
+    const { suggestions } = await generateSuggestions(
+      [{ repo: makeRepo({ id: "r1" }), analysis: makeAnalysis("Other") }],
+      [otherList],
+      nullReroute,
+    );
+    assertEqual(suggestions.length, 1, "one suggestion");
+    assertEqual(suggestions[0].type, "move-to-list", "moves to existing Other list");
+    assertEqual(asMoveToList(suggestions[0]).targetListId, "l-other", "targets existing Other id");
+  });
+
   test("allow-rename: keep-existing strategy does not emit rename-list", async () => {
     const existingList = makeList({ id: "l1", name: "Old AI Tools" });
     const analyzed = [

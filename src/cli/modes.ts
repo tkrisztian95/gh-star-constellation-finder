@@ -59,7 +59,11 @@ export async function runAnalyzeOnly(
   const langfuse = createLangfuseClient();
   const langfuseSessionId = generateSessionId();
   const trace = langfuse
-    ? createRunTrace(langfuse, { repoCount: repos.length, backend }, langfuseSessionId)
+    ? createRunTrace(
+        langfuse,
+        { repoCount: repos.length, listsCount: lists.length, backend },
+        langfuseSessionId,
+      )
     : null;
 
   const analyzer = createProvider(cliArgs.backend, trace);
