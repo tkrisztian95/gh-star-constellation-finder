@@ -83,6 +83,8 @@ export async function runReviewPhase({
     (msg) => setPhase({ tag: "consolidating", subStep: msg }),
   );
   for (const entry of analyzedRepos) {
+    // "Other" is a protected reserved bucket — never remap it away.
+    if (entry.analysis.category.toLowerCase().trim() === "other") continue;
     const consolidated = remapping.get(entry.analysis.category);
     if (consolidated) entry.analysis.category = consolidated;
   }

@@ -17,14 +17,14 @@
 
 ## 2. User Interface, Review & Phase Logic
 
-- [ ] 2.1 Update UI to always display the "Other" bucket and provide a tooltip or help text explaining its purpose
-- [ ] 2.2 Prevent the "Other" bucket from being deleted or renamed away in review/apply phases
-- [ ] 2.3 Ensure phase transitions (analysis, review, apply) check for the presence of the "Other" bucket and add it if missing
-- [ ] 2.4 Update documentation and onboarding materials to reflect the reserved slot
+- [x] 2.1 Update UI to always display the "Other" bucket and provide a tooltip or help text explaining its purpose
+- [x] 2.2 Prevent the "Other" bucket from being deleted or renamed away in review/apply phases
+- [x] 2.3 Ensure phase transitions (analysis, review, apply) check for the presence of the "Other" bucket and add it if missing
+- [x] 2.4 Update documentation and onboarding materials to reflect the reserved slot
 
 ## 3. Testing & Validation
 
-- [ ] 3.1 Write tests to verify the "Other" bucket is always present after categorization
-- [ ] 3.2 Test that uncategorizable repos are assigned to "Other"
-- [ ] 3.3 Test that the "Other" bucket cannot be deleted or renamed
+- [x] 3.1 Write tests to verify the "Other" bucket is always present after categorization
+- [x] 3.2 Test that uncategorizable repos are assigned to "Other"
+- [x] 3.3 Test that the "Other" bucket cannot be deleted or renamed
 - [ ] 3.4 Validate UI and documentation changes with users or stakeholders

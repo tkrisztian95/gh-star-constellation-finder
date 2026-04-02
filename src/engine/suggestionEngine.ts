@@ -56,11 +56,17 @@ export async function generateSuggestions(
   // would never be claimed and could be incorrectly targeted for renaming.
   // Pre-claim lists with 2+ repos to prevent that; lists with 0–1 repos are
   // still eligible for renaming (single-repo lists are low-risk to rename).
+  // The "Other" list is always pre-claimed to prevent it from being renamed away.
   const claimedListIds = new Set<string>(
     scopeMode === "unlisted-only"
       ? existingLists.filter((l) => l.repoIds.length > 1).map((l) => l.id)
       : [],
   );
+  for (const list of existingLists) {
+    if (list.name.toLowerCase().trim() === "other") {
+      claimedListIds.add(list.id);
+    }
+  }
 
   for (const { repo, analysis } of analyzedRepos) {
     if (analysis.category === "analysis-failed") continue;
@@ -191,10 +197,11 @@ export async function generateSuggestions(
     }
   }
 
-  // Collect singleton pending list IDs (only one suggestion references them)
+  // Collect singleton pending list IDs (only one suggestion references them).
+  // "Other" is protected from rerouting — it is always a valid destination.
   const singletonListIds = new Set<string>();
   for (const [id, count] of pendingListMemberCount) {
-    if (count === 1) singletonListIds.add(id);
+    if (count === 1 && id !== "pending:other") singletonListIds.add(id);
   }
 
   if (singletonListIds.size === 0) {

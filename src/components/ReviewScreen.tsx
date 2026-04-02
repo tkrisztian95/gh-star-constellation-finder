@@ -266,6 +266,12 @@ export function ReviewScreen({
                   {repoSuggestion.analysis.category}
                 </Text>
               </Text>
+              {repoSuggestion.analysis.category.toLowerCase().trim() === "other" && (
+                <Text color="gray" dimColor>
+                  ℹ "Other" is a reserved catch-all bucket for repos that don't fit a specific
+                  category. It is always kept and cannot be renamed or deleted.
+                </Text>
+              )}
               {repoSuggestion.analysis.killerFeature ? (
                 <Text>
                   Killer Feature: <Text italic>{repoSuggestion.analysis.killerFeature}</Text>

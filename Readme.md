@@ -43,6 +43,7 @@ flowchart TD
 * **Native Integration:** Uses the GitHub GraphQL API to create and manage lists directly on your profile — no third-party database required.
 * **Human-in-the-Loop:** Review AI-generated suggestions and insights before any changes are written to your account.
 * **Health Audits:** Automatically flags archived repositories to help you declutter.
+* **Reserved "Other" Bucket:** One of the 32 GitHub list slots is always reserved for an "Other" catch-all. Any repo that doesn't fit a specific category lands here instead of being forced into an ill-fitting group. The "Other" list is protected — it can never be renamed or deleted by the tool.
 * **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document to stdout for scripting or inspection.
 
 ## 🚀 Getting Started

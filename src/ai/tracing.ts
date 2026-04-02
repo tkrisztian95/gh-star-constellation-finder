@@ -29,6 +29,7 @@ export function createRunTrace(
   langfuse: Langfuse,
   metadata: {
     repoCount: number;
+    listsCount: number;
     backend: string;
     filter?: ScopeMode;
     mode?: ConsolidationStrategy;
