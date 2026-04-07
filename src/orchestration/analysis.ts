@@ -4,8 +4,13 @@ import { consolidateCategories, rerouteOrphanRepos } from "./consolidationCoordi
 import { generateSuggestions } from "../engine/suggestionEngine.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { computeDataQuality } from "../github/readmeFetcher.js";
-import { generateSessionId } from "../ai/tracing.js";
-import type { createRunTrace } from "../ai/tracing.js";
+import {
+  generateSessionId,
+  createPhaseSpan,
+  endSpanSafe,
+  createMilestoneEvent,
+} from "../ai/tracing.js";
+import type { createRunTrace, LangfuseParent, LangfuseSpan } from "../ai/tracing.js";
 import type { fetchUserLists } from "../github/starFetcher.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
@@ -30,6 +35,7 @@ export interface RunAnalysisParams {
   filterLabel: string | undefined;
   concurrency: number;
   setPhase: (p: AppPhase) => void;
+  parent?: LangfuseParent | null;
 }
 
 export async function runAnalysis({
@@ -42,15 +48,19 @@ export async function runAnalysis({
   filterLabel,
   concurrency,
   setPhase,
+  parent,
 }: RunAnalysisParams): Promise<AnalysisResult> {
   const analyzedRepos: AnalyzedRepo[] = [];
   let analyzed = 0;
   let analysisErrorCount = 0;
   const analysisStartTime = Date.now();
+  const analysisSpan = createPhaseSpan(parent ?? null, "analysis-phase", {
+    repoCount: filteredRepos.length,
+  });
 
   setPhase({ tag: "analyzing", analyzed: 0, total: filteredRepos.length, filterLabel });
 
-  {
+  try {
     let active = 0;
     const pending = [...filteredRepos];
     const inFlight: Promise<void>[] = [];
@@ -90,6 +100,7 @@ export async function runAnalysis({
                 existingListNames,
               },
               abortController.signal,
+              analysisSpan,
             );
           } catch (err) {
             if (interruptedRef.value) return; // aborted — drop this repo silently
@@ -116,6 +127,10 @@ export async function runAnalysis({
     }
 
     await Promise.all(inFlight);
+  } finally {
+    endSpanSafe(analysisSpan, {
+      output: { successCount: analyzedRepos.length - analysisErrorCount },
+    });
   }
 
   return { analyzedRepos, analysisErrorCount, analysisStartTime };
@@ -128,6 +143,7 @@ export interface HandleInterruptParams {
   lists: Awaited<ReturnType<typeof fetchUserLists>>;
   strategy: ConsolidationStrategy;
   trace: ReturnType<typeof createRunTrace> | null;
+  agentObs: LangfuseSpan | null;
   login: string;
   modelId: string;
   analysisStartTime: number;
@@ -148,6 +164,7 @@ export async function handleInterrupt({
   lists,
   strategy,
   trace,
+  agentObs,
   login,
   modelId,
   analysisStartTime,
@@ -159,6 +176,10 @@ export async function handleInterrupt({
   unmount,
   provider,
 }: HandleInterruptParams): Promise<void> {
+  createMilestoneEvent(agentObs, "run-interrupted", {
+    analysedCount: analyzedRepos.length,
+    totalCount: filteredRepos.length,
+  });
   if (analyzedRepos.length === 0) {
     setPhase({ tag: "interrupt-confirm", analyzedCount: 0, totalCount: filteredRepos.length });
     await interruptChoicePromise; // only exit available; any key exits

@@ -1,4 +1,4 @@
-import type { LangfuseTrace } from "./tracing.js";
+import type { LangfuseParent } from "./tracing.js";
 import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
 import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
@@ -17,21 +17,25 @@ import {
  */
 export function createOllamaProvider(
   model: string = process.env.OLLAMA_MODEL ?? "llama3",
-  trace?: LangfuseTrace | null,
+  _trace?: LangfuseParent | null,
   host: string = process.env.OLLAMA_HOST ?? "http://localhost:11434",
 ): AIProvider {
   return {
     modelId: `ollama/${model}`,
 
-    async analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult> {
+    async analyze(
+      input: RepoInput,
+      signal?: AbortSignal,
+      parent?: LangfuseParent | null,
+    ): Promise<AnalysisResult> {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildAnalyzeRepoPrompt(input);
 
       // Start tracing if enabled
-      let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+      let generation: { end: (data: object) => void } | undefined;
       try {
-        if (trace) {
-          generation = trace.generation({
+        if (parent) {
+          generation = parent.generation({
             name: `analyze-${input.owner}/${input.name}`,
             model,
             input: [
@@ -84,25 +88,31 @@ export function createOllamaProvider(
       const body = (await response.json()) as OllamaResponse;
       const content = parseOllamaResponseBody(body);
 
-      // End tracing with output/usage if enabled
+      const result = parseAnalysisResponse(content, ANALYSIS_FAILED_RESULT.category);
+
+      // End tracing with output/usage/metadata if enabled
       endGenerationSafe(generation, {
         output: content,
         usage:
           body.prompt_eval_count !== undefined
             ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
             : undefined,
+        metadata: {
+          repoFullName: `${input.owner}/${input.name}`,
+          assignedCategory: result.category,
+        },
       });
 
-      return parseAnalysisResponse(content, ANALYSIS_FAILED_RESULT.category);
+      return result;
     },
 
     async complete(
       prompt: string,
       generationName: string,
-      parent?: LangfuseTrace | null,
+      parent?: LangfuseParent | null,
     ): Promise<string> {
       // Start tracing if enabled
-      let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+      let generation: { end: (data: object) => void } | undefined;
       try {
         if (parent) {
           generation = parent.generation({

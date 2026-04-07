@@ -2,7 +2,23 @@
   "permissions": {
     "allow": [
       "Bash(openspec instructions:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npx tsc:*)",
+      "Bash(openspec new:*)",
+      "Bash(find /Users/toth/Git/Hobby/gh-star-constellation-finder/src/components -name *.tsx)",
+      "Bash(bun add:*)",
+      "Bash(bun run:*)",
+      "Bash(bun test:*)",
+      "Bash(bun tsc:*)",
+      "Bash(git stash:*)",
+      "Bash(npm test:*)",
+      "Read(//Users/toth/.claude/skills/prompt-architect/references/frameworks/**)",
+      "Read(//Users/toth/.claude/skills/prompt-architect/assets/templates/**)",
+      "Bash(git add:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/toth/Git/Hobby/gh-star-constellation-finder/openspec/specs",
+      "/Users/toth/Git/Hobby/gh-star-constellation-finder/.github"
     ]
   }
 }

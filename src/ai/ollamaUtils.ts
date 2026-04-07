@@ -8,6 +8,7 @@ export interface GenerationEndData {
     input: number;
     output: number;
   };
+  metadata?: object;
 }
 
 export function endGenerationSafe(
