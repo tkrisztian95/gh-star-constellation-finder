@@ -8,6 +8,8 @@ import {
   createRunTrace,
   generateSessionId,
   flushTracing,
+  createAgentObservation,
+  createMilestoneEvent,
 } from "../ai/tracing.js";
 import type { Repo, ScopeMode, ConsolidationStrategy } from "../types.js";
 import { readConfig, writeConfig, ensureAnalyticsId } from "../config.js";
@@ -178,6 +180,9 @@ export async function main() {
     cliArgs.concurrency,
   );
 
+  // Create provider first so modelId is available for trace metadata
+  const analyzer = createProvider(cliArgs.backend);
+
   // Set up Langfuse tracing (no-op when credentials are absent)
   const langfuse = createLangfuseClient();
   process.on("beforeExit", () => {
@@ -192,13 +197,24 @@ export async function main() {
           backend,
           filter: scopeMode,
           mode: strategy,
+          modelId: analyzer.modelId,
+          filteredRepoCount: filteredRepos.length,
+          totalRepoCount: allRepos.length,
+          listNames: lists.map((l) => l.name),
+          concurrency: cliArgs.concurrency,
         },
         generateSessionId(),
       )
     : null;
 
-  // Analyze
-  const analyzer = createProvider(cliArgs.backend, trace);
+  const agentObs = createAgentObservation(trace, "constellation-agent", {
+    backend,
+    filteredRepoCount: filteredRepos.length,
+  });
+  createMilestoneEvent(agentObs, "run-start", {
+    backend,
+    filteredRepoCount: filteredRepos.length,
+  });
   const existingListNames = lists.map((l) => l.name);
 
   const { analyzedRepos, analysisErrorCount, analysisStartTime } = await runAnalysis({
@@ -211,6 +227,7 @@ export async function main() {
     filterLabel,
     concurrency: cliArgs.concurrency,
     setPhase: tui.setPhase,
+    parent: agentObs,
   });
 
   // Handle ESC interrupt
@@ -222,6 +239,7 @@ export async function main() {
       lists,
       strategy,
       trace,
+      agentObs,
       login,
       modelId: analyzer.modelId ?? backend,
       analysisStartTime,
@@ -242,7 +260,7 @@ export async function main() {
     existingListNames,
     strategy,
     scopeMode,
-    trace,
+    parent: agentObs,
     allRepos,
     setPhase: tui.setPhase,
     reviewPromise: tui.reviewPromise,

@@ -3,8 +3,8 @@ import fs from "fs";
 import { consolidateCategories, rerouteOrphanRepos } from "./consolidationCoordinator.js";
 import { generateSuggestions } from "../engine/suggestionEngine.js";
 import type { AnalyzedRepo, ReroutedRepo } from "../engine/suggestionEngine.js";
-import { generateSessionId } from "../ai/tracing.js";
-import type { createRunTrace } from "../ai/tracing.js";
+import { generateSessionId, createPhaseSpan, endSpanSafe } from "../ai/tracing.js";
+import type { LangfuseParent } from "../ai/tracing.js";
 import type { fetchUserLists } from "../github/starFetcher.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
@@ -28,7 +28,7 @@ export interface ReviewPhaseParams {
   existingListNames: string[];
   strategy: ConsolidationStrategy;
   scopeMode: ScopeMode;
-  trace: ReturnType<typeof createRunTrace> | null;
+  parent: LangfuseParent | null;
   allRepos: Repo[];
   setPhase: (p: AppPhase) => void;
   reviewPromise: Promise<{ decisions: Map<number, ReviewDecision>; quit: boolean }>;
@@ -49,7 +49,7 @@ export async function runReviewPhase({
   existingListNames,
   strategy,
   scopeMode,
-  trace,
+  parent,
   allRepos,
   setPhase,
   reviewPromise,
@@ -78,7 +78,7 @@ export async function runReviewPhase({
     existingListNames.map((name) => ({ name, topics: [] })),
     undefined,
     strategy,
-    trace,
+    parent,
     analyzedRepos,
     (msg) => setPhase({ tag: "consolidating", subStep: msg }),
   );
@@ -94,8 +94,8 @@ export async function runReviewPhase({
   const boundReroute = (
     orphans: { category: string }[],
     availableTargets: string[],
-    parent?: Parameters<typeof rerouteOrphanRepos>[3],
-  ) => rerouteOrphanRepos(orphans, availableTargets, provider, parent);
+    rerouteParent?: Parameters<typeof rerouteOrphanRepos>[3],
+  ) => rerouteOrphanRepos(orphans, availableTargets, provider, rerouteParent);
 
   const { suggestions, count, reroutedRepos } = await generateSuggestions(
     analyzedRepos,
@@ -103,7 +103,7 @@ export async function runReviewPhase({
     boundReroute,
     strategy,
     scopeMode,
-    trace,
+    parent,
   );
 
   track("analysis_completed", {
@@ -128,9 +128,12 @@ export async function runReviewPhase({
     process.exit(0);
   }
 
+  const reviewSpan = createPhaseSpan(parent, "review-phase", { suggestionCount: count });
   setPhase({ tag: "review", suggestions, mergeWarnings, repos: allRepos });
   const { decisions, quit } = await reviewPromise;
   const acceptedCount = Array.from(decisions.values()).filter((d) => d === "accepted").length;
+  const rejectedCount = Array.from(decisions.values()).filter((d) => d === "rejected").length;
+  endSpanSafe(reviewSpan, { output: { acceptedCount, rejectedCount } });
 
   if (quit && acceptedCount === 0) {
     track("suggestions_reviewed_quit", {

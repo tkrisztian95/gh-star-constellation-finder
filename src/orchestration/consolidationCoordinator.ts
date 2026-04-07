@@ -6,7 +6,8 @@ import {
 import type { ExistingListContext } from "../ai/prompts.js";
 import type { ConsolidationResult, AIProvider } from "../ai/types.js";
 import type { ConsolidationStrategy } from "../types.js";
-import type { LangfuseTrace } from "../ai/tracing.js";
+import type { LangfuseParent } from "../ai/tracing.js";
+import { createPhaseSpan, endSpanSafe } from "../ai/tracing.js";
 import {
   GITHUB_MAX_LISTS,
   identityResult,
@@ -24,7 +25,7 @@ export async function consolidateCategories(
   existingLists: ExistingListContext[] = [],
   maxLists: number = GITHUB_MAX_LISTS,
   strategy: ConsolidationStrategy = "keep-existing",
-  parent?: LangfuseTrace | null,
+  parent?: LangfuseParent | null,
   analyzedRepos?: AnalyzedRepo[],
   onSubStep?: (message: string) => void,
 ): Promise<ConsolidationResult> {
@@ -34,6 +35,12 @@ export async function consolidateCategories(
 
   const effectiveExistingLists = strategy === "recreate" ? [] : existingLists;
   const effectiveMaxLists = strategy === "recreate" ? GITHUB_MAX_LISTS : maxLists;
+
+  const consolidationSpan = createPhaseSpan(parent ?? null, "consolidation-phase", {
+    strategy,
+    existingListCount: existingLists.length,
+    proposedCategoryCount: proposedNames.length,
+  });
 
   try {
     // Build distribution context deterministically from analyzedRepos
@@ -70,7 +77,11 @@ export async function consolidateCategories(
     const pass1Map = await (async () => {
       const prompt = buildLanguageQualifierPrompt(proposedNames);
       try {
-        const content = await provider.complete(prompt, "deduplicate-language-qualifiers", parent);
+        const content = await provider.complete(
+          prompt,
+          "deduplicate-language-qualifiers",
+          consolidationSpan,
+        );
         return parseRemapping(content, proposedNames);
       } catch {
         // Safe fallback: pass all names through unchanged; pass 2 will still run
@@ -89,7 +100,7 @@ export async function consolidateCategories(
         strategy,
         distributionContext,
       );
-      const content = await provider.complete(prompt, "consolidate-categories", parent);
+      const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan);
       const remapping = parseRemapping(content, deduplicatedNames);
       return buildConsolidationResult(
         remapping,
@@ -107,11 +118,17 @@ export async function consolidateCategories(
       composedRemapping.set(name, final);
     }
 
+    const finalCategoryCount = new Set(composedRemapping.values()).size;
+    endSpanSafe(consolidationSpan, { output: { finalCategoryCount } });
     return {
       remapping: composedRemapping,
       mergeWarnings: [...buildMergeWarnings(pass1Map, proposedNames), ...pass2Result.mergeWarnings],
     };
   } catch (err) {
+    endSpanSafe(consolidationSpan, {
+      level: "ERROR",
+      statusMessage: err instanceof Error ? err.message : String(err),
+    });
     const warning = `Warning: category consolidation failed (${err instanceof Error ? err.message : String(err)}), using original names`;
     const result = identityResult(proposedNames);
     result.mergeWarnings.push(warning);
@@ -123,7 +140,7 @@ export async function rerouteOrphanRepos(
   orphans: { category: string }[],
   availableTargets: string[],
   provider: AIProvider,
-  parent?: LangfuseTrace | null,
+  parent?: LangfuseParent | null,
 ): Promise<Map<string, string | null>> {
   if (orphans.length === 0 || availableTargets.length === 0) {
     return nullRerouteMap(orphans.map((o) => o.category));

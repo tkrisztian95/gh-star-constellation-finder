@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { LangfuseTrace } from "./tracing.js";
+import type { LangfuseParent } from "./tracing.js";
 import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
 import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
@@ -17,7 +17,7 @@ import {
  * @param model - Model name (default: env OPENAI_MODEL or 'gpt-4o-mini')
  */
 export function createOpenAIProvider(
-  trace?: LangfuseTrace | null,
+  _trace?: LangfuseParent | null,
   apiKey: string = process.env.OPENAI_API_KEY!,
   model: string = process.env.OPENAI_MODEL ?? "gpt-4o-mini",
 ): AIProvider {
@@ -32,15 +32,19 @@ export function createOpenAIProvider(
   return {
     modelId: `openai/${model}`,
 
-    async analyze(input: RepoInput, signal?: AbortSignal): Promise<AnalysisResult> {
+    async analyze(
+      input: RepoInput,
+      signal?: AbortSignal,
+      parent?: LangfuseParent | null,
+    ): Promise<AnalysisResult> {
       const systemPrompt = buildSystemPrompt(input.existingListNames ?? []);
       const userMessage = buildAnalyzeRepoPrompt(input);
 
       // Start tracing if enabled
-      let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+      let generation: { end: (data: object) => void } | undefined;
       try {
-        if (trace) {
-          generation = trace.generation({
+        if (parent) {
+          generation = parent.generation({
             name: `analyze-${input.owner}/${input.name}`,
             model,
             input: [
@@ -76,8 +80,9 @@ export function createOpenAIProvider(
       }
 
       const content = parseOpenAIContent(completion);
+      const result = parseAnalysisResponse(content, ANALYSIS_FAILED_RESULT.category);
 
-      // End tracing with output/usage if enabled
+      // End tracing with output/usage/metadata if enabled
       endGenerationSafe(generation, {
         output: content,
         usage: completion.usage
@@ -86,18 +91,22 @@ export function createOpenAIProvider(
               output: completion.usage.completion_tokens,
             }
           : undefined,
+        metadata: {
+          repoFullName: `${input.owner}/${input.name}`,
+          assignedCategory: result.category,
+        },
       });
 
-      return parseAnalysisResponse(content, ANALYSIS_FAILED_RESULT.category);
+      return result;
     },
 
     async complete(
       prompt: string,
       generationName: string,
-      parent?: LangfuseTrace | null,
+      parent?: LangfuseParent | null,
     ): Promise<string> {
       // Start tracing if enabled
-      let generation: ReturnType<LangfuseTrace["generation"]> | undefined;
+      let generation: { end: (data: object) => void } | undefined;
       try {
         if (parent) {
           generation = parent.generation({
