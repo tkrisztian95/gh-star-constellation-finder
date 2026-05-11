@@ -1,6 +1,22 @@
 # Agent Guidelines
 
-Always check `openspec/specs/` for existing requirements and history, and `openspec/changes/` for what is planned or in progress.
+Always check `openspec/specs/` for existing requirements and history, `openspec/changes/` for what is planned or in progress, and the GitHub issue tracker (`gh issue list --repo tkrisztian95/gh-star-constellation-finder`) for the triaged backlog.
+
+## Workflow: idea → issue → spec → branch → PR
+
+Every non-trivial change in this repo follows the same five-step pipeline. Skipping steps is fine for typo fixes; for anything else, do them in order.
+
+1. **Capture the idea.** Add a one-line entry to `docs/ideas.md` while it's fresh. Don't open an issue yet — `docs/ideas.md` is the rough inbox, the GitHub issue tracker is the triaged queue.
+2. **File the GitHub issue.** Use the `/issues-from-ideas` skill (see [.claude/skills/issues-from-ideas/SKILL.md](.claude/skills/issues-from-ideas/SKILL.md)) to convert lines in `docs/ideas.md` into issues with cleaned titles, verbatim bodies, and labels from the project taxonomy (`area:*` + one of `bug` / `enhancement` / `documentation` / `type:*`). After issues are filed, empty `docs/ideas.md` — the tracker is now the source of truth.
+3. **Propose the OpenSpec change.** Run `/opsx:propose` against the issue. The first line of `proposal.md` MUST reference the issue: `Tracks #<N>` (or `Tracks #<N>, #<M>` for bundled work). The change slug should be obviously related to the issue's intent — they don't have to be identical strings, but the chain `issue ↔ change folder ↔ branch ↔ PR` must be trivially greppable.
+4. **Branch and implement.** Create the branch from `main` using the change slug verbatim as the branch name (see "Branches & git workflow"). Work through `tasks.md` with `/opsx:apply`, committing per numbered task section.
+5. **Open the PR, link the issue, archive on merge.**
+   - PR title: same style as commit subjects, e.g. `feat(cache-analysis-results): cache module + reuse`.
+   - PR body MUST end with `Closes #<N>` (or `Closes #<N>, closes #<M>`) so GitHub auto-closes the issue on merge.
+   - Run `/opsx:archive` as the final commit on the branch (`chore(openspec): archive <slug>`) — it lands inside the same PR.
+   - Squash-merge for single-section changes; normal merge for multi-section changes so per-section commits survive for bisecting.
+
+**One issue per change, one change per branch, one branch per PR.** Bundling unrelated issues into one PR makes review and rollback harder. If two issues genuinely share implementation, file a single change that lists both with `Tracks #N, #M` / `Closes #N, closes #M`.
 
 ## Stack
 
@@ -40,12 +56,14 @@ Active change artifacts live in `openspec/changes/<change-slug>/` and include `p
 - **Commit after archiving:** `/opsx:archive` produces a single `chore(openspec): archive <change-slug>` commit that moves the change folder into `archive/<date>-<slug>/` and promotes the spec deltas. Mirrors the existing history (`git log --oneline | grep "archive"`).
 - **Validate specs before applying:** Run `openspec validate --strict` after propose and before apply to catch JSON/Markdown formatting errors early.
 - **Capture breaking changes in `proposal.md`.** The app is still pre-1.0 and the session JSON / cache file formats are not frozen — breaking changes are acceptable, but the proposal MUST call them out under a "Breaking changes" heading so the archive log is searchable.
+- **Link the issue from both ends.** Every `proposal.md` opens with `Tracks #<N>`; every PR body closes with `Closes #<N>`. Without both, the issue ↔ change ↔ PR chain breaks and the archive log loses its anchor.
 
 ## Branches & git workflow
 
 - **One branch per OpenSpec change.** Branch name matches the change slug exactly — e.g. for `openspec/changes/cache-analysis-results/`, branch is `cache-analysis-results`. No `feat/` prefix; the slug already encodes the intent. Keeps branch ↔ change ↔ archive folder trivially greppable.
 - **Branch from `main`, PR back into `main`.** `main` is the only long-lived branch. Squash-merging is fine for small changes; for multi-section changes, prefer a normal merge so the per-section commits survive in history (matches the bisect-friendliness rationale above).
 - **Never commit directly to `main`** for code changes once a branch is open. The only exceptions are tiny doc/typo fixes and the `chore(openspec): archive ...` commit produced by `/opsx:archive` (which is conventionally landed via the same PR as the implementation).
+- **PRs close issues.** Every PR body MUST contain `Closes #<N>` for the issue the change implements. Multi-issue bundles use `Closes #<N>, closes #<M>` — GitHub only auto-closes when each issue is preceded by its own keyword.
 - **Hooks are real.** Husky + lint-staged run `prettier --write` and `eslint --fix` on staged `src/**/*.{ts,tsx}` files. Do not bypass with `--no-verify` — if a hook fails, fix the underlying issue.
 
 ## Testing & quality gates
