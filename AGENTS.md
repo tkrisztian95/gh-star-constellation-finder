@@ -1,4 +1,19 @@
+# Agent Guidelines
+
+The canonical agent guide for this repository is [CLAUDE.md](CLAUDE.md). It covers the stack, project conventions, the OpenSpec workflow (`/opsx:propose` → `/opsx:apply` → `/opsx:archive`), branch and commit conventions, testing gates, and observability.
+
+Quick orientation for any agent (Claude or otherwise):
+
+- **Read first:** `openspec/specs/` for existing requirements, `openspec/changes/` for in-flight work.
+- **Toolchain:** Bun (`bun run`, `bun install`) — never `npm` or `node`. Entry point: `src/index.tsx`.
+- **Plan before code:** Non-trivial changes go through OpenSpec. One branch per change, branch name == change slug.
+- **Commit cadence:** One commit per completed `tasks.md` section, scoped with the change slug (e.g. `feat(cache-analysis-results): cache module (tasks 1.x)`). Archive lands as `chore(openspec): archive <slug>`.
+- **Quality gates before PR:** `bun run typecheck && bun run lint && bun run format:check && bun run test`.
+
+See [CLAUDE.md](CLAUDE.md) for the full version — including the AI provider abstraction, the "Other" bucket invariant, the headless/TUI parity rule, and the Langfuse/PostHog opt-in contract.
+
 <!-- gitnexus:start -->
+
 # GitNexus — Code Intelligence
 
 This project is indexed by GitNexus as **gh-star-constellation-finder** (2269 symbols, 2478 relationships, 27 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
@@ -22,22 +37,22 @@ This project is indexed by GitNexus as **gh-star-constellation-finder** (2269 sy
 
 ## Resources
 
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/gh-star-constellation-finder/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/gh-star-constellation-finder/clusters` | All functional areas |
-| `gitnexus://repo/gh-star-constellation-finder/processes` | All execution flows |
-| `gitnexus://repo/gh-star-constellation-finder/process/{name}` | Step-by-step execution trace |
+| Resource                                                      | Use for                                  |
+| ------------------------------------------------------------- | ---------------------------------------- |
+| `gitnexus://repo/gh-star-constellation-finder/context`        | Codebase overview, check index freshness |
+| `gitnexus://repo/gh-star-constellation-finder/clusters`       | All functional areas                     |
+| `gitnexus://repo/gh-star-constellation-finder/processes`      | All execution flows                      |
+| `gitnexus://repo/gh-star-constellation-finder/process/{name}` | Step-by-step execution trace             |
 
 ## CLI
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Task                                         | Read this skill file                                        |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md`       |
+| Blast radius / "What breaks if I change X?"  | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?"             | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md`       |
+| Rename / extract / split / refactor          | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md`     |
+| Tools, resources, schema reference           | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md`           |
+| Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
 
 <!-- gitnexus:end -->
