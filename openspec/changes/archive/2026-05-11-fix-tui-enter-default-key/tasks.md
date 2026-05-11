@@ -18,4 +18,4 @@
 - [x] 3.2 `bun run lint` is clean
 - [x] 3.3 `bun run format:check` is clean
 - [x] 3.4 `bun run test` passes, including new tests (note: `bun run test` only runs the first glob match — pre-existing script bug, affects CI too. New tests verified by running `bun run src/__tests__/tuiDefaultKey.test.ts` and `bun run src/__tests__/interruptAnalysis.test.ts` directly. Worth filing a follow-up issue for the test-runner script — out of scope here.)
-- [ ] 3.5 Manual smoke test in a real terminal: launch the TUI, press Enter on the scope prompt, confirm scope=1 is selected and the flow advances (cannot be performed in this non-interactive agent environment — owner must drive the TTY themselves before merging)
+- [x] 3.5 Manual smoke test in a real terminal: launch the TUI, press Enter on the scope prompt, confirm scope=1 is selected and the flow advances (verified by repo owner)
