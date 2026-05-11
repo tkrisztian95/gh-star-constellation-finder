@@ -24,7 +24,7 @@ jobs:
         run: bun run typecheck
 
       - name: Build
-        run: bun build src/index.tsx --target=bun
+        run: bun run build
 
   test:
     runs-on: ubuntu-latest
