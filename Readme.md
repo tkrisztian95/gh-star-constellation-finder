@@ -152,6 +152,31 @@ Output shape:
 | `LANGFUSE_PUBLIC_KEY` | optional | Langfuse public key (enables prompt tracing) |
 | `LANGFUSE_SECRET_KEY` | optional | Langfuse secret key |
 | `LANGFUSE_BASE_URL` | optional | Custom Langfuse host (default: Langfuse cloud) |
+| `LOG_LEVEL` | optional | Log level: `debug`, `info`, `warn`, or `error` (default: `info`) |
+| `LOG_FILE` | optional | Log file path. Absolute, or relative (resolved against the project root — e.g. `LOG_FILE=app.log`). Default: `$XDG_STATE_HOME/gh-star-constellation-finder/app.log`, falling back to `~/.local/state/...` |
+
+## 📓 Logging
+
+The app writes structured JSONL logs to a file on every run. Logging is **always on** — only the level and path are configurable. In interactive TUI mode the logger never writes to stdout/stderr (so it can't corrupt Ink rendering); in `--analyze-only` headless mode, `warn` and `error` lines are also mirrored to stderr in a compact human-readable form for AI-tool harness use.
+
+```bash
+# tail the log live while running
+tail -f app.log | jq .
+
+# everything from this run, filtered to warn+
+jq 'select(.level=="warn" or .level=="error")' app.log
+```
+
+What gets logged at the default `info` level:
+
+- **Lifecycle:** app start (backend, headless flag, concurrency, limit), auth ok, exits
+- **Phases:** stars+lists fetched, READMEs fetched, analysis start/end, consolidation, suggestions generated, review decisions, apply phase, session saved
+- **User decisions:** confirm yes/no, scope picked, strategy picked, ESC interrupt, interrupt choice (continue/exit/save), summary apply yes/no, save prompt response
+- **Failures:** auth errors, GitHub fetch failures, README fetch failures, individual mutation failures (`error`); rate-limit nearing, scope-token write-permission gap, analysis-failed repos (`warn`)
+
+Per-repo analysis traces and per-mutation success lines are at `debug` level — set `LOG_LEVEL=debug` to capture them when reproducing a bug.
+
+> AI call latency, token usage, and prompt content are NOT logged here — that's [Langfuse](#-prompt-tracing-optional)'s job. The two are complementary: Langfuse for AI-call tracing, the JSONL log for everything else.
 
 ## 🔍 Prompt Tracing (optional)
 

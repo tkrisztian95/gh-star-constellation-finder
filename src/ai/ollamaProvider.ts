@@ -2,6 +2,7 @@ import type { LangfuseParent } from "./tracing.js";
 import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
 import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
+import { logger } from "../logger.js";
 import {
   endGenerationSafe,
   parseOllamaResponseBody,
@@ -67,19 +68,14 @@ export function createOllamaProvider(
       } catch (error: unknown) {
         if (signal?.aborted) throw error;
         const message = error instanceof Error ? error.message : String(error);
-        // Use robust logging if available, fallback to console
-        if (typeof console !== "undefined") {
-          console.error(`Ollama unreachable for ${input.owner}/${input.name}: ${message}`);
-        }
+        logger.error("Ollama unreachable", { owner: input.owner, name: input.name, message });
         endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
         return ANALYSIS_FAILED_RESULT;
       }
 
       if (!response.ok) {
         const message = `HTTP ${response.status}`;
-        if (typeof console !== "undefined") {
-          console.error(`Ollama error for ${input.owner}/${input.name}: ${message}`);
-        }
+        logger.error("Ollama request failed", { owner: input.owner, name: input.name, message });
         endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
         return ANALYSIS_FAILED_RESULT;
       }

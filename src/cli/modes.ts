@@ -21,6 +21,7 @@ import { buildSessionJson } from "../session/json.js";
 import type { CliArgs } from "./args.js";
 import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
 import type { PhaseTimings } from "../types.js";
+import { logger } from "../logger.js";
 
 export async function runAnalyzeOnly(
   cliArgs: CliArgs,
@@ -30,6 +31,13 @@ export async function runAnalyzeOnly(
 ) {
   const startMs = Date.now();
   const phaseTimings: PhaseTimings = {};
+  logger.info("analyze-only mode starting", {
+    login,
+    backend: cliArgs.backend,
+    concurrency: cliArgs.concurrency,
+    limit: cliArgs.limit,
+    outputPath: cliArgs.outputPath,
+  });
 
   let allRepos: Awaited<ReturnType<typeof fetchStarredRepos>>;
   let lists: Awaited<ReturnType<typeof fetchUserLists>>;
@@ -44,6 +52,11 @@ export async function runAnalyzeOnly(
       phaseTimings.fetchStarsListsMs = Date.now() - fetchStart;
     }
   }
+  logger.info("analyze-only fetched stars and lists", {
+    repoCount: allRepos.length,
+    listCount: lists.length,
+    durationMs: phaseTimings.fetchStarsListsMs,
+  });
 
   const repoListIds = new Map<string, string[]>();
   for (const list of lists) {
@@ -138,6 +151,14 @@ export async function runAnalyzeOnly(
     }),
   );
   phaseTimings.analysisMs = Date.now() - analysisStart;
+  const analyzeOnlyErrorCount = analyzedRepos.filter(
+    (r) => r.analysis.category === "analysis-failed",
+  ).length;
+  logger.info("analyze-only analysis complete", {
+    analyzedCount: analyzedRepos.length,
+    errorCount: analyzeOnlyErrorCount,
+    durationMs: phaseTimings.analysisMs,
+  });
 
   const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
   const newCategoryNames = [
@@ -218,11 +239,19 @@ export async function runAnalyzeOnly(
 
   if (cliArgs.outputPath) {
     fs.writeFileSync(cliArgs.outputPath, json);
+    logger.info("analyze-only output written", { path: cliArgs.outputPath });
     track("file_saved", { context: "analyze_only" });
     process.stderr.write(`Saved analysis to ${cliArgs.outputPath}\n`);
   } else {
     process.stdout.write(json);
+    logger.info("analyze-only output written to stdout");
   }
 
+  logger.info("analyze-only run complete", {
+    runId,
+    suggestionCount: suggestions.length,
+    errorCount: errors.length,
+    durationMs: Date.now() - startMs,
+  });
   await analyticsShutdown();
 }
