@@ -1,6 +1,7 @@
 import type { Suggestion } from "../types.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
 import type { MutationResult } from "../github/mutator.js";
+import type { AnalysisTiming } from "../orchestration/analysis.js";
 
 export interface SessionDecision {
   suggestionIndex: number;
@@ -12,13 +13,16 @@ export interface SessionJsonInput {
   summary: Record<string, unknown>;
   suggestions: Suggestion[];
   errors: { repo: string; owner: string }[];
+  analysisTimings?: AnalysisTiming[];
   decisions?: SessionDecision[];
   mutationResults?: MutationResult[];
 }
 
 export function buildSessionJson(input: SessionJsonInput): string {
-  const { runId, summary, suggestions, errors, decisions, mutationResults } = input;
+  const { runId, summary, suggestions, errors, analysisTimings, decisions, mutationResults } =
+    input;
   const obj: Record<string, unknown> = { runId, summary, suggestions, errors };
+  if (analysisTimings !== undefined) obj.analysisTimings = analysisTimings;
   if (decisions !== undefined) obj.decisions = decisions;
   if (mutationResults !== undefined) obj.mutationResults = mutationResults;
   return JSON.stringify(obj, null, 2) + "\n";

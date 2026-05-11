@@ -1,13 +1,20 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
+import type { PhaseTimings } from "../types.js";
+import { PhaseTimingsLines } from "./PhaseTimingsLines.js";
 
 interface SavePromptScreenProps {
   onSubmit: (path: string) => void;
   errorMessage?: string;
+  phaseTimings?: PhaseTimings;
 }
 
-export function SavePromptScreen({ onSubmit, errorMessage }: SavePromptScreenProps) {
+export function SavePromptScreen({
+  onSubmit,
+  errorMessage,
+  phaseTimings,
+}: Readonly<SavePromptScreenProps>) {
   const [value, setValue] = useState("");
 
   return (
@@ -24,6 +31,7 @@ export function SavePromptScreen({ onSubmit, errorMessage }: SavePromptScreenPro
           <Text color="red">Error: {errorMessage}</Text>
         </Box>
       )}
+      {phaseTimings && <PhaseTimingsLines phaseTimings={phaseTimings} />}
     </Box>
   );
 }
