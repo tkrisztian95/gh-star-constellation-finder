@@ -85,6 +85,7 @@ bun run test        # bun runs src/__tests__/*.test.ts
 
 - **Langfuse tracing is opt-in.** If `LANGFUSE_PUBLIC_KEY` + `LANGFUSE_SECRET_KEY` are set, every AI call is traced with structured spans (see `openspec/specs/langfuse-span-phases/`, `langfuse-event-milestones/`, `langfuse-enriched-metadata/`). When adding a new AI call site, instrument it through the existing tracer wrapper — do not create a parallel tracing layer.
 - **PostHog analytics is opt-in.** When adding or renaming a captured event, keep the event name and properties consistent with the conventions in `src/analytics.ts`. Treat `posthog-node` as fire-and-forget; never `await` it on the hot path.
+- **File logging is always-on.** `src/logger.ts` writes JSONL to `$XDG_STATE_HOME/gh-star-constellation-finder/app.log` (override with `LOG_FILE`); level via `LOG_LEVEL` (default `info`). For any operational log in non-test source, use `logger.{debug,info,warn,error}` — never `console.*` (the `no-console` ESLint rule will fail the lint step otherwise, and stray `console.*` writes corrupt Ink TUI rendering).
 - **Ollama has no token counts.** When extending tracing or analytics that report token usage, branch on backend and omit the field for Ollama traces rather than guessing.
 
 ## Where things live
