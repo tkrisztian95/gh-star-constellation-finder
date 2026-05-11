@@ -1,3 +1,5 @@
+import { logger } from "../logger.js";
+
 const README_MAX_LENGTH = 4000;
 const PREFIX_LENGTH = 1500;
 const SECTION_LENGTH = 1500;
@@ -79,7 +81,7 @@ async function fetchReadme(owner: string, repo: string, token: string): Promise<
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`README fetch error for ${owner}/${repo}: ${message}`);
+    logger.error("README fetch failed", { owner, repo, message });
     return "";
   }
 
@@ -88,7 +90,7 @@ async function fetchReadme(owner: string, repo: string, token: string): Promise<
   }
 
   if (!response.ok) {
-    console.error(`README fetch error for ${owner}/${repo}: HTTP ${response.status}`);
+    logger.error("README fetch failed", { owner, repo, status: response.status });
     return "";
   }
 
@@ -138,6 +140,8 @@ export async function fetchAllReadmes(
 ): Promise<Map<string, string>> {
   const acquire = createSemaphore(concurrency);
   const results = new Map<string, string>();
+  const start = Date.now();
+  logger.info("readme fetch starting", { count: repos.length, concurrency });
 
   await Promise.all(
     repos.map(async ({ owner, name }) => {
@@ -151,5 +155,12 @@ export async function fetchAllReadmes(
     }),
   );
 
+  let empty = 0;
+  for (const v of results.values()) if (v.length === 0) empty++;
+  logger.info("readme fetch complete", {
+    count: results.size,
+    emptyOrMissing: empty,
+    durationMs: Date.now() - start,
+  });
   return results;
 }

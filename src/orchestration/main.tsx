@@ -14,6 +14,7 @@ import {
 import type { Repo, ScopeMode, ConsolidationStrategy, PhaseTimings } from "../types.js";
 import { readConfig, writeConfig, ensureAnalyticsId } from "../config.js";
 import { initAnalytics, track, shutdown as analyticsShutdown } from "../analytics.js";
+import { logger } from "../logger.js";
 
 import { parseArgs } from "../cli/args.js";
 import { runAnalyzeOnly } from "../cli/modes.js";
@@ -36,6 +37,12 @@ export async function main() {
   });
 
   const backend = resolveBackend(cliArgs.backend);
+  logger.info("app started", {
+    backend,
+    analyzeOnly: cliArgs.analyzeOnly,
+    concurrency: cliArgs.concurrency,
+    limit: cliArgs.limit,
+  });
   track("app_started", { backend, analyzeOnly: cliArgs.analyzeOnly ?? false });
 
   // Auth
@@ -44,10 +51,16 @@ export async function main() {
   let login: string;
   try {
     ({ token, graphqlWithAuth, login } = await authenticate());
+    logger.info("authenticated", { login });
   } catch (err) {
     const reason = err instanceof AuthError ? err.reason : "network_error";
     const message = err instanceof Error ? err.message : String(err);
-    console.error(message);
+    logger.error("authentication failed", { reason, message });
+    // TUI not mounted yet; surface user-facing message on stderr.
+    // Headless mode already gets it via the logger's stderr-mirror.
+    if (!cliArgs.analyzeOnly) {
+      process.stderr.write(`${message}\n`);
+    }
     track("auth_failed", { reason });
     await analyticsShutdown();
     process.exit(1);
@@ -75,6 +88,11 @@ export async function main() {
       fetchUserLists(graphqlWithAuth),
     ]);
     phaseTimings.fetchStarsListsMs = Date.now() - fetchStarsStart;
+    logger.info("fetched stars and lists", {
+      repoCount: allRepos.length,
+      listCount: lists.length,
+      durationMs: phaseTimings.fetchStarsListsMs,
+    });
   } catch (err) {
     phaseTimings.fetchStarsListsMs = Date.now() - fetchStarsStart;
     const raw = err instanceof Error ? err.message : String(err);
@@ -86,6 +104,7 @@ export async function main() {
             .trim()
             .slice(0, 200)
         : raw;
+    logger.error("fetch failed", { message, durationMs: phaseTimings.fetchStarsListsMs });
     tui.setPhase({ tag: "error", message });
     track("fetch_failed", { message });
     await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -110,6 +129,7 @@ export async function main() {
   const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
 
   if (repos.length === 0) {
+    logger.info("no repos found; exiting");
     track("no_repos_found");
     tui.setPhase({ tag: "info", message: "No starred repositories found." });
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -130,16 +150,19 @@ export async function main() {
   if (showAnalyticsNotice) writeConfig({ analyticsNoticeSeen: true });
   const proceed = await tui.confirmPromise;
   if (!proceed) {
+    logger.info("user cancelled at confirm");
     track("session_cancelled", { stage: "confirm" });
     await analyticsShutdown();
     tui.unmount();
     process.exit(0);
   }
+  logger.info("user confirmed");
 
   let scopeMode: ScopeMode;
   if (lists.length > 0) {
     tui.setPhase({ tag: "pick-scope" });
     scopeMode = await tui.scopePromise;
+    logger.info("user picked scope", { scope: scopeMode });
   } else {
     scopeMode = "all";
   }
@@ -148,6 +171,7 @@ export async function main() {
     scopeMode === "unlisted-only" ? repos.filter((r) => r.listIds.length === 0) : repos;
 
   if (filteredRepos.length === 0) {
+    logger.info("scope filter eliminated all repos; exiting", { scope: scopeMode });
     tui.setPhase({
       tag: "info",
       message: "All your starred repos are already organized — nothing to do!",
@@ -162,10 +186,19 @@ export async function main() {
   if (lists.length > 0) {
     tui.setPhase({ tag: "pick-strategy", scopeMode, hasLists: true });
     strategy = await tui.strategyPromise;
+    logger.info("user picked strategy", { strategy });
   } else {
     strategy = "keep-existing";
   }
 
+  logger.info("analysis pipeline starting", {
+    scope: scopeMode,
+    strategy,
+    backend,
+    repoCount: repos.length,
+    filteredRepoCount: filteredRepos.length,
+    concurrency: cliArgs.concurrency,
+  });
   track("analysis_started", {
     scope: scopeMode,
     strategy,
@@ -190,6 +223,10 @@ export async function main() {
   } finally {
     phaseTimings.fetchReadmesMs = Date.now() - fetchReadmesStart;
   }
+  logger.info("readmes fetched", {
+    count: readmes.size,
+    durationMs: phaseTimings.fetchReadmesMs,
+  });
 
   // Create provider first so modelId is available for trace metadata
   const analyzer = createProvider(cliArgs.backend);
@@ -242,9 +279,16 @@ export async function main() {
       phaseTimings,
       parent: agentObs,
     });
+  logger.info("analysis complete", {
+    analyzedCount: analyzedRepos.length,
+    errorCount: analysisErrorCount,
+    interrupted: interruptedRef.value,
+    durationMs: Date.now() - analysisStartTime,
+  });
 
   // Handle ESC interrupt
   if (interruptedRef.value) {
+    logger.info("user interrupted analysis (ESC)");
     await handleInterrupt({
       analyzedRepos,
       filteredRepos,
@@ -291,6 +335,12 @@ export async function main() {
     analysisTimings,
   });
 
+  logger.info("review phase complete", {
+    suggestionCount: count,
+    acceptedCount,
+    decisionsCount: decisions.size,
+  });
+
   // Apply mutations + save
   await runApplyPhase({
     suggestions,
@@ -312,4 +362,5 @@ export async function main() {
     phaseTimings,
     analysisTimings,
   });
+  logger.info("app exiting cleanly");
 }

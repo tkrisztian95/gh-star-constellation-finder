@@ -13,6 +13,7 @@ import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
 import type { AIProvider } from "../ai/types.js";
 import type { AnalysisTiming } from "./analysis.js";
+import { logger } from "../logger.js";
 
 export interface ReviewPhaseResult {
   suggestions: Suggestion[];
@@ -77,6 +78,11 @@ export async function runReviewPhase({
         .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim())),
     ),
   ];
+  logger.info("consolidation starting", {
+    newCategoryCount: newCategoryNames.length,
+    existingListCount: existingListNames.length,
+    strategy,
+  });
   const consolidationStart = Date.now();
   const { remapping, mergeWarnings } = await consolidateCategories(
     newCategoryNames,
@@ -89,6 +95,11 @@ export async function runReviewPhase({
     (msg) => setPhase({ tag: "consolidating", subStep: msg }),
   ).finally(() => {
     phaseTimings.consolidationMs = Date.now() - consolidationStart;
+  });
+  logger.info("consolidation complete", {
+    remappedCount: remapping.size,
+    mergeWarningCount: mergeWarnings.length,
+    durationMs: phaseTimings.consolidationMs,
   });
   for (const entry of analyzedRepos) {
     // "Other" is a protected reserved bucket — never remap it away.
@@ -116,6 +127,11 @@ export async function runReviewPhase({
   ).finally(() => {
     phaseTimings.suggestionsMs = Date.now() - suggestionsStart;
   });
+  logger.info("suggestions generated", {
+    count,
+    reroutedRepoCount: reroutedRepos.length,
+    durationMs: phaseTimings.suggestionsMs,
+  });
 
   track("analysis_completed", {
     repoCount: analyzedRepos.length,
@@ -129,6 +145,7 @@ export async function runReviewPhase({
   });
 
   if (count === 0) {
+    logger.info("no suggestions generated; exiting");
     setPhase({
       tag: "info",
       message: "No suggestions generated — all repos are already well organized!",
@@ -144,9 +161,19 @@ export async function runReviewPhase({
   const { decisions, quit } = await reviewPromise;
   const acceptedCount = Array.from(decisions.values()).filter((d) => d === "accepted").length;
   const rejectedCount = Array.from(decisions.values()).filter((d) => d === "rejected").length;
+  const skippedCount = decisions.size - acceptedCount - rejectedCount;
   endSpanSafe(reviewSpan, { output: { acceptedCount, rejectedCount } });
+  logger.info("review decisions made", {
+    totalSuggestions: count,
+    decisionCount: decisions.size,
+    acceptedCount,
+    rejectedCount,
+    skippedCount,
+    quit,
+  });
 
   if (quit && acceptedCount === 0) {
+    logger.info("user quit review without accepting any suggestions; exiting");
     track("suggestions_reviewed_quit", {
       totalSuggestions: count,
       scope: scopeMode,
@@ -168,6 +195,7 @@ export async function runReviewPhase({
     phaseTimings,
   });
   const apply = await summaryPromise;
+  logger.info("user reviewed summary", { apply, acceptedCount });
 
   if (!apply || acceptedCount === 0) {
     setPhase({
@@ -204,13 +232,16 @@ export async function runReviewPhase({
       });
       try {
         fs.writeFileSync(savePath, json);
+        logger.info("saved session (no changes applied)", { path: savePath });
         track("file_saved", { context: "interactive_no_changes" });
         process.stderr.write(`Saved session to ${savePath}\n`);
       } catch (err) {
-        process.stderr.write(
-          `Error writing file: ${err instanceof Error ? err.message : String(err)}\n`,
-        );
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error("failed to write session file", { path: savePath, message });
+        process.stderr.write(`Error writing file: ${message}\n`);
       }
+    } else {
+      logger.info("user declined to save session (no changes applied)");
     }
     process.exit(0);
   }

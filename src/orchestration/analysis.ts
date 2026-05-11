@@ -18,6 +18,7 @@ import type { Repo, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../ty
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
 import type { AIProvider } from "../ai/index.js";
+import { logger } from "../logger.js";
 
 export type AnalysisTimingStatus = "ok" | "failed" | "skipped-archived" | "aborted";
 
@@ -138,7 +139,21 @@ export async function runAnalysis({
             analysis.dataQuality = computeDataQuality(readme);
           }
           repo.readme = readme;
-          if (analysis.category === "analysis-failed") analysisErrorCount++;
+          if (analysis.category === "analysis-failed") {
+            analysisErrorCount++;
+            logger.warn("repo analysis returned analysis-failed", {
+              owner: repo.owner,
+              name: repo.name,
+            });
+          } else {
+            logger.debug("repo analyzed", {
+              owner: repo.owner,
+              name: repo.name,
+              category: analysis.category,
+              durationMs: Date.now() - repoStart,
+              status,
+            });
+          }
           analyzedRepos.push({ repo, analysis, readme });
           analyzed++;
           setPhase({
@@ -238,6 +253,7 @@ export async function handleInterrupt({
   if (analyzedRepos.length === 0) {
     setPhase({ tag: "interrupt-confirm", analyzedCount: 0, totalCount: filteredRepos.length });
     await interruptChoicePromise; // only exit available; any key exits
+    logger.info("user exited after interrupt (no analyzed repos)");
     track("analysis_completed", {
       repoCount: 0,
       interrupted: true,
@@ -260,6 +276,11 @@ export async function handleInterrupt({
     totalCount: filteredRepos.length,
   });
   const choice = await interruptChoicePromise;
+  logger.info("user picked interrupt choice", {
+    choice,
+    analyzedCount: analyzedRepos.length,
+    totalCount: filteredRepos.length,
+  });
 
   if (choice === "exit") {
     track("analysis_completed", {
@@ -347,7 +368,10 @@ export async function handleInterrupt({
     const savePath = await savePromptPromise;
     if (savePath) {
       fs.writeFileSync(savePath, saveJson);
+      logger.info("saved partial session", { path: savePath });
       track("file_saved", { context: "interrupt" });
+    } else {
+      logger.info("user declined to save partial session");
     }
     await analyticsShutdown();
     unmount();
