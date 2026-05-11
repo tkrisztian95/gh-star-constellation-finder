@@ -1,9 +1,9 @@
 ## 1. ReviewScreen keybinding
 
-- [ ] 1.1 In [src/components/ReviewScreen.tsx](../../../src/components/ReviewScreen.tsx) `useInput` handler, add a branch matching `key.ctrl && input.toLowerCase() === "a"`. Below the `showQuitConfirm` early-return guard and above the existing `a` / Enter branch.
-- [ ] 1.2 In that branch, build a new `decisions` map by iterating `i = index .. suggestions.length - 1` and setting `next.set(i, "accepted")` only if `next.has(i)` is false, so prior `skipped` / `rejected` decisions earlier in the queue are preserved.
-- [ ] 1.3 Call `onComplete(next)` to advance directly to the Summary screen — do not advance `index` and do not show any extra confirmation prompt.
-- [ ] 1.4 Update the help row inline string at the top of the ReviewScreen panel to read `[a/Enter] Accept [Ctrl+A] Accept all [s] Skip [r] Reject [q] Quit`.
+- [x] 1.1 In [src/components/ReviewScreen.tsx](../../../src/components/ReviewScreen.tsx) `useInput` handler, add a branch matching `key.ctrl && input.toLowerCase() === "a"`. Below the `showQuitConfirm` early-return guard and above the existing `a` / Enter branch.
+- [x] 1.2 In that branch, build a new `decisions` map by iterating `i = index .. suggestions.length - 1` and setting `next.set(i, "accepted")` only if `next.has(i)` is false, so prior `skipped` / `rejected` decisions earlier in the queue are preserved.
+- [x] 1.3 Call `onComplete(next)` to advance directly to the Summary screen — do not advance `index` and do not show any extra confirmation prompt.
+- [x] 1.4 Update the help row inline string at the top of the ReviewScreen panel to read `[a/Enter] Accept [Ctrl+A] Accept all [s] Skip [r] Reject [q] Quit`.
 
 ## 2. Tests
 

@@ -86,6 +86,15 @@ export function ReviewScreen({
       return;
     }
 
+    if (key.ctrl && input.toLowerCase() === "a") {
+      const next = new Map(decisions);
+      for (let i = index; i < suggestions.length; i++) {
+        if (!next.has(i)) next.set(i, "accepted");
+      }
+      onComplete(next);
+      return;
+    }
+
     if (input.toLowerCase() === "a" || key.return) {
       const next = new Map(decisions);
       next.set(index, "accepted");
@@ -170,7 +179,7 @@ export function ReviewScreen({
         <Text bold color="magenta">
           Suggestion {index + 1} of {suggestions.length}
         </Text>
-        <Text color="gray">[a/Enter] Accept [s] Skip [r] Reject [q] Quit</Text>
+        <Text color="gray">[a/Enter] Accept [Ctrl+A] Accept all [s] Skip [r] Reject [q] Quit</Text>
       </Box>
 
       {/* Suggestion panel */}
