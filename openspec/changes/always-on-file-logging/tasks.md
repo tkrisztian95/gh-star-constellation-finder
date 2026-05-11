@@ -1,12 +1,12 @@
 ## 1. Logger module
 
-- [ ] 1.1 Create `src/logger.ts` with the level-based API (`debug`, `info`, `warn`, `error`) and an `initLogger({ headless })` initializer; calls before init are no-ops
-- [ ] 1.2 Implement env-var parsing for `LOG_LEVEL` (case-insensitive, fallback to `info` with a warn line on invalid) and `LOG_FILE` (absolute path only; reject relative with a warn line)
-- [ ] 1.3 Implement the default path resolver: `${XDG_STATE_HOME:-$HOME/.local/state}/gh-star-constellation-finder/app.log`, creating parent dirs with `fs.mkdirSync(..., { recursive: true })`
-- [ ] 1.4 Open the file with `fs.createWriteStream(path, { flags: "a" })` and store the singleton stream at module scope; register a `process.on("exit", () => stream.end())` flush hook
-- [ ] 1.5 Implement JSONL envelope serialization (`ts`, `level`, `msg`, ...fields) with envelope keys non-overwritable by callers; level check happens before serialization
-- [ ] 1.6 Implement the stderr-mirror branch: gated on `headless: true`, fires only for `warn`/`error`, formats as `<LEVEL> <msg> [<key>=<value> ...]`
-- [ ] 1.7 Wrap every external operation (mkdir, open, write, end) in try/catch so I/O errors degrade to no-op without throwing; no internal error ever writes to stdout, and stderr is only touched via the headless mirror branch
+- [x] 1.1 Create `src/logger.ts` with the level-based API (`debug`, `info`, `warn`, `error`) and an `initLogger({ headless })` initializer; calls before init are no-ops
+- [x] 1.2 Implement env-var parsing for `LOG_LEVEL` (case-insensitive, fallback to `info` with a warn line on invalid) and `LOG_FILE` (absolute path only; reject relative with a warn line)
+- [x] 1.3 Implement the default path resolver: `${XDG_STATE_HOME:-$HOME/.local/state}/gh-star-constellation-finder/app.log`, creating parent dirs with `fs.mkdirSync(..., { recursive: true })`
+- [x] 1.4 Open the file with `fs.createWriteStream(path, { flags: "a" })` and store the singleton stream at module scope; register a `process.on("exit", () => stream.end())` flush hook
+- [x] 1.5 Implement JSONL envelope serialization (`ts`, `level`, `msg`, ...fields) with envelope keys non-overwritable by callers; level check happens before serialization
+- [x] 1.6 Implement the stderr-mirror branch: gated on `headless: true`, fires only for `warn`/`error`, formats as `<LEVEL> <msg> [<key>=<value> ...]`
+- [x] 1.7 Wrap every external operation (mkdir, open, write, end) in try/catch so I/O errors degrade to no-op without throwing; no internal error ever writes to stdout, and stderr is only touched via the headless mirror branch
 
 ## 2. Tests
 
