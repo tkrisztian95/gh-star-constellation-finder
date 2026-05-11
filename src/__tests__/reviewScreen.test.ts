@@ -2,6 +2,7 @@ import {
   deriveIncomingRepos,
   deriveExistingUnanalyzed,
   deriveRenameDecision,
+  deriveBulkAcceptDecisions,
   type ReviewDecision,
 } from "../components/ReviewScreen.js";
 import type { Repo, Suggestion, MoveToListSuggestion } from "../types.js";
@@ -185,6 +186,38 @@ function runTests() {
       const decisions = new Map<number, ReviewDecision>(); // no decision recorded
       const result = deriveRenameDecision(suggestions, decisions, "rename:list-1");
       assertEqual(result, undefined, "no decision yet — note should not render");
+    }),
+  );
+
+  // --- 5.11 bulk-accept preserves prior skip/reject decisions ---
+  tests.push(
+    test("5.11 deriveBulkAcceptDecisions preserves prior skip/reject and fills the rest with accepted", () => {
+      const prior = new Map<number, ReviewDecision>([
+        [0, "accepted"],
+        [1, "skipped"],
+        [2, "rejected"],
+      ]);
+      const result = deriveBulkAcceptDecisions(prior, 3, 10);
+      assertEqual(result.size, 10, "result has one entry per suggestion");
+      assertEqual(result.get(0), "accepted", "#0 stays accepted");
+      assertEqual(result.get(1), "skipped", "#1 stays skipped");
+      assertEqual(result.get(2), "rejected", "#2 stays rejected");
+      for (let i = 3; i < 10; i++) {
+        assertEqual(result.get(i), "accepted", `#${i} bulk-accepted`);
+      }
+      // prior must not be mutated
+      assertEqual(prior.size, 3, "prior map is not mutated");
+    }),
+  );
+
+  // --- 5.12 bulk-accept from index 0 with empty prior ---
+  tests.push(
+    test("5.12 deriveBulkAcceptDecisions on empty prior from index 0 accepts every suggestion", () => {
+      const result = deriveBulkAcceptDecisions(new Map(), 0, 5);
+      assertEqual(result.size, 5, "5 entries");
+      for (let i = 0; i < 5; i++) {
+        assertEqual(result.get(i), "accepted", `#${i} accepted`);
+      }
     }),
   );
 
