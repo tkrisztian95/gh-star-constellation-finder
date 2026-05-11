@@ -183,11 +183,10 @@ export function ReviewScreen({
       )}
 
       {/* Header */}
-      <Box justifyContent="space-between" marginBottom={1}>
+      <Box marginBottom={1}>
         <Text bold color="magenta">
           Suggestion {index + 1} of {suggestions.length}
         </Text>
-        <Text color="gray">[a/Enter] Accept [Ctrl+A] Accept all [s] Skip [r] Reject [q] Quit</Text>
       </Box>
 
       {/* Suggestion panel */}
@@ -324,6 +323,11 @@ export function ReviewScreen({
             }
             return null;
           })()}
+      </Box>
+
+      {/* Keybinding hint */}
+      <Box marginTop={1}>
+        <Text color="gray">[a/Enter] Accept [Ctrl+A] Accept all [s] Skip [r] Reject [q] Quit</Text>
       </Box>
 
       {showQuitConfirm && (
