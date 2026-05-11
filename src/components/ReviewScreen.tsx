@@ -36,6 +36,18 @@ export function deriveRenameDecision(
   return renameIdx >= 0 ? decisions.get(renameIdx) : undefined;
 }
 
+export function deriveBulkAcceptDecisions(
+  prior: Map<number, ReviewDecision>,
+  currentIndex: number,
+  suggestionCount: number,
+): Map<number, ReviewDecision> {
+  const next = new Map(prior);
+  for (let i = currentIndex; i < suggestionCount; i++) {
+    if (!next.has(i)) next.set(i, "accepted");
+  }
+  return next;
+}
+
 interface QuitConfirmProps {
   acceptedCount: number;
   onConfirm: (applyBeforeQuit: boolean) => void;
@@ -87,11 +99,7 @@ export function ReviewScreen({
     }
 
     if (key.ctrl && input.toLowerCase() === "a") {
-      const next = new Map(decisions);
-      for (let i = index; i < suggestions.length; i++) {
-        if (!next.has(i)) next.set(i, "accepted");
-      }
-      onComplete(next);
+      onComplete(deriveBulkAcceptDecisions(decisions, index, suggestions.length));
       return;
     }
 
