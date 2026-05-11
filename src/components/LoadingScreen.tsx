@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
+import { formatDuration } from "../util/duration.js";
 
 const SPINNER_FRAMES = ["|", "/", "-", "\\"];
 
@@ -10,6 +11,7 @@ interface LoadingScreenProps {
   filterLabel?: string;
   stopping?: boolean;
   currentRepo?: string;
+  startedAt?: number;
   onInterrupt?: () => void;
 }
 
@@ -20,9 +22,11 @@ export function LoadingScreen({
   filterLabel,
   stopping,
   currentRepo,
+  startedAt,
   onInterrupt,
 }: LoadingScreenProps) {
   const [frame, setFrame] = useState(0);
+  const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -30,6 +34,12 @@ export function LoadingScreen({
     }, 100);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (phase !== "analyzing" || startedAt === undefined) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [phase, startedAt]);
 
   useInput((_, key) => {
     if (key.escape && phase === "analyzing" && onInterrupt) {
@@ -85,6 +95,12 @@ export function LoadingScreen({
             <Text color="gray" dimColor>
               {"  "}
               {currentRepo}
+            </Text>
+          )}
+          {startedAt !== undefined && (
+            <Text color="gray" dimColor>
+              {"  Elapsed "}
+              {formatDuration(now - startedAt)}
             </Text>
           )}
         </Box>

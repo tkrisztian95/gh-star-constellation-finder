@@ -1,18 +1,4 @@
-# analyze-only-output Specification
-
-## Purpose
-Headless `--analyze-only` JSON output mode for non-interactive consumption.
-## Requirements
-### Requirement: --analyze-only flag triggers headless JSON output mode
-The CLI SHALL accept an `--analyze-only` flag. When present, the application SHALL run the full read pipeline (fetch starred repos, fetch READMEs, AI analysis, category consolidation, suggestion generation) without rendering any interactive TUI, print a single JSON document to stdout, and exit with code `0`.
-
-#### Scenario: Flag present — JSON emitted and process exits
-- **WHEN** the CLI is invoked with `--analyze-only`
-- **THEN** the process SHALL print valid JSON to stdout and exit with code `0` without prompting the user
-
-#### Scenario: Flag absent — normal TUI flow unchanged
-- **WHEN** the CLI is invoked without `--analyze-only`
-- **THEN** the existing interactive TUI flow SHALL run exactly as before
+## MODIFIED Requirements
 
 ### Requirement: JSON output contains run ID, analyzed repos, and suggestions
 The JSON document emitted in `--analyze-only` mode SHALL be an object with the following top-level keys: `runId` (string), `suggestions` (array), `summary` (object), `errors` (array), and `analysisTimings` (array).
@@ -59,34 +45,7 @@ The `analysisTimings` array SHALL contain one entry per repo that entered the an
 - **WHEN** a repo's analysis fails and is recorded in `errors`
 - **THEN** the same repo SHALL appear in `analysisTimings` with `status: "failed"`
 
-### Requirement: Existing CLI flags are honoured in analyze-only mode
-When `--analyze-only` is combined with `--backend`, `--limit`, or `--concurrency`, those flags SHALL take effect just as they do in interactive mode.
-
-#### Scenario: --limit restricts repos analyzed
-- **WHEN** `--analyze-only --limit 10` is passed
-- **THEN** the output SHALL contain at most 10 entries in `analyzedRepos`
-
-#### Scenario: --backend selects AI backend
-- **WHEN** `--analyze-only --backend ollama` is passed
-- **THEN** the Ollama backend SHALL be used for analysis
-
-### Requirement: stdout is clean JSON in analyze-only mode
-In `--analyze-only` mode without `--output`, the process SHALL write only the JSON document to stdout. No progress indicators, TUI frames, or other text SHALL appear on stdout. When `--output` is provided, stdout SHALL be entirely empty — the JSON document is written to the file instead.
-
-#### Scenario: stdout contains only JSON (no --output)
-- **WHEN** stdout is captured while running with `--analyze-only` and no `--output` flag
-- **THEN** the captured output SHALL be parseable as JSON with no leading or trailing non-JSON characters
-
-#### Scenario: stdout is empty when --output is used
-- **WHEN** stdout is captured while running with `--analyze-only --output <path>`
-- **THEN** the captured stdout SHALL be empty
-
-### Requirement: analyze-only mode uses allow-rename consolidation strategy
-In `--analyze-only` mode the category consolidation step SHALL use the `"allow-rename"` strategy, as no interactive strategy picker is shown.
-
-#### Scenario: Consolidation runs without user input
-- **WHEN** `--analyze-only` is used and no strategy flag is provided
-- **THEN** category consolidation SHALL proceed with strategy `"allow-rename"` without prompting the user
+## ADDED Requirements
 
 ### Requirement: Interactive-flow session JSON carries phase timings
 The session JSON written by any interactive-flow save-site (interrupt-save, no-changes-save in `runReviewPhase`, and post-apply save in `runApplyPhase`) SHALL include `summary.phaseTimings` and a top-level `analysisTimings` array with the same shape as the analyze-only output, populated with whichever phase fields were measured before the save.
@@ -102,4 +61,3 @@ The session JSON written by any interactive-flow save-site (interrupt-save, no-c
 #### Scenario: No-changes save omits applyMs
 - **WHEN** the user reaches the save-prompt without applying changes
 - **THEN** `summary.phaseTimings.applyMs` SHALL NOT be present
-
