@@ -6,15 +6,16 @@ export type InterruptChoice = "continue" | "save" | "exit";
 /** Pure routing logic — exported for testing */
 export function resolveInterruptChoice(
   input: string,
+  isEnter: boolean,
   analyzedCount: number,
 ): InterruptChoice | null {
   if (analyzedCount > 0) {
-    if (input === "1" || input === "") return "continue";
+    if (input === "1" || isEnter) return "continue";
     if (input === "2") return "save";
     if (input === "3") return "exit";
     return null;
   } else {
-    if (input === "1" || input === "" || input === "3") return "exit";
+    if (input === "1" || isEnter || input === "3") return "exit";
     return null;
   }
 }
@@ -30,8 +31,8 @@ export function InterruptConfirmScreen({
   totalCount,
   onChoice,
 }: InterruptConfirmScreenProps) {
-  useInput((input) => {
-    const choice = resolveInterruptChoice(input, analyzedCount);
+  useInput((input, key) => {
+    const choice = resolveInterruptChoice(input, key.return, analyzedCount);
     if (choice) onChoice(choice);
   });
 

@@ -2,6 +2,18 @@ import React from "react";
 import { Box, Text, useInput } from "ink";
 import type { ConsolidationStrategy, ScopeMode } from "../types.js";
 
+/** Pure routing logic — exported for testing */
+export function resolveStrategyChoice(
+  input: string,
+  isEnter: boolean,
+  hasLists: boolean,
+): ConsolidationStrategy | null {
+  if (hasLists && input === "2") return "recreate";
+  if (hasLists && input === "3") return "allow-rename";
+  if (input === "1" || isEnter) return "keep-existing";
+  return null;
+}
+
 interface StrategyScreenProps {
   onSelect: (strategy: ConsolidationStrategy) => void;
   scopeMode?: ScopeMode;
@@ -9,10 +21,9 @@ interface StrategyScreenProps {
 }
 
 export function StrategyScreen({ onSelect, scopeMode, hasLists = true }: StrategyScreenProps) {
-  useInput((input) => {
-    if (hasLists && input === "2") onSelect("recreate");
-    else if (hasLists && input === "3") onSelect("allow-rename");
-    else if (input === "1" || input === "") onSelect("keep-existing");
+  useInput((input, key) => {
+    const choice = resolveStrategyChoice(input, key.return, hasLists);
+    if (choice) onSelect(choice);
   });
 
   return (
