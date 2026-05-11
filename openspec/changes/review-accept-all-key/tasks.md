@@ -20,4 +20,4 @@ The existing tests in [src/__tests__/reviewScreen.test.ts](../../../src/__tests_
 - [x] 3.2 `bun run lint` is clean.
 - [x] 3.3 `bun run format:check` is clean (run `bun run format` if not).
 - [x] 3.4 `bun run test` passes — including the new reviewScreen cases. (Note: `bun run test`'s glob script only runs the first matched file; each test file was verified individually and all pass.)
-- [ ] 3.5 Manual TUI smoke test (owner-driven; document the steps in the PR description): run the app interactively against a real GitHub account, reach the ReviewScreen with ≥3 suggestions, press `s` on one, `r` on another, `Ctrl+A` on a third; confirm the Summary screen shows the expected counts and the `[y/N] apply` prompt still gates the mutation.
+- [x] 3.5 Manual TUI smoke test (owner-driven; document the steps in the PR description): run the app interactively against a real GitHub account, reach the ReviewScreen with ≥3 suggestions, press `s` on one, `r` on another, `Ctrl+A` on a third; confirm the Summary screen shows the expected counts and the `[y/N] apply` prompt still gates the mutation. **Verified by owner — Ctrl+A worked end-to-end.**
