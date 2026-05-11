@@ -153,7 +153,7 @@ Output shape:
 | `LANGFUSE_SECRET_KEY` | optional | Langfuse secret key |
 | `LANGFUSE_BASE_URL` | optional | Custom Langfuse host (default: Langfuse cloud) |
 | `LOG_LEVEL` | optional | Log level: `debug`, `info`, `warn`, or `error` (default: `info`) |
-| `LOG_FILE` | optional | Absolute path for the log file (default: `$XDG_STATE_HOME/gh-star-constellation-finder/app.log`, falling back to `~/.local/state/...`) |
+| `LOG_FILE` | optional | Log file path. Absolute, or relative (resolved against the project root — e.g. `LOG_FILE=app.log`). Default: `$XDG_STATE_HOME/gh-star-constellation-finder/app.log`, falling back to `~/.local/state/...` |
 
 ## 🔍 Prompt Tracing (optional)
 

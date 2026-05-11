@@ -69,15 +69,15 @@ The system SHALL read the `LOG_LEVEL` env var at `initLogger` time and accept on
 
 ### Requirement: Log file path is configurable via LOG_FILE env var
 
-The system SHALL read the `LOG_FILE` env var at `initLogger` time. When set to an absolute path, the logger SHALL use that path. When unset, the logger SHALL use the XDG-state default. A relative path SHALL be rejected: the logger falls back to the default and emits a single `warn` line noting the rejection.
+The system SHALL read the `LOG_FILE` env var at `initLogger` time. When set to an absolute path, the logger SHALL use that path. When set to a relative path, the logger SHALL resolve it against `process.cwd()` so developers can write logs to a project-root path (e.g. `LOG_FILE=app.log`). When unset, the logger SHALL use the XDG-state default.
 
 #### Scenario: Absolute path override
 - **WHEN** the app starts with `LOG_FILE=/tmp/my-run.log`
 - **THEN** log lines are written to `/tmp/my-run.log`, creating it (and any missing parent directories) if needed
 
-#### Scenario: Relative path is rejected
-- **WHEN** the app starts with `LOG_FILE=./local.log`
-- **THEN** the logger uses the XDG default path and emits a `warn` line: `LOG_FILE must be an absolute path; falling back to default`
+#### Scenario: Relative path is resolved against cwd
+- **WHEN** the app starts with `LOG_FILE=app.log` and `process.cwd()` is `/path/to/project`
+- **THEN** log lines are written to `/path/to/project/app.log`
 
 #### Scenario: Default path uses XDG_STATE_HOME when set
 - **WHEN** the app starts with `XDG_STATE_HOME=/custom/state` and no `LOG_FILE`
