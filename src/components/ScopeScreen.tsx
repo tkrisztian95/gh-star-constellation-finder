@@ -3,14 +3,21 @@ import { Box, Text, useInput } from "ink";
 
 import type { ScopeMode } from "../types.js";
 
+/** Pure routing logic — exported for testing */
+export function resolveScopeChoice(input: string, isEnter: boolean): ScopeMode | null {
+  if (input === "2") return "unlisted-only";
+  if (input === "1" || isEnter) return "all";
+  return null;
+}
+
 interface ScopeScreenProps {
   onSelect: (mode: ScopeMode) => void;
 }
 
 export function ScopeScreen({ onSelect }: ScopeScreenProps) {
-  useInput((input) => {
-    if (input === "2") onSelect("unlisted-only");
-    else if (input === "1" || input === "") onSelect("all");
+  useInput((input, key) => {
+    const choice = resolveScopeChoice(input, key.return);
+    if (choice) onSelect(choice);
   });
 
   return (

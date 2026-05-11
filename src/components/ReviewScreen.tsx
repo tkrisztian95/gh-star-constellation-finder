@@ -42,9 +42,9 @@ interface QuitConfirmProps {
 }
 
 function QuitConfirmPrompt({ acceptedCount, onConfirm }: QuitConfirmProps) {
-  useInput((input) => {
+  useInput((input, key) => {
     if (input.toLowerCase() === "y") onConfirm(true);
-    else if (input.toLowerCase() === "n" || input === "") onConfirm(false);
+    else if (input.toLowerCase() === "n" || key.return) onConfirm(false);
   });
 
   return (
