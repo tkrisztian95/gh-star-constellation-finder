@@ -43,8 +43,8 @@
 
 ## 6. Docs
 
-- [ ] 6.1 Update README env-var section to document `LOG_LEVEL` (default `info`, accepted values) and `LOG_FILE` (default XDG path, absolute paths only)
-- [ ] 6.2 Add a one-line pointer to the logger in the project `CLAUDE.md` "Observability & telemetry" section (point at `src/logger.ts` and note that new code should use it, not `console.*`)
+- [x] 6.1 Update README env-var section to document `LOG_LEVEL` (default `info`, accepted values) and `LOG_FILE` (default XDG path, absolute paths only)
+- [x] 6.2 Add a one-line pointer to the logger in the project `CLAUDE.md` "Observability & telemetry" section (point at `src/logger.ts` and note that new code should use it, not `console.*`)
 
 ## 7. Final validation
 
