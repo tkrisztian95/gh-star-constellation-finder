@@ -7,9 +7,10 @@ import type { fetchUserLists } from "../github/starFetcher.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
-import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode } from "../types.js";
+import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
+import type { AnalysisTiming } from "./analysis.js";
 
 export interface ApplyPhaseParams {
   suggestions: Suggestion[];
@@ -28,6 +29,8 @@ export interface ApplyPhaseParams {
   sessionRunId: string;
   login: string;
   modelId: string;
+  phaseTimings: PhaseTimings;
+  analysisTimings: AnalysisTiming[];
 }
 
 export async function runApplyPhase({
@@ -47,26 +50,34 @@ export async function runApplyPhase({
   sessionRunId,
   login,
   modelId,
+  phaseTimings,
+  analysisTimings,
 }: ApplyPhaseParams): Promise<void> {
-  // In recreate mode, delete all existing lists before applying
-  if (strategy === "recreate" && lists.length > 0) {
-    await deleteAllLists(lists, graphqlWithAuth);
+  const applyStart = Date.now();
+  let finalResults: MutationResult[];
+  try {
+    // In recreate mode, delete all existing lists before applying
+    if (strategy === "recreate" && lists.length > 0) {
+      await deleteAllLists(lists, graphqlWithAuth);
+    }
+
+    const mutationResults: MutationResult[] = [];
+    setPhase({ tag: "applying", results: [] });
+
+    finalResults = await applyAcceptedSuggestions(
+      suggestions,
+      decisions,
+      graphqlWithAuth,
+      (result) => {
+        mutationResults.push(result);
+        setPhase({ tag: "applying", results: [...mutationResults] });
+      },
+    );
+  } finally {
+    phaseTimings.applyMs = Date.now() - applyStart;
   }
 
-  const mutationResults: MutationResult[] = [];
-  setPhase({ tag: "applying", results: [] });
-
-  const finalResults = await applyAcceptedSuggestions(
-    suggestions,
-    decisions,
-    graphqlWithAuth,
-    (result) => {
-      mutationResults.push(result);
-      setPhase({ tag: "applying", results: [...mutationResults] });
-    },
-  );
-
-  setPhase({ tag: "done", results: finalResults });
+  setPhase({ tag: "done", results: finalResults, phaseTimings });
 
   const failed = finalResults.filter((r) => r.status === "failed").length;
   const rejectedCount = Array.from(decisions.values()).filter((d) => d === "rejected").length;
@@ -100,7 +111,13 @@ export async function runApplyPhase({
   // Wait briefly for TUI to render final state
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  setPhase({ tag: "save-prompt", suggestions, decisions, mutationResults: finalResults });
+  setPhase({
+    tag: "save-prompt",
+    suggestions,
+    decisions,
+    mutationResults: finalResults,
+    phaseTimings,
+  });
   const savePath = await savePromptPromise;
   await analyticsShutdown();
   unmount();
@@ -120,9 +137,11 @@ export async function runApplyPhase({
         analyzedCount: analyzedRepos.length,
         suggestionCount: suggestions.length,
         githubUser: login,
+        phaseTimings,
       },
       suggestions,
       errors,
+      analysisTimings,
       decisions: decisionsArray,
       mutationResults: finalResults,
     });

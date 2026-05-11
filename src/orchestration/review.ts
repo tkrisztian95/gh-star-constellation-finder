@@ -8,10 +8,11 @@ import type { LangfuseParent } from "../ai/tracing.js";
 import type { fetchUserLists } from "../github/starFetcher.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
-import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode } from "../types.js";
+import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
 import type { AIProvider } from "../ai/types.js";
+import type { AnalysisTiming } from "./analysis.js";
 
 export interface ReviewPhaseResult {
   suggestions: Suggestion[];
@@ -40,6 +41,8 @@ export interface ReviewPhaseParams {
   analysisErrorCount: number;
   login: string;
   provider: AIProvider;
+  phaseTimings: PhaseTimings;
+  analysisTimings: AnalysisTiming[];
 }
 
 // Returns only if the user confirmed to apply changes; otherwise calls process.exit()
@@ -61,6 +64,8 @@ export async function runReviewPhase({
   analysisErrorCount,
   login,
   provider,
+  phaseTimings,
+  analysisTimings,
 }: ReviewPhaseParams): Promise<ReviewPhaseResult> {
   // Consolidate proposed new category names to reduce list proliferation
   setPhase({ tag: "consolidating" });
@@ -72,6 +77,7 @@ export async function runReviewPhase({
         .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim())),
     ),
   ];
+  const consolidationStart = Date.now();
   const { remapping, mergeWarnings } = await consolidateCategories(
     newCategoryNames,
     provider,
@@ -81,7 +87,9 @@ export async function runReviewPhase({
     parent,
     analyzedRepos,
     (msg) => setPhase({ tag: "consolidating", subStep: msg }),
-  );
+  ).finally(() => {
+    phaseTimings.consolidationMs = Date.now() - consolidationStart;
+  });
   for (const entry of analyzedRepos) {
     // "Other" is a protected reserved bucket — never remap it away.
     if (entry.analysis.category.toLowerCase().trim() === "other") continue;
@@ -97,6 +105,7 @@ export async function runReviewPhase({
     rerouteParent?: Parameters<typeof rerouteOrphanRepos>[3],
   ) => rerouteOrphanRepos(orphans, availableTargets, provider, rerouteParent);
 
+  const suggestionsStart = Date.now();
   const { suggestions, count, reroutedRepos } = await generateSuggestions(
     analyzedRepos,
     lists,
@@ -104,7 +113,9 @@ export async function runReviewPhase({
     strategy,
     scopeMode,
     parent,
-  );
+  ).finally(() => {
+    phaseTimings.suggestionsMs = Date.now() - suggestionsStart;
+  });
 
   track("analysis_completed", {
     repoCount: analyzedRepos.length,
@@ -154,11 +165,18 @@ export async function runReviewPhase({
     strategy,
     existingListCount: lists.length,
     scopeMode,
+    phaseTimings,
   });
   const apply = await summaryPromise;
 
   if (!apply || acceptedCount === 0) {
-    setPhase({ tag: "save-prompt", suggestions, decisions, mutationResults: undefined });
+    setPhase({
+      tag: "save-prompt",
+      suggestions,
+      decisions,
+      mutationResults: undefined,
+      phaseTimings,
+    });
     const savePath = await savePromptPromise;
     await analyticsShutdown();
     unmount();
@@ -177,9 +195,11 @@ export async function runReviewPhase({
           analyzedCount: analyzedRepos.length,
           suggestionCount: suggestions.length,
           githubUser: login,
+          phaseTimings,
         },
         suggestions,
         errors,
+        analysisTimings,
         decisions: decisionsArray,
       });
       try {

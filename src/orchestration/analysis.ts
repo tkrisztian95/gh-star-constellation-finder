@@ -14,15 +14,26 @@ import type { createRunTrace, LangfuseParent, LangfuseSpan } from "../ai/tracing
 import type { fetchUserLists } from "../github/starFetcher.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
-import type { Repo, ConsolidationStrategy, ScopeMode } from "../types.js";
+import type { Repo, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
 import type { AIProvider } from "../ai/index.js";
+
+export type AnalysisTimingStatus = "ok" | "failed" | "skipped-archived" | "aborted";
+
+export interface AnalysisTiming {
+  owner: string;
+  name: string;
+  durationMs: number;
+  status: AnalysisTimingStatus;
+}
 
 export interface AnalysisResult {
   analyzedRepos: AnalyzedRepo[];
   analysisErrorCount: number;
   analysisStartTime: number;
+  analysisDurationMs: number;
+  analysisTimings: AnalysisTiming[];
 }
 
 export interface RunAnalysisParams {
@@ -35,6 +46,7 @@ export interface RunAnalysisParams {
   filterLabel: string | undefined;
   concurrency: number;
   setPhase: (p: AppPhase) => void;
+  phaseTimings: PhaseTimings;
   parent?: LangfuseParent | null;
 }
 
@@ -48,9 +60,11 @@ export async function runAnalysis({
   filterLabel,
   concurrency,
   setPhase,
+  phaseTimings,
   parent,
 }: RunAnalysisParams): Promise<AnalysisResult> {
   const analyzedRepos: AnalyzedRepo[] = [];
+  const analysisTimings: AnalysisTiming[] = [];
   let analyzed = 0;
   let analysisErrorCount = 0;
   const analysisStartTime = Date.now();
@@ -58,7 +72,13 @@ export async function runAnalysis({
     repoCount: filteredRepos.length,
   });
 
-  setPhase({ tag: "analyzing", analyzed: 0, total: filteredRepos.length, filterLabel });
+  setPhase({
+    tag: "analyzing",
+    analyzed: 0,
+    total: filteredRepos.length,
+    filterLabel,
+    startedAt: analysisStartTime,
+  });
 
   try {
     let active = 0;
@@ -70,50 +90,73 @@ export async function runAnalysis({
       const repo = pending.shift()!;
       active++;
       const p = (async () => {
-        setPhase({
-          tag: "analyzing",
-          analyzed,
-          total: filteredRepos.length,
-          filterLabel,
-          currentRepo: `${repo.owner}/${repo.name}`,
-        });
-        let analysis;
-        let readme = "";
-        if (repo.isArchived) {
-          analysis = {
-            category: "Archived",
-            killerFeature: "(archived repository)",
-            dataQuality: "sparse" as const,
-          };
-        } else {
-          readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
-          try {
-            analysis = await analyzer.analyze(
-              {
-                name: repo.name,
-                owner: repo.owner,
-                description: repo.description,
-                language: repo.language,
-                topics: repo.topics,
-                readme,
-                isArchived: false,
-                existingListNames,
-              },
-              abortController.signal,
-              analysisSpan,
-            );
-          } catch (err) {
-            if (interruptedRef.value) return; // aborted — drop this repo silently
-            throw err;
+        const repoStart = Date.now();
+        let status: AnalysisTimingStatus = "ok";
+        try {
+          setPhase({
+            tag: "analyzing",
+            analyzed,
+            total: filteredRepos.length,
+            filterLabel,
+            currentRepo: `${repo.owner}/${repo.name}`,
+            startedAt: analysisStartTime,
+          });
+          let analysis;
+          let readme = "";
+          if (repo.isArchived) {
+            status = "skipped-archived";
+            analysis = {
+              category: "Archived",
+              killerFeature: "(archived repository)",
+              dataQuality: "sparse" as const,
+            };
+          } else {
+            readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
+            try {
+              analysis = await analyzer.analyze(
+                {
+                  name: repo.name,
+                  owner: repo.owner,
+                  description: repo.description,
+                  language: repo.language,
+                  topics: repo.topics,
+                  readme,
+                  isArchived: false,
+                  existingListNames,
+                },
+                abortController.signal,
+                analysisSpan,
+              );
+            } catch (err) {
+              if (interruptedRef.value) {
+                status = "aborted";
+                return;
+              }
+              status = "failed";
+              throw err;
+            }
+            analysis.dataQuality = computeDataQuality(readme);
           }
-          analysis.dataQuality = computeDataQuality(readme);
+          repo.readme = readme;
+          if (analysis.category === "analysis-failed") analysisErrorCount++;
+          analyzedRepos.push({ repo, analysis, readme });
+          analyzed++;
+          setPhase({
+            tag: "analyzing",
+            analyzed,
+            total: filteredRepos.length,
+            filterLabel,
+            startedAt: analysisStartTime,
+          });
+        } finally {
+          analysisTimings.push({
+            owner: repo.owner,
+            name: repo.name,
+            durationMs: Date.now() - repoStart,
+            status,
+          });
+          active--;
         }
-        repo.readme = readme;
-        if (analysis.category === "analysis-failed") analysisErrorCount++;
-        analyzedRepos.push({ repo, analysis, readme });
-        analyzed++;
-        setPhase({ tag: "analyzing", analyzed, total: filteredRepos.length, filterLabel });
-        active--;
         if (!interruptedRef.value && pending.length > 0) {
           await dispatch()!;
         }
@@ -133,7 +176,15 @@ export async function runAnalysis({
     });
   }
 
-  return { analyzedRepos, analysisErrorCount, analysisStartTime };
+  const analysisDurationMs = Date.now() - analysisStartTime;
+  phaseTimings.analysisMs = analysisDurationMs;
+  return {
+    analyzedRepos,
+    analysisErrorCount,
+    analysisStartTime,
+    analysisDurationMs,
+    analysisTimings,
+  };
 }
 
 export interface HandleInterruptParams {
@@ -154,6 +205,8 @@ export interface HandleInterruptParams {
   savePromptPromise: Promise<string>;
   unmount: () => void;
   provider: AIProvider;
+  phaseTimings: PhaseTimings;
+  analysisTimings: AnalysisTiming[];
 }
 
 // Returns only if the user chose "continue"; otherwise calls process.exit()
@@ -175,6 +228,8 @@ export async function handleInterrupt({
   savePromptPromise,
   unmount,
   provider,
+  phaseTimings,
+  analysisTimings,
 }: HandleInterruptParams): Promise<void> {
   createMilestoneEvent(agentObs, "run-interrupted", {
     analysedCount: analyzedRepos.length,
@@ -281,12 +336,14 @@ export async function handleInterrupt({
         suggestionCount: suggestions.length,
         interrupted: true,
         githubUser: login,
+        phaseTimings,
       },
       suggestions,
       errors: saveErrors,
+      analysisTimings,
     });
 
-    setPhase({ tag: "save-prompt", suggestions, decisions: new Map() });
+    setPhase({ tag: "save-prompt", suggestions, decisions: new Map(), phaseTimings });
     const savePath = await savePromptPromise;
     if (savePath) {
       fs.writeFileSync(savePath, saveJson);

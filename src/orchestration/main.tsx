@@ -11,7 +11,7 @@ import {
   createAgentObservation,
   createMilestoneEvent,
 } from "../ai/tracing.js";
-import type { Repo, ScopeMode, ConsolidationStrategy } from "../types.js";
+import type { Repo, ScopeMode, ConsolidationStrategy, PhaseTimings } from "../types.js";
 import { readConfig, writeConfig, ensureAnalyticsId } from "../config.js";
 import { initAnalytics, track, shutdown as analyticsShutdown } from "../analytics.js";
 
@@ -63,15 +63,20 @@ export async function main() {
   const abortController = new AbortController();
   const tui = setupTui({ interruptedRef, abortController });
 
+  const phaseTimings: PhaseTimings = {};
+
   // Fetch stars + lists
   let allRepos: Repo[];
   let lists: Awaited<ReturnType<typeof fetchUserLists>>;
+  const fetchStarsStart = Date.now();
   try {
     [allRepos, lists] = await Promise.all([
       fetchStarredRepos(graphqlWithAuth),
       fetchUserLists(graphqlWithAuth),
     ]);
+    phaseTimings.fetchStarsListsMs = Date.now() - fetchStarsStart;
   } catch (err) {
+    phaseTimings.fetchStarsListsMs = Date.now() - fetchStarsStart;
     const raw = err instanceof Error ? err.message : String(err);
     const message =
       raw.includes("<html") || raw.includes("<!DOCTYPE")
@@ -174,11 +179,17 @@ export async function main() {
 
   // Fetch READMEs
   tui.setPhase({ tag: "fetching", filterLabel });
-  const readmes = await fetchAllReadmes(
-    filteredRepos.map((r) => ({ owner: r.owner, name: r.name })),
-    token,
-    cliArgs.concurrency,
-  );
+  const fetchReadmesStart = Date.now();
+  let readmes: Awaited<ReturnType<typeof fetchAllReadmes>>;
+  try {
+    readmes = await fetchAllReadmes(
+      filteredRepos.map((r) => ({ owner: r.owner, name: r.name })),
+      token,
+      cliArgs.concurrency,
+    );
+  } finally {
+    phaseTimings.fetchReadmesMs = Date.now() - fetchReadmesStart;
+  }
 
   // Create provider first so modelId is available for trace metadata
   const analyzer = createProvider(cliArgs.backend);
@@ -217,18 +228,20 @@ export async function main() {
   });
   const existingListNames = lists.map((l) => l.name);
 
-  const { analyzedRepos, analysisErrorCount, analysisStartTime } = await runAnalysis({
-    filteredRepos,
-    readmes,
-    analyzer,
-    existingListNames,
-    abortController,
-    interruptedRef,
-    filterLabel,
-    concurrency: cliArgs.concurrency,
-    setPhase: tui.setPhase,
-    parent: agentObs,
-  });
+  const { analyzedRepos, analysisErrorCount, analysisStartTime, analysisTimings } =
+    await runAnalysis({
+      filteredRepos,
+      readmes,
+      analyzer,
+      existingListNames,
+      abortController,
+      interruptedRef,
+      filterLabel,
+      concurrency: cliArgs.concurrency,
+      setPhase: tui.setPhase,
+      phaseTimings,
+      parent: agentObs,
+    });
 
   // Handle ESC interrupt
   if (interruptedRef.value) {
@@ -250,6 +263,8 @@ export async function main() {
       savePromptPromise: tui.savePromptPromise,
       unmount: tui.unmount,
       provider: analyzer,
+      phaseTimings,
+      analysisTimings,
     });
   }
 
@@ -272,6 +287,8 @@ export async function main() {
     analysisErrorCount,
     login,
     provider: analyzer,
+    phaseTimings,
+    analysisTimings,
   });
 
   // Apply mutations + save
@@ -292,5 +309,7 @@ export async function main() {
     sessionRunId,
     login,
     modelId: analyzer.modelId ?? backend,
+    phaseTimings,
+    analysisTimings,
   });
 }

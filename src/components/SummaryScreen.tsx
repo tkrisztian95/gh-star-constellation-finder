@@ -1,8 +1,9 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import type { Suggestion, ConsolidationStrategy, ScopeMode } from "../types.js";
+import type { Suggestion, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { ReroutedRepo } from "../engine/suggestionEngine.js";
 import type { ReviewDecision } from "./ReviewScreen.js";
+import { PhaseTimingsLines } from "./PhaseTimingsLines.js";
 
 interface SummaryScreenProps {
   suggestions: Suggestion[];
@@ -11,6 +12,7 @@ interface SummaryScreenProps {
   strategy?: ConsolidationStrategy;
   existingListCount?: number;
   scopeMode?: ScopeMode;
+  phaseTimings?: PhaseTimings;
   onConfirm: (apply: boolean) => void;
 }
 
@@ -27,6 +29,7 @@ export function SummaryScreen({
   strategy = "keep-existing",
   existingListCount = 0,
   scopeMode,
+  phaseTimings,
   onConfirm,
 }: SummaryScreenProps) {
   const accepted: Suggestion[] = [];
@@ -156,6 +159,8 @@ export function SummaryScreen({
           <Text color="gray">No accepted changes. Exiting...</Text>
         </Box>
       )}
+
+      {phaseTimings && <PhaseTimingsLines phaseTimings={phaseTimings} />}
     </Box>
   );
 }

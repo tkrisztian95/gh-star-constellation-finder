@@ -16,6 +16,7 @@ import { SavePromptScreen } from "./SavePromptScreen.js";
 import { ConsolidatingScreen } from "./ConsolidatingScreen.js";
 import { StepIndicator } from "./StepIndicator.js";
 import { InterruptConfirmScreen } from "./InterruptConfirmScreen.js";
+import { PhaseTimingsLines } from "./PhaseTimingsLines.js";
 
 export const DIVIDER = "─".repeat(84);
 export const SHOW_STEPS_TAGS = new Set([
@@ -124,6 +125,7 @@ export function App({
           filterLabel={phase.filterLabel}
           stopping={phase.stopping}
           currentRepo={phase.currentRepo}
+          startedAt={phase.startedAt}
           onInterrupt={onAnalysisInterrupt}
         />
       )}
@@ -156,6 +158,7 @@ export function App({
           strategy={phase.strategy}
           existingListCount={phase.existingListCount}
           scopeMode={phase.scopeMode}
+          phaseTimings={phase.phaseTimings}
           onConfirm={onSummaryConfirm}
         />
       )}
@@ -183,6 +186,7 @@ export function App({
               {r.status === "success" ? "✓" : "✗"} {r.message}
             </Text>
           ))}
+          <PhaseTimingsLines phaseTimings={phase.phaseTimings} />
         </Box>
       )}
 
@@ -199,7 +203,11 @@ export function App({
       )}
 
       {phase.tag === "save-prompt" && (
-        <SavePromptScreen onSubmit={onSavePromptSubmit} errorMessage={phase.saveError} />
+        <SavePromptScreen
+          onSubmit={onSavePromptSubmit}
+          errorMessage={phase.saveError}
+          phaseTimings={phase.phaseTimings}
+        />
       )}
     </Box>
   );

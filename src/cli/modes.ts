@@ -19,6 +19,8 @@ import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
 import type { CliArgs } from "./args.js";
+import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
+import type { PhaseTimings } from "../types.js";
 
 export async function runAnalyzeOnly(
   cliArgs: CliArgs,
@@ -27,11 +29,21 @@ export async function runAnalyzeOnly(
   login: string,
 ) {
   const startMs = Date.now();
+  const phaseTimings: PhaseTimings = {};
 
-  const [allRepos, lists] = await Promise.all([
-    fetchStarredRepos(graphqlWithAuth),
-    fetchUserLists(graphqlWithAuth),
-  ]);
+  let allRepos: Awaited<ReturnType<typeof fetchStarredRepos>>;
+  let lists: Awaited<ReturnType<typeof fetchUserLists>>;
+  {
+    const fetchStart = Date.now();
+    try {
+      [allRepos, lists] = await Promise.all([
+        fetchStarredRepos(graphqlWithAuth),
+        fetchUserLists(graphqlWithAuth),
+      ]);
+    } finally {
+      phaseTimings.fetchStarsListsMs = Date.now() - fetchStart;
+    }
+  }
 
   const repoListIds = new Map<string, string[]>();
   for (const list of lists) {
@@ -47,11 +59,19 @@ export async function runAnalyzeOnly(
 
   const repos = cliArgs.limit ? allRepos.slice(0, cliArgs.limit) : allRepos;
 
-  const readmes = await fetchAllReadmes(
-    repos.map((r) => ({ owner: r.owner, name: r.name })),
-    token,
-    cliArgs.concurrency,
-  );
+  let readmes: Awaited<ReturnType<typeof fetchAllReadmes>>;
+  {
+    const readmesStart = Date.now();
+    try {
+      readmes = await fetchAllReadmes(
+        repos.map((r) => ({ owner: r.owner, name: r.name })),
+        token,
+        cliArgs.concurrency,
+      );
+    } finally {
+      phaseTimings.fetchReadmesMs = Date.now() - readmesStart;
+    }
+  }
 
   const backend = resolveBackend(cliArgs.backend);
 
@@ -69,35 +89,55 @@ export async function runAnalyzeOnly(
   const analyzer = createProvider(cliArgs.backend, trace);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
+  const analysisTimings: AnalysisTiming[] = [];
 
+  const analysisStart = Date.now();
   await Promise.all(
     repos.map(async (repo) => {
-      let analysis;
-      let readme = "";
-      if (repo.isArchived) {
-        analysis = {
-          category: "Archived",
-          killerFeature: "(archived repository)",
-          dataQuality: "sparse" as const,
-        };
-      } else {
-        readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
-        analysis = await analyzer.analyze({
-          name: repo.name,
+      const repoStart = Date.now();
+      let status: AnalysisTimingStatus = "ok";
+      try {
+        let analysis;
+        let readme = "";
+        if (repo.isArchived) {
+          status = "skipped-archived";
+          analysis = {
+            category: "Archived",
+            killerFeature: "(archived repository)",
+            dataQuality: "sparse" as const,
+          };
+        } else {
+          readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
+          try {
+            analysis = await analyzer.analyze({
+              name: repo.name,
+              owner: repo.owner,
+              description: repo.description,
+              language: repo.language,
+              topics: repo.topics,
+              readme,
+              isArchived: false,
+              existingListNames,
+            });
+          } catch (err) {
+            status = "failed";
+            throw err;
+          }
+          analysis.dataQuality = computeDataQuality(readme);
+        }
+        repo.readme = readme;
+        analyzedRepos.push({ repo, analysis, readme });
+      } finally {
+        analysisTimings.push({
           owner: repo.owner,
-          description: repo.description,
-          language: repo.language,
-          topics: repo.topics,
-          readme,
-          isArchived: false,
-          existingListNames,
+          name: repo.name,
+          durationMs: Date.now() - repoStart,
+          status,
         });
-        analysis.dataQuality = computeDataQuality(readme);
       }
-      repo.readme = readme;
-      analyzedRepos.push({ repo, analysis, readme });
     }),
   );
+  phaseTimings.analysisMs = Date.now() - analysisStart;
 
   const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
   const newCategoryNames = [
@@ -107,7 +147,8 @@ export async function runAnalyzeOnly(
         .filter((c) => !existingListNamesLower.has(c.toLowerCase().trim())),
     ),
   ];
-  const { remapping } = await consolidateCategories(
+  const consolidationStart = Date.now();
+  const consolidationResult = await consolidateCategories(
     newCategoryNames,
     analyzer,
     existingListNames.map((name) => ({ name, topics: [] })),
@@ -115,7 +156,10 @@ export async function runAnalyzeOnly(
     "allow-rename",
     trace,
     analyzedRepos,
-  );
+  ).finally(() => {
+    phaseTimings.consolidationMs = Date.now() - consolidationStart;
+  });
+  const { remapping } = consolidationResult;
   for (const entry of analyzedRepos) {
     const consolidated = remapping.get(entry.analysis.category);
     if (consolidated) {
@@ -130,6 +174,7 @@ export async function runAnalyzeOnly(
     availableTargets: string[],
     parent?: Parameters<typeof rerouteOrphanRepos>[3],
   ) => rerouteOrphanRepos(orphans, availableTargets, analyzer, parent);
+  const suggestionsStart = Date.now();
   const { suggestions } = await generateSuggestions(
     analyzedRepos,
     lists,
@@ -137,7 +182,9 @@ export async function runAnalyzeOnly(
     "allow-rename",
     undefined,
     trace,
-  );
+  ).finally(() => {
+    phaseTimings.suggestionsMs = Date.now() - suggestionsStart;
+  });
 
   const errors = analyzedRepos
     .filter((e) => e.analysis.category === "analysis-failed")
@@ -148,6 +195,8 @@ export async function runAnalyzeOnly(
     analyzedCount: repos.length,
     suggestionCount: suggestions.length,
     durationMs: Date.now() - startMs,
+    analysisDurationMs: phaseTimings.analysisMs ?? 0,
+    phaseTimings,
     model: analyzer.modelId ?? null,
     githubUser: login,
   };
@@ -157,7 +206,7 @@ export async function runAnalyzeOnly(
 
   await flushTracing(langfuse);
 
-  const json = buildSessionJson({ runId, summary, suggestions, errors });
+  const json = buildSessionJson({ runId, summary, suggestions, errors, analysisTimings });
 
   track("analyze_only_run", {
     repoCount: repos.length,
