@@ -1,3 +1,8 @@
+# consolidate-phase-ui Specification
+
+## Purpose
+TBD - added during archive of informed-category-consolidation. Update Purpose with a concise summary of this capability.
+## Requirements
 ### Requirement: App transitions to a consolidating phase after analysis completes
 Immediately after all per-repo analysis tasks finish (and before `consolidateCategories` is called), the app phase SHALL be set to `"consolidating"`. The phase SHALL remain `"consolidating"` until `consolidateCategories` and `generateSuggestions` both resolve, at which point the phase SHALL transition to `"review"` (or `"info"` if no suggestions are generated).
 
@@ -47,8 +52,17 @@ The `StepIndicator` component SHALL replace the separate "Scope" and "Strategy" 
 - **THEN** the "Setup" step SHALL be rendered with a green ✓ prefix
 
 ### Requirement: UI shows a loading message during consolidating phase
-When the app phase is `"consolidating"`, the TUI SHALL render a visible loading message (e.g., "Consolidating categories…") so that users know the application is working.
+When the app phase is `"consolidating"`, the TUI SHALL render a visible loading message that reflects the current sub-step of consolidation. When the distribution summary pass (Pass 0) is running the message SHALL indicate that the system is analysing repo distribution. When the consolidation passes are running the message SHALL indicate that categories are being consolidated.
 
 #### Scenario: Loading message is shown during consolidation
 - **WHEN** the app phase is `"consolidating"`
 - **THEN** a non-empty text message describing the consolidation activity SHALL be visible in the TUI
+
+#### Scenario: Loading message reflects distribution analysis sub-step
+- **WHEN** Pass 0 (distribution summary) is executing
+- **THEN** the visible message SHALL mention distribution or repo grouping (e.g. "Analysing repo distribution…")
+
+#### Scenario: Loading message reflects category consolidation sub-step
+- **WHEN** Pass 1 or Pass 2 (consolidation) is executing
+- **THEN** the visible message SHALL indicate category consolidation is in progress (e.g. "Consolidating categories…")
+
