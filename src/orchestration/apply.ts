@@ -11,6 +11,19 @@ import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode, PhaseTimings }
 import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
 import type { AnalysisTiming } from "./analysis.js";
+import { logger } from "../logger.js";
+
+function describeSuggestionTarget(s: Suggestion): string {
+  switch (s.type) {
+    case "create-list":
+    case "move-to-list":
+      return s.targetListName;
+    case "rename-list":
+      return `${s.oldName} -> ${s.newName}`;
+    case "delete-list":
+      return s.listName;
+  }
+}
 
 export interface ApplyPhaseParams {
   suggestions: Suggestion[];
@@ -53,11 +66,13 @@ export async function runApplyPhase({
   phaseTimings,
   analysisTimings,
 }: ApplyPhaseParams): Promise<void> {
+  logger.info("apply phase starting", { acceptedCount, strategy });
   const applyStart = Date.now();
   let finalResults: MutationResult[];
   try {
     // In recreate mode, delete all existing lists before applying
     if (strategy === "recreate" && lists.length > 0) {
+      logger.info("deleting existing lists (recreate strategy)", { count: lists.length });
       await deleteAllLists(lists, graphqlWithAuth);
     }
 
@@ -70,6 +85,16 @@ export async function runApplyPhase({
       graphqlWithAuth,
       (result) => {
         mutationResults.push(result);
+        const target = describeSuggestionTarget(result.suggestion);
+        if (result.status === "failed") {
+          logger.error("mutation failed", {
+            type: result.suggestion.type,
+            target,
+            message: result.message,
+          });
+        } else {
+          logger.debug("mutation ok", { type: result.suggestion.type, target });
+        }
         setPhase({ tag: "applying", results: [...mutationResults] });
       },
     );
@@ -80,6 +105,12 @@ export async function runApplyPhase({
   setPhase({ tag: "done", results: finalResults, phaseTimings });
 
   const failed = finalResults.filter((r) => r.status === "failed").length;
+  logger.info("apply phase complete", {
+    total: finalResults.length,
+    succeeded: finalResults.length - failed,
+    failed,
+    durationMs: phaseTimings.applyMs,
+  });
   const rejectedCount = Array.from(decisions.values()).filter((d) => d === "rejected").length;
   const skippedCount = Array.from(decisions.values()).filter((d) => d === "skipped").length;
   const failureReasons =
@@ -147,13 +178,16 @@ export async function runApplyPhase({
     });
     try {
       fs.writeFileSync(savePath, json);
+      logger.info("saved session", { path: savePath, runId: sessionRunId });
       track("file_saved", { context: "interactive" });
       process.stderr.write(`Saved session to ${savePath}\n`);
     } catch (err) {
-      process.stderr.write(
-        `Error writing file: ${err instanceof Error ? err.message : String(err)}\n`,
-      );
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error("failed to write session file", { path: savePath, message });
+      process.stderr.write(`Error writing file: ${message}\n`);
     }
+  } else {
+    logger.info("user declined to save session");
   }
 
   if (failed > 0) {

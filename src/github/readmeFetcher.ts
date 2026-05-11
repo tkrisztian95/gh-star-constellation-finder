@@ -140,6 +140,8 @@ export async function fetchAllReadmes(
 ): Promise<Map<string, string>> {
   const acquire = createSemaphore(concurrency);
   const results = new Map<string, string>();
+  const start = Date.now();
+  logger.info("readme fetch starting", { count: repos.length, concurrency });
 
   await Promise.all(
     repos.map(async ({ owner, name }) => {
@@ -153,5 +155,12 @@ export async function fetchAllReadmes(
     }),
   );
 
+  let empty = 0;
+  for (const v of results.values()) if (v.length === 0) empty++;
+  logger.info("readme fetch complete", {
+    count: results.size,
+    emptyOrMissing: empty,
+    durationMs: Date.now() - start,
+  });
   return results;
 }

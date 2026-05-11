@@ -82,6 +82,7 @@ export async function fetchStarredRepos(graphqlWithAuth: typeof graphql): Promis
   const repos: Repo[] = [];
   let cursor: string | null = null;
   let pageCount = 0;
+  const start = Date.now();
 
   while (true) {
     if (pageCount > 0 && pageCount % 5 === 0) {
@@ -102,6 +103,11 @@ export async function fetchStarredRepos(graphqlWithAuth: typeof graphql): Promis
     pageCount++;
   }
 
+  logger.debug("starred repos paginated", {
+    pages: pageCount + 1,
+    repoCount: repos.length,
+    durationMs: Date.now() - start,
+  });
   return repos;
 }
 
