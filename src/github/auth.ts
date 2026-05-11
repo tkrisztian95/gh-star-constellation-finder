@@ -1,4 +1,5 @@
 import { graphql } from "@octokit/graphql";
+import { logger } from "../logger.js";
 
 export interface AuthResult {
   login: string;
@@ -49,9 +50,9 @@ export async function authenticate(): Promise<AuthResult> {
     );
 
     if (!hasWriteScope) {
-      console.warn(
-        "Warning: token may lack write permissions for GitHub Lists — accept actions will fail",
-      );
+      logger.warn("GitHub token may lack write permissions for Lists; accept actions will fail", {
+        scopes: scopeList,
+      });
     }
 
     const body = (await response.json()) as {

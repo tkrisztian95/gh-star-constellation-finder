@@ -29,12 +29,12 @@
 ## 4. Migrate existing console call sites
 
 - [x] 4.1 `src/index.tsx:4` — replace `console.error` with `logger.error` (preserve message + add error object as structured field)
-- [ ] 4.2 `src/github/starFetcher.ts:73` — replace `console.log` with `logger.warn` (this is the rate-limit warning; warn is the correct level) with structured fields for remaining count / reset
-- [ ] 4.3 `src/github/readmeFetcher.ts:82, 91` — replace both `console.error` calls with `logger.error`, attaching the repo identifier and error message as structured fields
-- [ ] 4.4 `src/github/auth.ts:52` — replace `console.warn` with `logger.warn`, preserving the auth-edge-case message
-- [ ] 4.5 `src/orchestration/main.tsx:50` — replace `console.error` with `logger.error`, attaching the failure context as structured fields
-- [ ] 4.6 Run `bun run typecheck` and `bun run lint` after the migration pass; fix any issues
-- [ ] 4.7 Run `bun run test`; fix anything that breaks (most likely: a test was asserting stdout content from a migrated call site — update the assertion to read the log file or drop the assertion if obsolete)
+- [x] 4.2 `src/github/starFetcher.ts:73` — replace `console.log` with `logger.warn` (this is the rate-limit warning; warn is the correct level) with structured fields for remaining count / reset
+- [x] 4.3 `src/github/readmeFetcher.ts:82, 91` — replace both `console.error` calls with `logger.error`, attaching the repo identifier and error message as structured fields
+- [x] 4.4 `src/github/auth.ts:52` — replace `console.warn` with `logger.warn`, preserving the auth-edge-case message
+- [x] 4.5 `src/orchestration/main.tsx:50` — replace `console.error` with `logger.error`, attaching the failure context as structured fields
+- [x] 4.6 Run `bun run typecheck` and `bun run lint` after the migration pass; fix any issues
+- [x] 4.7 Run `bun run test`; fix anything that breaks (most likely: a test was asserting stdout content from a migrated call site — update the assertion to read the log file or drop the assertion if obsolete)
 
 ## 5. ESLint guard
 
