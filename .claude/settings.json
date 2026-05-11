@@ -2,23 +2,70 @@
   "permissions": {
     "allow": [
       "Bash(openspec instructions:*)",
+      "Bash(openspec new:*)",
+      "Bash(openspec status:*)",
+      "Bash(openspec validate *)",
       "Bash(npx tsx:*)",
       "Bash(npx tsc:*)",
-      "Bash(openspec new:*)",
       "Bash(find /Users/toth/Git/Hobby/gh-star-constellation-finder/src/components -name *.tsx)",
       "Bash(bun add:*)",
       "Bash(bun run:*)",
       "Bash(bun test:*)",
       "Bash(bun tsc:*)",
       "Bash(git stash:*)",
+      "Bash(git add:*)",
       "Bash(npm test:*)",
+      "Bash(mkdir -p:*)",
       "Read(//Users/toth/.claude/skills/prompt-architect/references/frameworks/**)",
       "Read(//Users/toth/.claude/skills/prompt-architect/assets/templates/**)",
-      "Bash(git add:*)"
+      "Skill(update-config:*)",
+      "mcp__gitnexus__*"
     ],
     "additionalDirectories": [
       "/Users/toth/Git/Hobby/gh-star-constellation-finder/openspec/specs",
       "/Users/toth/Git/Hobby/gh-star-constellation-finder/.github"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "mcp__gitnexus__impact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p .claude && touch .claude/.gitnexus-impact-stamp"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__gitnexus__detect_changes",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mkdir -p .claude && touch .claude/.gitnexus-detect-stamp"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read -r f; case \"$f\" in *\"/src/\"*|src/*) s=.claude/.gitnexus-impact-stamp; if [ ! -f \"$s\" ] || [ $(($(date +%s) - $(stat -f %m \"$s\"))) -gt 600 ]; then echo 'Run mcp__gitnexus__impact on the target symbol before editing src/. CLAUDE.md requires impact analysis first.' >&2; exit 2; fi;; esac; }"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | { read -r c; case \"$c\" in \"git commit\"*|*\" git commit\"*) s=.claude/.gitnexus-detect-stamp; if [ ! -f \"$s\" ] || [ $(($(date +%s) - $(stat -f %m \"$s\"))) -gt 600 ]; then echo 'Run mcp__gitnexus__detect_changes before git commit. CLAUDE.md requires it.' >&2; exit 2; fi;; esac; }"
+          }
+        ]
+      }
     ]
   }
 }
