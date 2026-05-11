@@ -1,31 +1,37 @@
 ## Why
 
-Users currently have no visibility into how long the AI analysis phase takes — only an opaque spinner during the run, no completion-screen duration, and per-repo latency is invisible. Long runs (hundreds of stars on a slow model) feel indefinite, and there is no data in the saved session JSON for users to compare runs, diagnose slow backends, or identify outlier repos that blew up wall-clock time.
+Users currently have no visibility into how long a run takes. The analyzing TUI shows only a spinner, no completion screen mentions duration, and the session JSON carries no timing data. Even worse, when a run feels slow there is no way to tell *which* phase is the culprit — fetching READMEs from GitHub, the per-repo LLM analysis loop, the consolidation step, suggestion generation, or applying mutations on GitHub. PostHog's `analysis_completed` event already records a `durationMs` for the analysis phase, but it is opaque to the end user and lumps everything into one number.
 
 ## What Changes
 
-- Capture the analysis-phase wall-clock duration and the per-repo analyzer latency for every repo analyzed (including failures).
+- Capture wall-clock duration for every measurable phase of a run: fetching stars and lists, fetching READMEs, analysis, consolidation, suggestion generation, and applying mutations.
+- Capture per-repo analysis latency (including failures and archived fast-paths) so the slowest repo or a hang on a specific one is diagnosable.
 - During the analyzing TUI phase, render a live elapsed timer next to the progress counter.
-- On the post-run completion path, surface the total analysis duration (formatted human-readably, e.g. `2m 14s`).
-- Persist `analysisDurationMs` and a per-repo `analysisDurationsMs` array in the session JSON `summary` (for both `--analyze-only` output and interrupt/save flows).
-- Per-repo timings are emitted as `{ owner, name, durationMs, status }` entries so users can spot the slowest analyses and the ones that failed.
+- On the post-run completion path, surface the total analysis duration (human-readable, e.g. `2m 14s`) and a short per-phase breakdown.
+- Persist `phaseTimings` and `analysisTimings` on the session JSON `summary` so saved runs are diff-able and shareable.
+- User-interactive phases (confirm, scope, strategy picker, review) are explicitly **not** measured — user think-time is not useful as a performance signal.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `analysis-runtime-metrics`: Capturing and exposing wall-clock timing for the analysis phase as a whole and per repo.
+- `run-phase-metrics`: Capturing and exposing wall-clock timing for each non-interactive phase of a run and per-repo analyzer latency.
 
 ### Modified Capabilities
 
-- `tui-review`: The analyzing-phase loading screen MUST render a live elapsed timer.
-- `analyze-only-output`: The session JSON `summary` MUST include `analysisDurationMs`; the output MUST include a top-level `analysisTimings` array with one entry per analyzed repo.
+- `tui-review`: The analyzing-phase loading screen MUST render a live elapsed timer; completion screens MUST display the total analysis duration and per-phase breakdown.
+- `analyze-only-output`: The session JSON MUST include `summary.phaseTimings` and a top-level `analysisTimings` array.
 
 ## Impact
 
-- `src/orchestration/analysis.ts` — wraps each `analyzer.analyze()` call to record per-repo duration; returns per-repo timings from `runAnalysis`.
-- `src/state/phases.ts` — `analyzing` phase variant gains `startedAt: number` so the screen can compute elapsed time.
-- `src/components/LoadingScreen.tsx` — live elapsed-time display when `phase === "analyzing"`.
-- `src/session/json.ts` — `SessionJsonInput` extended with optional per-repo timings; surfaced in serialized output.
-- `src/orchestration/main.tsx`, `src/orchestration/review.ts`, `src/orchestration/apply.ts`, `src/cli/analyzeOnly.ts` (or equivalent analyze-only entry) — thread per-repo timings through to all session JSON build sites (interrupt-save, analyze-only, post-apply save).
-- No new dependencies. No breaking changes to existing analytics events (`durationMs` continues to mean total since `analysisStartTime`).
+- `src/orchestration/main.tsx` — wraps the fetch-stars-and-lists `Promise.all` and the `fetchAllReadmes` call with timing; accumulates a `PhaseTimings` object that is threaded through subsequent phases.
+- `src/orchestration/analysis.ts` — `runAnalysis` returns `analysisDurationMs` and `analysisTimings`; `handleInterrupt` save path receives and serializes the partial `PhaseTimings`.
+- `src/orchestration/review.ts` — instruments `consolidateCategories` and `generateSuggestions` calls, augments `ReviewPhaseResult` with `consolidationMs` and `suggestionsMs`.
+- `src/orchestration/apply.ts` — instruments the GitHub mutation loop, includes `applyMs` in the saved session JSON when applicable.
+- `src/cli/modes.ts` (`runAnalyzeOnly`) — collects all non-interactive phase timings and serializes them.
+- `src/state/phases.ts` — `analyzing` phase carries `startedAt: number`; `summary`/`save-prompt`/`done` carry `phaseTimings: PhaseTimings`.
+- `src/components/LoadingScreen.tsx` — live elapsed-time display during `analyzing`.
+- `src/components/SummaryScreen.tsx`, `SavePromptScreen.tsx`, plus the done screen — render formatted total + per-phase breakdown.
+- `src/session/json.ts` — `SessionJsonInput.summary` accepts `phaseTimings`; output gains a top-level `analysisTimings` array.
+- New `src/util/duration.ts` — single formatting helper used by both TUI and JSON.
+- No new dependencies. PostHog `durationMs` semantics on `analysis_completed` are unchanged (additive only).
