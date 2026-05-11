@@ -64,3 +64,12 @@ export type Suggestion =
   | MoveToListSuggestion
   | RenameListSuggestion
   | DeleteListSuggestion;
+
+export interface PhaseTimings {
+  fetchStarsListsMs?: number;
+  fetchReadmesMs?: number;
+  analysisMs?: number;
+  consolidationMs?: number;
+  suggestionsMs?: number;
+  applyMs?: number;
+}
