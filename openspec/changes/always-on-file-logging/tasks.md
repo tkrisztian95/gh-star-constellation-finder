@@ -48,8 +48,8 @@
 
 ## 7. Final validation
 
-- [ ] 7.1 Run the full quality gate locally: `bun run typecheck && bun run lint && bun run format:check && bun run test`
-- [ ] 7.2 Smoke test interactive mode: run the TUI briefly, confirm zero stdout/stderr corruption and that the log file received expected lines
-- [ ] 7.3 Smoke test headless mode: run with `--analyze-only`, confirm `warn`/`error` lines appear on stderr in compact form and the log file received JSONL
-- [ ] 7.4 Run `openspec validate --strict always-on-file-logging` to confirm the change artifacts are well-formed
-- [ ] 7.5 Run `mcp__gitnexus__detect_changes` on the staged set before the final commit and report risk summary
+- [x] 7.1 Run the full quality gate locally: `bun run typecheck && bun run lint && bun run format:check && bun run test`
+- [x] 7.2 Smoke test interactive mode: run the TUI briefly, confirm zero stdout/stderr corruption and that the log file received expected lines
+- [x] 7.3 Smoke test headless mode: run with `--analyze-only`, confirm `warn`/`error` lines appear on stderr in compact form and the log file received JSONL
+- [x] 7.4 Run `openspec validate --strict always-on-file-logging` to confirm the change artifacts are well-formed
+- [x] 7.5 Run `mcp__gitnexus__detect_changes` on the staged set before the final commit and report risk summary
