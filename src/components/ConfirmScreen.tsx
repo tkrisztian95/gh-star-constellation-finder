@@ -1,6 +1,13 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
 
+/** Pure routing logic — exported for testing. Returns null when the keystroke is not a recognised confirm choice. */
+export function resolveConfirmChoice(input: string, isEnter: boolean): boolean | null {
+  if (input.toLowerCase() === "y") return true;
+  if (input.toLowerCase() === "n" || isEnter) return false;
+  return null;
+}
+
 interface ConfirmScreenProps {
   repoCount: number;
   listCount: number;
@@ -16,9 +23,9 @@ export function ConfirmScreen({
   onConfirm,
   showAnalyticsNotice,
 }: ConfirmScreenProps) {
-  useInput((input) => {
-    if (input.toLowerCase() === "y") onConfirm(true);
-    else if (input.toLowerCase() === "n" || input === "") onConfirm(false);
+  useInput((input, key) => {
+    const choice = resolveConfirmChoice(input, key.return);
+    if (choice !== null) onConfirm(choice);
   });
 
   return (

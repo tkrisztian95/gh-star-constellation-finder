@@ -32,41 +32,45 @@ function runTests() {
   console.log("  resolveInterruptChoice (analyzedCount > 0)");
 
   test('key "1" → continue', () => {
-    assertEqual(resolveInterruptChoice("1", 5), "continue", "key 1");
+    assertEqual(resolveInterruptChoice("1", false, 5), "continue", "key 1");
   });
 
-  test("Enter (empty string) → continue (default)", () => {
-    assertEqual(resolveInterruptChoice("", 5), "continue", "Enter");
+  test("Enter (key.return) → continue (default)", () => {
+    assertEqual(resolveInterruptChoice("", true, 5), "continue", "Enter");
+  });
+
+  test("Enter delivered as carriage-return → continue (default)", () => {
+    assertEqual(resolveInterruptChoice("\r", true, 5), "continue", String.raw`Enter as \r`);
   });
 
   test('key "2" → save', () => {
-    assertEqual(resolveInterruptChoice("2", 5), "save", "key 2");
+    assertEqual(resolveInterruptChoice("2", false, 5), "save", "key 2");
   });
 
   test('key "3" → exit', () => {
-    assertEqual(resolveInterruptChoice("3", 5), "exit", "key 3");
+    assertEqual(resolveInterruptChoice("3", false, 5), "exit", "key 3");
   });
 
   test("unrecognised key → null (no choice)", () => {
-    assertEqual(resolveInterruptChoice("q", 5), null, "unknown key");
+    assertEqual(resolveInterruptChoice("q", false, 5), null, "unknown key");
   });
 
   console.log("\n  resolveInterruptChoice (analyzedCount === 0)");
 
   test('key "1" → exit (only option)', () => {
-    assertEqual(resolveInterruptChoice("1", 0), "exit", "key 1 with 0 repos");
+    assertEqual(resolveInterruptChoice("1", false, 0), "exit", "key 1 with 0 repos");
   });
 
   test("Enter → exit", () => {
-    assertEqual(resolveInterruptChoice("", 0), "exit", "Enter with 0 repos");
+    assertEqual(resolveInterruptChoice("", true, 0), "exit", "Enter with 0 repos");
   });
 
   test('key "3" → exit', () => {
-    assertEqual(resolveInterruptChoice("3", 0), "exit", "key 3 with 0 repos");
+    assertEqual(resolveInterruptChoice("3", false, 0), "exit", "key 3 with 0 repos");
   });
 
   test('key "2" → null (save not available with 0 repos)', () => {
-    assertEqual(resolveInterruptChoice("2", 0), null, "key 2 with 0 repos");
+    assertEqual(resolveInterruptChoice("2", false, 0), null, "key 2 with 0 repos");
   });
 
   // --- LoadingScreen: ESC hint visibility ---
