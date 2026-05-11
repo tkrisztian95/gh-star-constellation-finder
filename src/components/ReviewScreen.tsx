@@ -36,6 +36,18 @@ export function deriveRenameDecision(
   return renameIdx >= 0 ? decisions.get(renameIdx) : undefined;
 }
 
+export function deriveBulkAcceptDecisions(
+  prior: Map<number, ReviewDecision>,
+  currentIndex: number,
+  suggestionCount: number,
+): Map<number, ReviewDecision> {
+  const next = new Map(prior);
+  for (let i = currentIndex; i < suggestionCount; i++) {
+    if (!next.has(i)) next.set(i, "accepted");
+  }
+  return next;
+}
+
 interface QuitConfirmProps {
   acceptedCount: number;
   onConfirm: (applyBeforeQuit: boolean) => void;
@@ -83,6 +95,11 @@ export function ReviewScreen({
 
     if (input.toLowerCase() === "q" || key.escape) {
       setShowQuitConfirm(true);
+      return;
+    }
+
+    if (key.ctrl && input.toLowerCase() === "a") {
+      onComplete(deriveBulkAcceptDecisions(decisions, index, suggestions.length));
       return;
     }
 
@@ -170,7 +187,7 @@ export function ReviewScreen({
         <Text bold color="magenta">
           Suggestion {index + 1} of {suggestions.length}
         </Text>
-        <Text color="gray">[a/Enter] Accept [s] Skip [r] Reject [q] Quit</Text>
+        <Text color="gray">[a/Enter] Accept [Ctrl+A] Accept all [s] Skip [r] Reject [q] Quit</Text>
       </Box>
 
       {/* Suggestion panel */}
