@@ -152,13 +152,15 @@ export const logger = {
   },
 };
 
-export function __resetLoggerForTests(): void {
-  if (state?.stream) {
-    try {
-      state.stream.end();
-    } catch {
-      // swallow
-    }
-  }
+export async function __resetLoggerForTests(): Promise<void> {
+  const stream = state?.stream ?? null;
   state = null;
+  if (!stream) return;
+  await new Promise<void>((resolve) => {
+    try {
+      stream.end(() => resolve());
+    } catch {
+      resolve();
+    }
+  });
 }
