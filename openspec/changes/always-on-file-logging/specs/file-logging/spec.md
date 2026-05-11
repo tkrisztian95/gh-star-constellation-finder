@@ -114,11 +114,11 @@ When `initLogger` is called with `headless: true`, log lines at level `warn` or 
 
 ### Requirement: Existing console-based operational logs are migrated
 
-The system SHALL replace the operational `console.log/.error/.warn` call sites in `src/index.tsx`, `src/github/starFetcher.ts`, `src/github/readmeFetcher.ts`, `src/github/auth.ts`, and `src/orchestration/main.tsx` with equivalent `logger.*` calls at the same severity level. Test-file `console.*` usage under `src/__tests__/` SHALL NOT be migrated.
+The system SHALL replace every operational `console.log/.error/.warn` call site under `src/` (excluding `src/__tests__/`) with an equivalent `logger.*` call at the same severity level. Migration is enforced going forward by the `no-console` ESLint rule (see "ESLint guards against console regressions"). User-facing error messages that today surface via `process.stderr.write` (or a direct stderr write retained as part of migration) are NOT considered `console.*` operational logs and SHALL remain.
 
-#### Scenario: All five files no longer emit operational console output
-- **WHEN** the codebase is searched for operational `console.log`, `console.warn`, or `console.error` in `src/index.tsx`, `src/github/`, and `src/orchestration/`
-- **THEN** no matches remain (excluding any that are intentionally part of user-facing CLI output, which there are none of as of this change)
+#### Scenario: No operational console calls remain under src/
+- **WHEN** the codebase is searched for `console.log`, `console.warn`, or `console.error` under `src/` excluding `src/__tests__/`
+- **THEN** no matches remain
 
 #### Scenario: Test files retain console output
 - **WHEN** the codebase is searched for `console.*` in `src/__tests__/`

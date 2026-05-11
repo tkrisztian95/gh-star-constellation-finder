@@ -3,6 +3,7 @@ import type { LangfuseParent } from "./tracing.js";
 import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
 import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
+import { logger } from "../logger.js";
 import {
   endGenerationSafe,
   parseOpenAIContent,
@@ -22,9 +23,9 @@ export function createOpenAIProvider(
   model: string = process.env.OPENAI_MODEL ?? "gpt-4o-mini",
 ): AIProvider {
   if (!apiKey) {
-    if (typeof console !== "undefined") {
-      console.error("Error: OPENAI_API_KEY is required for the openai backend");
-    }
+    const message = "Error: OPENAI_API_KEY is required for the openai backend";
+    logger.error("missing OPENAI_API_KEY", { backend: "openai" });
+    process.stderr.write(`${message}\n`);
     process.exit(1);
   }
   const client = new OpenAI({ apiKey });
