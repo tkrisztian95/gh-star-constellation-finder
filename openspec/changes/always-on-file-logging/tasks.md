@@ -10,15 +10,15 @@
 
 ## 2. Tests
 
-- [ ] 2.1 Add `src/__tests__/logger.test.ts` with a temp-dir fixture: each test creates a unique temp `LOG_FILE`, reads the file after the run, asserts contents
-- [ ] 2.2 Test JSONL envelope: each level emits one well-formed line with `ts`/`level`/`msg` and merged fields; envelope keys cannot be overwritten
-- [ ] 2.3 Test level filtering: `LOG_LEVEL=warn` drops `info`/`debug` calls (no line written), keeps `warn`/`error`
-- [ ] 2.4 Test invalid `LOG_LEVEL` falls back to `info` and emits the warn-line about invalid value
-- [ ] 2.5 Test `LOG_FILE`: absolute path is used; relative path is rejected with a warn line, default is used
-- [ ] 2.6 Test pre-init calls are no-ops (no file created, no throw)
-- [ ] 2.7 Test safe-to-fail: point `LOG_FILE` at an unwritable path (e.g. inside a `chmod 000` dir or `/proc/1/forbidden`); init returns, subsequent calls no-op, app does not throw
-- [ ] 2.8 Test headless stderr-mirror: capture stderr, assert `warn`/`error` lines appear in compact format when `headless: true`, and that `info`/`debug` do NOT mirror
-- [ ] 2.9 Test interactive mode never writes to stderr or stdout: capture both, assert empty for all four levels
+- [x] 2.1 Add `src/__tests__/logger.test.ts` with a temp-dir fixture: each test creates a unique temp `LOG_FILE`, reads the file after the run, asserts contents
+- [x] 2.2 Test JSONL envelope: each level emits one well-formed line with `ts`/`level`/`msg` and merged fields; envelope keys cannot be overwritten
+- [x] 2.3 Test level filtering: `LOG_LEVEL=warn` drops `info`/`debug` calls (no line written), keeps `warn`/`error`
+- [x] 2.4 Test invalid `LOG_LEVEL` falls back to `info` and emits the warn-line about invalid value
+- [x] 2.5 Test `LOG_FILE`: absolute path is used; relative path is rejected with a warn line, default is used
+- [x] 2.6 Test pre-init calls are no-ops (no file created, no throw)
+- [x] 2.7 Test safe-to-fail: point `LOG_FILE` at an unwritable path (e.g. inside a `chmod 000` dir or `/proc/1/forbidden`); init returns, subsequent calls no-op, app does not throw
+- [x] 2.8 Test headless stderr-mirror: capture stderr, assert `warn`/`error` lines appear in compact format when `headless: true`, and that `info`/`debug` do NOT mirror
+- [x] 2.9 Test interactive mode never writes to stderr or stdout: capture both, assert empty for all four levels
 
 ## 3. Wire-up at startup
 
