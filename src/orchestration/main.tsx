@@ -14,6 +14,7 @@ import {
 import type { Repo, ScopeMode, ConsolidationStrategy, PhaseTimings } from "../types.js";
 import { readConfig, writeConfig, ensureAnalyticsId } from "../config.js";
 import { initAnalytics, track, shutdown as analyticsShutdown } from "../analytics.js";
+import { logger } from "../logger.js";
 
 import { parseArgs } from "../cli/args.js";
 import { runAnalyzeOnly } from "../cli/modes.js";
@@ -47,7 +48,12 @@ export async function main() {
   } catch (err) {
     const reason = err instanceof AuthError ? err.reason : "network_error";
     const message = err instanceof Error ? err.message : String(err);
-    console.error(message);
+    logger.error("authentication failed", { reason, message });
+    // TUI not mounted yet; surface user-facing message on stderr.
+    // Headless mode already gets it via the logger's stderr-mirror.
+    if (!cliArgs.analyzeOnly) {
+      process.stderr.write(`${message}\n`);
+    }
     track("auth_failed", { reason });
     await analyticsShutdown();
     process.exit(1);

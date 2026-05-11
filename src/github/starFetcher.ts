@@ -1,6 +1,7 @@
 import { graphql } from "@octokit/graphql";
 import type { Repo, GitHubList } from "../types.js";
 import { STARRED_REPOSITORIES_QUERY, USER_LISTS_QUERY } from "../graphql/queries.js";
+import { logger } from "../logger.js";
 
 interface GraphQLPageInfo {
   hasNextPage: boolean;
@@ -70,7 +71,7 @@ async function checkRateLimit(): Promise<void> {
   if (remaining < 50) {
     const waitMs = Math.max(0, reset * 1000 - Date.now());
     const waitSec = Math.ceil(waitMs / 1000);
-    console.log(`Rate limit nearly exhausted (${remaining} remaining). Waiting ${waitSec}s...`);
+    logger.warn("GitHub REST rate limit nearly exhausted", { remaining, waitSec });
     if (waitMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
