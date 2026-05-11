@@ -38,8 +38,8 @@
 
 ## 5. ESLint guard
 
-- [ ] 5.1 Add `no-console: "error"` to `eslint.config.*` for `src/**/*.{ts,tsx}` with an override allowlist for `src/__tests__/**`
-- [ ] 5.2 Run `bun run lint` and confirm a clean pass (any remaining `console.*` in non-test source would now fail; that's the migration completeness check)
+- [x] 5.1 Add `no-console: "error"` to `eslint.config.*` for `src/**/*.{ts,tsx}` with an override allowlist for `src/__tests__/**`
+- [x] 5.2 Run `bun run lint` and confirm a clean pass (any remaining `console.*` in non-test source would now fail; that's the migration completeness check)
 
 ## 6. Docs
 
