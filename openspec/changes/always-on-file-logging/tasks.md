@@ -22,13 +22,13 @@
 
 ## 3. Wire-up at startup
 
-- [ ] 3.1 In `src/index.tsx`, detect headless mode from parsed CLI args (the `--analyze-only` flag — get it from `src/cli/args.ts`)
-- [ ] 3.2 Call `initLogger({ headless })` as the very first side-effecting line, before any other module init that might log
-- [ ] 3.3 Verify with a quick smoke run (`bun run src/index.tsx --help` or similar minimal invocation) that the log file is created at the expected default path
+- [x] 3.1 In `src/index.tsx`, detect headless mode from parsed CLI args (the `--analyze-only` flag — get it from `src/cli/args.ts`)
+- [x] 3.2 Call `initLogger({ headless })` as the very first side-effecting line, before any other module init that might log
+- [x] 3.3 Verify with a quick smoke run (`bun run src/index.tsx --help` or similar minimal invocation) that the log file is created at the expected default path
 
 ## 4. Migrate existing console call sites
 
-- [ ] 4.1 `src/index.tsx:4` — replace `console.error` with `logger.error` (preserve message + add error object as structured field)
+- [x] 4.1 `src/index.tsx:4` — replace `console.error` with `logger.error` (preserve message + add error object as structured field)
 - [ ] 4.2 `src/github/starFetcher.ts:73` — replace `console.log` with `logger.warn` (this is the rate-limit warning; warn is the correct level) with structured fields for remaining count / reset
 - [ ] 4.3 `src/github/readmeFetcher.ts:82, 91` — replace both `console.error` calls with `logger.error`, attaching the repo identifier and error message as structured fields
 - [ ] 4.4 `src/github/auth.ts:52` — replace `console.warn` with `logger.warn`, preserving the auth-edge-case message
