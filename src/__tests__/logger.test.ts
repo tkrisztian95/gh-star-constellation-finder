@@ -170,20 +170,22 @@ async function runTests() {
     assert(lines.length === 1, "one line at custom path");
   });
 
-  await test("LOG_FILE relative path is rejected; default + warn line", async () => {
-    const xdg = mkdtempSync(join(tmpdir(), "logger-xdg-"));
-    process.env.XDG_STATE_HOME = xdg;
-    process.env.LOG_FILE = "./local.log";
-    initLogger({ headless: false });
-    logger.info("after rejection");
-    await __resetLoggerForTests();
-    const defaultPath = join(xdg, "gh-star-constellation-finder", "app.log");
-    assert(existsSync(defaultPath), `default path used: ${defaultPath}`);
-    const lines = await readLogLines(defaultPath);
-    const parsed = lines.map((l) => JSON.parse(l) as { level: string; msg: string });
-    const warns = parsed.filter((p) => p.level === "warn" && p.msg.includes("LOG_FILE"));
-    assert(warns.length === 1, "relative-path warn line emitted once");
-    assert(!existsSync("./local.log"), "no relative file created");
+  await test("LOG_FILE relative path is resolved against cwd", async () => {
+    const cwdDir = mkdtempSync(join(tmpdir(), "logger-cwd-"));
+    const origCwd = process.cwd();
+    process.chdir(cwdDir);
+    try {
+      process.env.LOG_FILE = "app.log";
+      initLogger({ headless: false });
+      logger.info("relative path works");
+      await __resetLoggerForTests();
+      const expected = join(cwdDir, "app.log");
+      assert(existsSync(expected), `relative path resolved to cwd: ${expected}`);
+      const lines = await readLogLines(expected);
+      assert(lines.length === 1, "one line written");
+    } finally {
+      process.chdir(origCwd);
+    }
   });
 
   await test("default path uses XDG_STATE_HOME when set", async () => {

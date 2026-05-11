@@ -1,5 +1,5 @@
 import { createWriteStream, mkdirSync, type WriteStream } from "node:fs";
-import { dirname, isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { homedir } from "node:os";
 
 const APP_NAME = "gh-star-constellation-finder";
@@ -36,10 +36,10 @@ function parseLevel(raw: string | undefined): { level: Level; invalid: boolean }
   return { level: "info", invalid: true };
 }
 
-function resolveLogFile(raw: string | undefined): { path: string; relativeRejected: boolean } {
-  if (!raw) return { path: defaultLogPath(), relativeRejected: false };
-  if (!isAbsolute(raw)) return { path: defaultLogPath(), relativeRejected: true };
-  return { path: raw, relativeRejected: false };
+function resolveLogFile(raw: string | undefined): { path: string } {
+  if (!raw) return { path: defaultLogPath() };
+  if (isAbsolute(raw)) return { path: raw };
+  return { path: resolve(process.cwd(), raw) };
 }
 
 function openStream(path: string): WriteStream | null {
@@ -107,7 +107,7 @@ function formatField(v: unknown): string {
 export function initLogger(opts: { headless: boolean }): void {
   if (state) return;
   const { level, invalid: invalidLevel } = parseLevel(process.env.LOG_LEVEL);
-  const { path, relativeRejected } = resolveLogFile(process.env.LOG_FILE);
+  const { path } = resolveLogFile(process.env.LOG_FILE);
   const stream = openStream(path);
   state = {
     stream,
@@ -128,11 +128,6 @@ export function initLogger(opts: { headless: boolean }): void {
   if (invalidLevel) {
     writeJsonl("warn", "invalid LOG_LEVEL value; falling back to info", {
       received: process.env.LOG_LEVEL,
-    });
-  }
-  if (relativeRejected) {
-    writeJsonl("warn", "LOG_FILE must be an absolute path; falling back to default", {
-      received: process.env.LOG_FILE,
     });
   }
 }
