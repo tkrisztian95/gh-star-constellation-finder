@@ -4,3 +4,4 @@ dist/
 .DS_Store
 .gitnexus
 .claude/.gitnexus-detect-stamp
+.claude/.gitnexus-impact-stamp
