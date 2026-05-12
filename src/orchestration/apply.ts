@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import { applyAcceptedSuggestions, deleteAllLists } from "../github/mutator.js";
 import type { MutationResult } from "../github/mutator.js";
@@ -7,6 +8,7 @@ import type { fetchUserLists } from "../github/starFetcher.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
+import { buildDefaultSavePath } from "../session/defaultPath.js";
 import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
@@ -148,6 +150,7 @@ export async function runApplyPhase({
     decisions,
     mutationResults: finalResults,
     phaseTimings,
+    defaultPath: buildDefaultSavePath({ modelId }),
   });
   const savePath = await savePromptPromise;
   await analyticsShutdown();
@@ -177,6 +180,7 @@ export async function runApplyPhase({
       mutationResults: finalResults,
     });
     try {
+      fs.mkdirSync(path.dirname(savePath), { recursive: true });
       fs.writeFileSync(savePath, json);
       logger.info("saved session", { path: savePath, runId: sessionRunId });
       track("file_saved", { context: "interactive" });
