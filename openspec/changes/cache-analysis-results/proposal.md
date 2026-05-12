@@ -1,3 +1,5 @@
+Tracks #9
+
 ## Why
 
 Every run of `gh-star-constellation-finder` makes one AI API call per starred repo, even for repos analyzed in a prior run. Caching analysis results locally eliminates redundant API calls and makes re-runs fast.
