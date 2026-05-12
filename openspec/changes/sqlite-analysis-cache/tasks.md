@@ -1,11 +1,12 @@
 ## 1. Storage Layer Rewrite
 
-- [ ] 1.1 Replace the JSON-backed body of `src/cache/analysisCache.ts` with a `bun:sqlite` implementation: open the DB, run `CREATE TABLE IF NOT EXISTS entries (key TEXT PRIMARY KEY, category TEXT NOT NULL, killer_feature TEXT NOT NULL, data_quality TEXT, updated_at INTEGER NOT NULL) WITHOUT ROWID;` and `PRAGMA user_version = 1; PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;`
-- [ ] 1.2 Update `DEFAULT_CACHE_PATH` from `.cache/analysis.json` to `.cache/analysis.db`; `cacheKey()` stays unchanged
-- [ ] 1.3 Implement `cache.get(repoId, readme)` using a prepared `SELECT category, killer_feature, data_quality FROM entries WHERE key = ?` statement; map the row (or `undefined`) to `AnalysisResult | null`
-- [ ] 1.4 Implement `cache.saveEntry(repoId, readme, result)` using a prepared `INSERT OR REPLACE INTO entries (key, category, killer_feature, data_quality, updated_at) VALUES (?, ?, ?, ?, ?)` statement; remove the `writeQueue` Promise chain since SQLite serializes writes
-- [ ] 1.5 Implement `cache.size` by loading the initial count via `SELECT COUNT(*) FROM entries` at `loadCache()` time and recomputing (or incrementing on new-row insert) inside `saveEntry()`
-- [ ] 1.6 On any error opening the DB or reading the schema, log a `warn` with the path + error, close the handle, rename the file to `<path>.broken.<timestamp>`, and reopen with a fresh schema — yielding an empty in-memory cache without crashing
+- [x] 1.0 Add `@types/bun` to devDependencies so `tsc --noEmit` can resolve the `bun:sqlite` module declaration (no runtime impact)
+- [x] 1.1 Replace the JSON-backed body of `src/cache/analysisCache.ts` with a `bun:sqlite` implementation: open the DB, run `CREATE TABLE IF NOT EXISTS entries (key TEXT PRIMARY KEY, category TEXT NOT NULL, killer_feature TEXT NOT NULL, data_quality TEXT, updated_at INTEGER NOT NULL) WITHOUT ROWID;` and `PRAGMA user_version = 1; PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;`
+- [x] 1.2 Update `DEFAULT_CACHE_PATH` from `.cache/analysis.json` to `.cache/analysis.db`; `cacheKey()` stays unchanged
+- [x] 1.3 Implement `cache.get(repoId, readme)` using a prepared `SELECT category, killer_feature, data_quality FROM entries WHERE key = ?` statement; map the row (or `undefined`) to `AnalysisResult | null`
+- [x] 1.4 Implement `cache.saveEntry(repoId, readme, result)` using a prepared `INSERT OR REPLACE INTO entries (key, category, killer_feature, data_quality, updated_at) VALUES (?, ?, ?, ?, ?)` statement; remove the `writeQueue` Promise chain since SQLite serializes writes
+- [x] 1.5 Implement `cache.size` via a prepared `SELECT COUNT(*) FROM entries` statement queried on each access (correctness over micro-optimization; tests + diagnostics read it infrequently)
+- [x] 1.6 On any error opening the DB or reading the schema, log a `warn` with the path + error, rename the file to `<path>.broken.<timestamp>`, and reopen with a fresh schema — yielding an empty in-memory cache without crashing
 
 ## 2. Call-site Verification
 
