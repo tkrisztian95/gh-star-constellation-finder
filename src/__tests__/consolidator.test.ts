@@ -48,6 +48,34 @@ function makeRecordingProvider(responses: string[]): AIProvider & { calls: strin
   };
 }
 
+type ChunkedHandler = (args: {
+  prompt: string;
+  generationName: string;
+  callIndex: number;
+}) => string | Error;
+
+function makeHandlerProvider(handler: ChunkedHandler): AIProvider & {
+  callCount: number;
+  generationNames: string[];
+} {
+  const generationNames: string[] = [];
+  const provider = {
+    modelId: "mock-handler",
+    callCount: 0,
+    generationNames,
+    analyze: async () => ({ category: "Test", killerFeature: "" }),
+    complete: async (prompt: string, generationName: string) => {
+      const callIndex = provider.callCount;
+      provider.callCount = callIndex + 1;
+      generationNames.push(generationName);
+      const result = handler({ prompt, generationName, callIndex });
+      if (result instanceof Error) throw result;
+      return result;
+    },
+  };
+  return provider;
+}
+
 function makeAnalyzedRepo(category: string, name = "repo"): AnalyzedRepo {
   return {
     repo: {
@@ -351,6 +379,99 @@ function runTests() {
         !provider.calls[1].includes("DISTRIBUTION CONTEXT"),
         "Pass 2 prompt should NOT contain DISTRIBUTION CONTEXT when no analyzedRepos",
       );
+    }),
+  );
+
+  // --- chunked pass-2 flow ---
+
+  tests.push(
+    test("consolidateCategories: single-chunk fast path issues exactly 2 provider calls (pass1 + pass2)", async () => {
+      const names = Array.from({ length: 10 }, (_, i) => `Cat ${i}`);
+      const provider = makeHandlerProvider(() => "{}");
+      await consolidateCategories(names, provider, [], 32);
+      assertEqual(provider.callCount, 2, "1 pass1 + 1 pass2");
+      assertEqual(provider.generationNames[0], "deduplicate-language-qualifiers", "pass1 name");
+      assertEqual(provider.generationNames[1], "consolidate-categories", "pass2 single-chunk name");
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories: 30 names with chunk size 25 yields 1 pass1 + 2 chunks, no reducer", async () => {
+      const names = Array.from({ length: 30 }, (_, i) => `Cat ${i}`);
+      const provider = makeHandlerProvider(() => "{}");
+      // budget = 100 - 0 = 100, well above 30 distinct canonicals → reducer skipped
+      await consolidateCategories(names, provider, [], 100);
+      assertEqual(provider.callCount, 3, "pass1 + 2 chunk calls");
+      assertEqual(provider.generationNames[0], "deduplicate-language-qualifiers", "pass1");
+      assert(
+        provider.generationNames[1].startsWith("consolidate-categories-chunk-"),
+        "chunk 1 generation name has chunk suffix",
+      );
+      assert(
+        provider.generationNames[2].startsWith("consolidate-categories-chunk-"),
+        "chunk 2 generation name has chunk suffix",
+      );
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories: 60 names identity-mapped per chunk preserves all 60 names", async () => {
+      const names = Array.from({ length: 60 }, (_, i) => `Cat ${i}`);
+      const provider = makeHandlerProvider(() => "{}");
+      // budget = 100, well above 60 → no reducer, no enforcebudget pressure
+      const result = await consolidateCategories(names, provider, [], 100);
+      assertEqual(provider.callCount, 4, "pass1 + 3 chunk calls (25+25+10)");
+      for (const name of names) {
+        assertEqual(result.remapping.get(name), name, `${name} identity-preserved`);
+      }
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories: failed chunk falls back to identity for its slice, others survive", async () => {
+      const names = Array.from({ length: 60 }, (_, i) => `Cat ${i}`);
+      const handler: ChunkedHandler = ({ generationName }) => {
+        if (generationName === "consolidate-categories-chunk-2") {
+          return new Error("mock chunk 2 provider error");
+        }
+        return "{}";
+      };
+      const provider = makeHandlerProvider(handler);
+      const result = await consolidateCategories(names, provider, [], 100);
+      // All 60 names must still be present in the result, mapped to themselves
+      for (const name of names) {
+        assertEqual(result.remapping.get(name), name, `${name} identity-preserved`);
+      }
+      // The failing chunk should NOT have torn down the run
+      assertEqual(result.remapping.size, 60, "all 60 names accounted for");
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories: over-budget chunked union triggers reducer call", async () => {
+      const names = Array.from({ length: 30 }, (_, i) => `Cat ${i}`);
+      // Each chunk maps its slice to identity (so each chunk produces ~25 / ~5
+      // distinct canonicals). Total union = 30 > budget = 5, reducer must fire.
+      const handler: ChunkedHandler = ({ generationName, prompt }) => {
+        if (generationName === "consolidate-categories-reduce") {
+          // Reducer collapses every input canonical into "All Tools"
+          const inputs = [...prompt.matchAll(/"(Cat \d+)"/g)].map((m) => m[1]);
+          const map: Record<string, string> = {};
+          for (const c of inputs) map[c] = "All Tools";
+          return JSON.stringify(map);
+        }
+        return "{}";
+      };
+      const provider = makeHandlerProvider(handler);
+      const result = await consolidateCategories(names, provider, [], 5);
+      const reducerCalls = provider.generationNames.filter(
+        (n) => n === "consolidate-categories-reduce",
+      );
+      assertEqual(reducerCalls.length, 1, "reducer called exactly once");
+      // After reducer, every name should map to "All Tools"
+      for (const name of names) {
+        assertEqual(result.remapping.get(name), "All Tools", `${name} → All Tools`);
+      }
     }),
   );
 
