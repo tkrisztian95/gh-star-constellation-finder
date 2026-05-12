@@ -33,5 +33,5 @@ Swapping the storage layer to **`bun:sqlite`** (built into Bun, zero new depende
 - `src/cache/analysisCache.ts`: rewrite the implementation around `bun:sqlite`. Module surface (`loadCache`, `cacheKey`, `AnalysisCache`, `DEFAULT_CACHE_PATH`) stays the same; the default path moves to `.cache/analysis.db`.
 - `src/__tests__/analysisCache.test.ts`: replace the JSON-file assertions (Test 1 reads the file with `JSON.parse`, Test 3 writes garbage JSON) with SQLite-level assertions (rows in the `entries` table, corrupt-DB recovery via rename). Behavioral tests (cache hit short-circuits analyzer, `--no-cache` forces re-analysis, content-based invalidation) stay structurally identical.
 - `.gitignore`: no change — `.cache/` already covers the new file.
-- `package.json`: no new dependencies; `bun:sqlite` is part of the Bun runtime.
+- `package.json`: no new **runtime** dependencies (`bun:sqlite` is part of the Bun runtime); adds `@types/bun` as a devDependency so `tsc --noEmit` can resolve the `bun:sqlite` module declaration.
 - README / docs: no mention of `.cache/analysis.json` exists outside the archived change folder, so no doc updates are needed in the main tree.

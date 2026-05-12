@@ -1,24 +1,32 @@
+import { Database, type Statement } from "bun:sqlite";
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { dirname } from "node:path";
 
-import { z } from "zod";
-
 import { logger } from "../logger.js";
 import type { AnalysisResult } from "../types.js";
 
-export const DEFAULT_CACHE_PATH = ".cache/analysis.json";
+export const DEFAULT_CACHE_PATH = ".cache/analysis.db";
 
-const entrySchema = z.object({
-  category: z.string(),
-  killerFeature: z.string(),
-  dataQuality: z.enum(["full", "sparse", "truncated"]).optional(),
-});
+const SCHEMA_VERSION = 1;
 
-const fileSchema = z.object({
-  version: z.literal(1),
-  entries: z.record(z.string(), entrySchema),
-});
+const CREATE_TABLE_SQL = `
+  CREATE TABLE IF NOT EXISTS entries (
+    key            TEXT PRIMARY KEY,
+    category       TEXT NOT NULL,
+    killer_feature TEXT NOT NULL,
+    data_quality   TEXT,
+    updated_at     INTEGER NOT NULL
+  ) WITHOUT ROWID;
+`;
+
+interface EntryRow {
+  category: string;
+  killer_feature: string;
+  data_quality: "full" | "sparse" | "truncated" | null;
+}
+
+type SaveParams = [string, string, string, string | null, number];
 
 export interface AnalysisCache {
   get(repoId: string, readme: string): AnalysisResult | null;
@@ -31,61 +39,83 @@ export function cacheKey(repoId: string, readme: string): string {
   return `${repoId}:${hash}`;
 }
 
-export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<AnalysisCache> {
-  const entries = new Map<string, z.infer<typeof entrySchema>>();
+function applySchema(db: Database): void {
+  db.exec("PRAGMA journal_mode = WAL;");
+  db.exec("PRAGMA synchronous = NORMAL;");
+  db.exec(CREATE_TABLE_SQL);
+  db.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+}
+
+async function openWithRecovery(filePath: string): Promise<Database> {
+  await fs.mkdir(dirname(filePath), { recursive: true });
 
   try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = fileSchema.parse(JSON.parse(raw));
-    for (const [k, v] of Object.entries(parsed.entries)) {
-      entries.set(k, v);
-    }
-    logger.info("analysis cache loaded", { path: filePath, size: entries.size });
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code === "ENOENT") {
-      logger.debug("analysis cache file absent; starting empty", { path: filePath });
-    } else {
-      logger.warn("analysis cache unreadable; starting empty", {
+    const db = new Database(filePath);
+    applySchema(db);
+    return db;
+  } catch (openErr) {
+    // The file exists but is not a valid SQLite database (or otherwise unreadable).
+    // Preserve it under <path>.broken.<timestamp> so the user can inspect, then
+    // start fresh at the original path.
+    const brokenPath = `${filePath}.broken.${Date.now()}`;
+    try {
+      await fs.rename(filePath, brokenPath);
+    } catch (renameErr) {
+      logger.error("analysis cache could not be quarantined; rethrowing open error", {
         path: filePath,
-        error: err instanceof Error ? err.message : String(err),
+        renameError: renameErr instanceof Error ? renameErr.message : String(renameErr),
+        openError: openErr instanceof Error ? openErr.message : String(openErr),
       });
+      throw openErr;
     }
+    logger.warn("analysis cache unreadable; quarantined and starting empty", {
+      path: filePath,
+      broken: brokenPath,
+      error: openErr instanceof Error ? openErr.message : String(openErr),
+    });
+    const fresh = new Database(filePath);
+    applySchema(fresh);
+    return fresh;
   }
+}
 
-  // Serialize concurrent writes so the file image stays consistent.
-  let writeQueue: Promise<void> = Promise.resolve();
-  const flush = async (): Promise<void> => {
-    const obj: Record<string, z.infer<typeof entrySchema>> = {};
-    for (const [k, v] of entries) obj[k] = v;
-    const payload = JSON.stringify({ version: 1, entries: obj }, null, 2);
-    await fs.mkdir(dirname(filePath), { recursive: true });
-    const tmpPath = `${filePath}.tmp`;
-    await fs.writeFile(tmpPath, payload, "utf8");
-    await fs.rename(tmpPath, filePath);
-  };
+export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<AnalysisCache> {
+  const db = await openWithRecovery(filePath);
+
+  const selectStmt: Statement<EntryRow, [string]> = db.query(
+    "SELECT category, killer_feature, data_quality FROM entries WHERE key = ?",
+  );
+  const upsertStmt: Statement<unknown, SaveParams> = db.query(
+    "INSERT OR REPLACE INTO entries (key, category, killer_feature, data_quality, updated_at) VALUES (?, ?, ?, ?, ?)",
+  );
+  const countStmt: Statement<{ n: number }, []> = db.query("SELECT COUNT(*) AS n FROM entries");
+
+  logger.info("analysis cache opened", {
+    path: filePath,
+    size: countStmt.get()?.n ?? 0,
+  });
 
   return {
     get(repoId, readme) {
-      const entry = entries.get(cacheKey(repoId, readme));
-      if (!entry) return null;
+      const row = selectStmt.get(cacheKey(repoId, readme));
+      if (!row) return null;
       return {
-        category: entry.category,
-        killerFeature: entry.killerFeature,
-        dataQuality: entry.dataQuality,
+        category: row.category,
+        killerFeature: row.killer_feature,
+        dataQuality: row.data_quality ?? undefined,
       };
     },
     async saveEntry(repoId, readme, result) {
-      entries.set(cacheKey(repoId, readme), {
-        category: result.category,
-        killerFeature: result.killerFeature,
-        dataQuality: result.dataQuality,
-      });
-      writeQueue = writeQueue.then(flush, flush);
-      await writeQueue;
+      upsertStmt.run(
+        cacheKey(repoId, readme),
+        result.category,
+        result.killerFeature,
+        result.dataQuality ?? null,
+        Date.now(),
+      );
     },
     get size() {
-      return entries.size;
+      return countStmt.get()?.n ?? 0;
     },
   };
 }
