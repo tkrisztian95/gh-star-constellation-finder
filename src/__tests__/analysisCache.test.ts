@@ -1,4 +1,5 @@
-import { mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
+import { Database } from "bun:sqlite";
+import { mkdtempSync, readdirSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -65,9 +66,9 @@ function makeRecordingProvider(opts: { throwOnAnalyze?: boolean } = {}): Recordi
 async function runTests(): Promise<void> {
   console.log("analysisCache.test.ts\n");
 
-  // --- Test 1 (task 4.1): saveEntry writes .cache/analysis.json with v1 schema
+  // --- Test 1 (task 4.1): saveEntry writes .cache/analysis.db with the v1 schema
   await withTempDir(async (dir) => {
-    const cachePath = join(dir, "analysis.json");
+    const cachePath = join(dir, "analysis.db");
     const cache = await loadCache(cachePath);
     await cache.saveEntry("a/repo", "README CONTENTS", {
       category: "Tools",
@@ -75,18 +76,50 @@ async function runTests(): Promise<void> {
       dataQuality: "full",
     });
 
-    const raw = JSON.parse(readFileSync(cachePath, "utf8"));
-    assertEqual(raw.version, 1, "file uses version 1");
-    const key = cacheKey("a/repo", "README CONTENTS");
-    assert(key in raw.entries, "entry stored under cacheKey(repoId, readme)");
-    assertEqual(raw.entries[key].category, "Tools", "category persisted");
-    assertEqual(raw.entries[key].killerFeature, "does the thing", "killerFeature persisted");
-    assertEqual(raw.entries[key].dataQuality, "full", "dataQuality persisted");
+    // Open the DB independently and inspect the schema + row directly.
+    const db = new Database(cachePath, { readonly: true });
+    try {
+      const userVersion = db
+        .query<{ user_version: number }, []>("PRAGMA user_version")
+        .get()?.user_version;
+      assertEqual(userVersion, 1, "PRAGMA user_version is 1");
+
+      const tables = db
+        .query<
+          { name: string },
+          []
+        >("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'entries'")
+        .all();
+      assertEqual(tables.length, 1, "entries table exists");
+
+      const key = cacheKey("a/repo", "README CONTENTS");
+      const row = db
+        .query<
+          {
+            key: string;
+            category: string;
+            killer_feature: string;
+            data_quality: string | null;
+            updated_at: number;
+          },
+          [string]
+        >(
+          "SELECT key, category, killer_feature, data_quality, updated_at FROM entries WHERE key = ?",
+        )
+        .get(key);
+      assert(row !== null, "row stored under cacheKey(repoId, readme)");
+      assertEqual(row?.category, "Tools", "category persisted");
+      assertEqual(row?.killer_feature, "does the thing", "killer_feature persisted");
+      assertEqual(row?.data_quality, "full", "data_quality persisted");
+      assert(typeof row?.updated_at === "number" && row.updated_at > 0, "updated_at populated");
+    } finally {
+      db.close();
+    }
   });
 
   // --- Test 2: content-based invalidation — same README hits, changed README misses
   await withTempDir(async (dir) => {
-    const cachePath = join(dir, "analysis.json");
+    const cachePath = join(dir, "analysis.db");
     const cache = await loadCache(cachePath);
     await cache.saveEntry("a/repo", "v1 readme", {
       category: "Original",
@@ -105,13 +138,22 @@ async function runTests(): Promise<void> {
     assertEqual(differentRepo, null, "cache miss when repoId differs");
   });
 
-  // --- Test 3 (task 4.4): corrupt cache file → empty cache, no throw
+  // --- Test 3 (task 4.5): corrupt SQLite file → quarantine + fresh empty cache, no throw
   await withTempDir(async (dir) => {
-    const cachePath = join(dir, "analysis.json");
+    const cachePath = join(dir, "analysis.db");
     mkdirSync(dir, { recursive: true });
-    writeFileSync(cachePath, "{ this is not valid json", "utf8");
+    writeFileSync(cachePath, "this is definitely not a sqlite database", "utf8");
+
     const cache = await loadCache(cachePath);
     assertEqual(cache.size, 0, "corrupt file yields empty cache");
+
+    const files = readdirSync(dir);
+    const brokenSibling = files.find((f) => f.startsWith("analysis.db.broken."));
+    assert(
+      brokenSibling !== undefined,
+      `broken file preserved as analysis.db.broken.<timestamp>; got: ${files.join(", ")}`,
+    );
+
     // Cache remains usable after recovery.
     await cache.saveEntry("a/repo", "readme", {
       category: "Recovered",
@@ -119,19 +161,20 @@ async function runTests(): Promise<void> {
       dataQuality: "full",
     });
     assertEqual(cache.size, 1, "cache writable after corruption recovery");
+
     const reloaded = await loadCache(cachePath);
     assertEqual(reloaded.size, 1, "recovered cache persists across loads");
   });
 
   // --- Test 4: missing cache file → empty cache, no error
   await withTempDir(async (dir) => {
-    const cache = await loadCache(join(dir, "does", "not", "exist.json"));
+    const cache = await loadCache(join(dir, "does", "not", "exist.db"));
     assertEqual(cache.size, 0, "missing file yields empty cache");
   });
 
-  // --- Test 5 (task 4.2): cache hit short-circuits analyzer in runAnalysis
+  // --- Test 5 (task 4.3): cache hit short-circuits analyzer in runAnalysis
   await withTempDir(async (dir) => {
-    const cachePath = join(dir, "analysis.json");
+    const cachePath = join(dir, "analysis.db");
     const cache = await loadCache(cachePath);
     await cache.saveEntry("a/cached", "MATCHING README", {
       category: "Cached",
@@ -160,9 +203,9 @@ async function runTests(): Promise<void> {
     assertEqual(result.analyzedRepos[0].analysis.category, "Cached", "cached category returned");
   });
 
-  // --- Test 6 (task 4.3): cache=null forces analyzer call even when entry exists on disk
+  // --- Test 6 (task 4.4): cache=null forces analyzer call even when entry exists on disk
   await withTempDir(async (dir) => {
-    const cachePath = join(dir, "analysis.json");
+    const cachePath = join(dir, "analysis.db");
     const seed = await loadCache(cachePath);
     await seed.saveEntry("a/repo", "README", {
       category: "Stale",
@@ -192,7 +235,7 @@ async function runTests(): Promise<void> {
 
   // --- Test 7: cache miss writes a new entry after analyzer runs
   await withTempDir(async (dir) => {
-    const cachePath = join(dir, "analysis.json");
+    const cachePath = join(dir, "analysis.db");
     const cache = await loadCache(cachePath);
     const provider = makeRecordingProvider();
     const phaseTimings: PhaseTimings = {};
@@ -212,8 +255,31 @@ async function runTests(): Promise<void> {
     assertEqual(provider.calls.length, 1, "analyzer called on cache miss");
     const reloaded = await loadCache(cachePath);
     const hit = reloaded.get("a/fresh", "FRESH README");
-    assert(hit !== null, "fresh analysis persisted to cache file");
+    assert(hit !== null, "fresh analysis persisted to cache db");
     assertEqual(hit?.category, "FreshCategory", "stored category matches analyzer output");
+  });
+
+  // --- Test 8 (task 3.4): concurrent saveEntry calls all persist; SQLite serializes writes
+  await withTempDir(async (dir) => {
+    const cachePath = join(dir, "analysis.db");
+    const cache = await loadCache(cachePath);
+    await Promise.all(
+      Array.from({ length: 10 }, (_, i) =>
+        cache.saveEntry(`a/repo-${i}`, `readme-${i}`, {
+          category: `cat-${i}`,
+          killerFeature: `feature-${i}`,
+          dataQuality: "full",
+        }),
+      ),
+    );
+    assertEqual(cache.size, 10, "all 10 concurrent saves landed");
+
+    const reloaded = await loadCache(cachePath);
+    assertEqual(reloaded.size, 10, "all 10 entries durable across reload");
+    for (let i = 0; i < 10; i++) {
+      const hit = reloaded.get(`a/repo-${i}`, `readme-${i}`);
+      assertEqual(hit?.category, `cat-${i}`, `entry ${i} category persisted`);
+    }
   });
 
   console.log("  ✓ all analysisCache assertions passed");
