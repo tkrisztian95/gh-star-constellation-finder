@@ -15,14 +15,14 @@
 
 ## 3. Reducer step
 
-- [ ] 3.1 Add `buildConsolidationReducerPrompt(canonicalNames: string[], existingLists: ExistingListContext[], maxLists: number): string` to `src/ai/prompts.ts` — minimal variant of `buildConsolidationPrompt` with input being just the over-budget canonical set
-- [ ] 3.2 Unit test the reducer prompt: must include canonical names, must include the budget number, must NOT include distribution context
-- [ ] 3.3 In `runChunkedConsolidation`, after composing per-chunk maps, compute the set of distinct canonical names that are not in `effectiveExistingLists`
-- [ ] 3.4 If that set fits `effectiveMaxLists`, skip reducer; emit `logger.info("consolidation reducer skipped", { canonicalCount, budget })`
-- [ ] 3.5 If over budget, call `provider.complete(reducerPrompt, "consolidate-categories-reduce", consolidationSpan)` once; parse with `parseRemapping`
-- [ ] 3.6 Compose chunk-canonical → reducer-final into the returned remapping
-- [ ] 3.7 On reducer failure (rejection or parse error): emit `logger.warn` matching the same shape, fall through with chunk-canonical (may slightly exceed budget — accept this as a graceful degrade rather than identity-mapping everything)
-- [ ] 3.8 Emit `logger.info("consolidation reducer applied", { canonicalsIn, canonicalsOut })` on reducer success
+- [x] 3.1 Add `buildConsolidationReducerPrompt(canonicalNames: string[], existingLists: ExistingListContext[], maxLists: number): string` to `src/ai/prompts.ts` — minimal variant of `buildConsolidationPrompt` with input being just the over-budget canonical set
+- [x] 3.2 Unit test the reducer prompt: must include canonical names, must include the budget number, must NOT include distribution context
+- [x] 3.3 In `runChunkedConsolidation`, after composing per-chunk maps, compute the set of distinct canonical names that are not in `effectiveExistingLists`
+- [x] 3.4 If that set fits `effectiveMaxLists`, skip reducer; emit `logger.info("consolidation reducer skipped", { canonicalCount, budget })`
+- [x] 3.5 If over budget, call `provider.complete(reducerPrompt, "consolidate-categories-reduce", consolidationSpan)` once; parse with `parseRemapping`
+- [x] 3.6 Compose chunk-canonical → reducer-final into the returned remapping
+- [x] 3.7 On reducer failure (rejection or parse error): emit `logger.warn` matching the same shape, fall through with chunk-canonical (may slightly exceed budget — accept this as a graceful degrade rather than identity-mapping everything)
+- [x] 3.8 Emit `logger.info("consolidation reducer applied", { canonicalsIn, canonicalsOut })` on reducer success
 
 ## 4. Tests
 

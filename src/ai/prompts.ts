@@ -213,6 +213,41 @@ ${distributionContext}
 Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
 }
 
+export function buildConsolidationReducerPrompt(
+  canonicalNames: string[],
+  existingLists: ExistingListContext[],
+  maxLists: number,
+): string {
+  const budget = maxLists - existingLists.length;
+  const nameList = canonicalNames.map((n) => `"${n}"`).join(", ");
+  const existingSection =
+    existingLists.length > 0
+      ? `\n\nEXISTING LISTS\n${existingLists.map((l) => `- "${l.name}"`).join("\n")}\n\nDo NOT produce a canonical name that is semantically identical to an existing list.`
+      : "";
+
+  return `You are a technical librarian merging proposed GitHub List category names into a smaller set.
+
+TASK
+The previous step produced ${canonicalNames.length} distinct canonical names but only ${budget} new lists are allowed. Merge semantically related names so the output contains at most ${budget} distinct canonical names. Map every input name to its final canonical name.
+
+RULES
+- Every input name must appear exactly once as a key in the output JSON.
+- The number of distinct values in the output JSON must not exceed ${budget}.
+- Prefer the more specific surviving name when merging.
+- Do not invent canonical names that are unrelated to any input.${existingSection}
+
+OUTPUT
+- The output must be a JSON object mapping every input name to its final canonical name.
+- Do NOT wrap the output in markdown code fences or add prose.
+- The output must be parseable by JSON.parse() without modification.
+- Every input name MUST appear exactly once as a key. The output must contain exactly ${canonicalNames.length} keys.
+
+INPUT
+[${nameList}]
+
+Return ONLY a valid JSON object. No prose, no markdown, no code fences.`;
+}
+
 export function buildLanguageQualifierPrompt(proposedNames: string[]): string {
   const nameList = proposedNames.map((n) => `"${n}"`).join(", ");
   return `You are a technical librarian deduplicating GitHub List category names.

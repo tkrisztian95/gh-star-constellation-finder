@@ -1,6 +1,7 @@
 import {
   buildAnalyzeRepoPrompt,
   buildConsolidationPrompt,
+  buildConsolidationReducerPrompt,
   buildReroutingPrompt,
 } from "../ai/prompts.js";
 import type { RepoInput } from "../ai/types.js";
@@ -129,6 +130,37 @@ function runTests() {
     );
     assert(prompt.includes('"HTTP Clients"'), "should include first target");
     assert(prompt.includes('"Vector Databases"'), "should include second target");
+  });
+
+  test("buildConsolidationReducerPrompt: includes input canonical names and budget", () => {
+    const prompt = buildConsolidationReducerPrompt(["A", "B", "C", "D"], [], 2);
+    assert(prompt.includes('"A"'), "includes A");
+    assert(prompt.includes('"D"'), "includes D");
+    // budget = 2 - 0 = 2
+    assert(prompt.includes("at most 2"), "states budget of 2");
+  });
+
+  test("buildConsolidationReducerPrompt: omits DISTRIBUTION CONTEXT", () => {
+    const prompt = buildConsolidationReducerPrompt(["A", "B"], [], 1);
+    assert(
+      !prompt.includes("DISTRIBUTION CONTEXT"),
+      "reducer prompt must not carry distribution context",
+    );
+  });
+
+  test("buildConsolidationReducerPrompt: surfaces existing list names when present", () => {
+    const prompt = buildConsolidationReducerPrompt(
+      ["CLI Tools", "Vector Databases"],
+      [
+        { name: "Curated Software Resources", topics: [] },
+        { name: "API Clients", topics: [] },
+      ],
+      32,
+    );
+    assert(prompt.includes('"Curated Software Resources"'), "lists first existing");
+    assert(prompt.includes('"API Clients"'), "lists second existing");
+    // budget = 32 - 2 = 30
+    assert(prompt.includes("at most 30"), "budget reflects remaining slots");
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

@@ -1,5 +1,6 @@
 import {
   buildConsolidationPrompt,
+  buildConsolidationReducerPrompt,
   buildLanguageQualifierPrompt,
   buildReroutingPrompt,
 } from "../ai/prompts.js";
@@ -114,8 +115,59 @@ async function runChunkedConsolidation(
     failedChunks,
   });
 
-  // Global budget enforcement happens here on the composed remapping —
-  // enforcebudget collapses over-budget canonicals into the largest group.
+  // Reducer step: if the union of new canonicals from the chunked map exceeds
+  // the global budget, run one extra LLM call to merge them semantically.
+  // enforcebudget below still acts as a deterministic safety net if reducer
+  // fails or under-merges.
+  const existingListLower = new Set(
+    effectiveExistingLists.map((l) => l.name.toLowerCase().trim()),
+  );
+  const distinctNewCanonicals = new Set<string>();
+  for (const canonical of composedRemapping.values()) {
+    if (!existingListLower.has(canonical.toLowerCase().trim())) {
+      distinctNewCanonicals.add(canonical);
+    }
+  }
+  const budget = effectiveMaxLists - effectiveExistingLists.length;
+
+  if (distinctNewCanonicals.size <= budget) {
+    logger.info("consolidation reducer skipped", {
+      canonicalCount: distinctNewCanonicals.size,
+      budget,
+    });
+  } else {
+    const canonicalsArray = [...distinctNewCanonicals];
+    const reducerPrompt = buildConsolidationReducerPrompt(
+      canonicalsArray,
+      effectiveExistingLists,
+      effectiveMaxLists,
+    );
+    let reducerContent = "";
+    try {
+      reducerContent = await provider.complete(
+        reducerPrompt,
+        "consolidate-categories-reduce",
+        consolidationSpan,
+      );
+      const reducerMap = parseRemapping(reducerContent, canonicalsArray);
+      for (const [name, currentCanonical] of composedRemapping) {
+        const finalCanonical = reducerMap.get(currentCanonical) ?? currentCanonical;
+        composedRemapping.set(name, finalCanonical);
+      }
+      logger.info("consolidation reducer applied", {
+        canonicalsIn: canonicalsArray.length,
+        canonicalsOut: new Set(reducerMap.values()).size,
+      });
+    } catch (err) {
+      logParseFailure("consolidate-categories-reduce", reducerContent, err);
+      // Fall through with the pre-reducer composedRemapping —
+      // enforcebudget in buildConsolidationResult is the safety net.
+    }
+  }
+
+  // Global budget enforcement happens here on the (possibly reducer-applied)
+  // composed remapping — enforcebudget collapses any still-over-budget
+  // canonicals into the largest group.
   return buildConsolidationResult(
     composedRemapping,
     deduplicatedNames,
