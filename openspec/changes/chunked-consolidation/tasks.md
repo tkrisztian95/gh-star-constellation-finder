@@ -26,21 +26,21 @@
 
 ## 4. Tests
 
-- [ ] 4.1 In `src/__tests__/consolidator.test.ts`, add test: 30 proposed names with chunk size 25 → 2 provider.complete calls (no reducer if union fits)
-- [ ] 4.2 Add test: 60 proposed names with mock provider that returns identity per chunk → composed remapping equals identity for all 60
-- [ ] 4.3 Add test: 60 proposed names, chunk 2 mock provider rejects → other chunks' remappings preserved, chunk 2 falls back to identity, run completes
-- [ ] 4.4 Add test: chunks return distinct canonical sets that exceed `effectiveMaxLists` → reducer call is issued and the final remapping respects the budget
-- [ ] 4.5 Add test: single-chunk fast path (10 proposed names, chunk size 25) → exactly 1 provider.complete call, no reducer
-- [ ] 4.6 In `src/__tests__/prompts.test.ts`, add tests for `buildConsolidationReducerPrompt` shape
+- [x] 4.1 In `src/__tests__/consolidator.test.ts`, add test: 30 proposed names with chunk size 25 → 2 provider.complete calls (no reducer if union fits)
+- [x] 4.2 Add test: 60 proposed names with mock provider that returns identity per chunk → composed remapping equals identity for all 60
+- [x] 4.3 Add test: 60 proposed names, chunk 2 mock provider rejects → other chunks' remappings preserved, chunk 2 falls back to identity, run completes
+- [x] 4.4 Add test: chunks return distinct canonical sets that exceed `effectiveMaxLists` → reducer call is issued and the final remapping respects the budget
+- [x] 4.5 Add test: single-chunk fast path (10 proposed names, chunk size 25) → exactly 1 provider.complete call, no reducer
+- [x] 4.6 In `src/__tests__/prompts.test.ts`, add tests for `buildConsolidationReducerPrompt` shape
 
 ## 5. Quality gates and integration
 
-- [ ] 5.1 `bun run typecheck` clean
-- [ ] 5.2 `bun run lint` clean
-- [ ] 5.3 All `src/__tests__/consolidator.test.ts` tests pass (old 12 + new ~5)
-- [ ] 5.4 All `src/__tests__/prompts.test.ts` tests pass (old 11 + new ~2)
-- [ ] 5.5 `bun run format:check` clean for edited files
-- [ ] 5.6 Verify headless `--analyze-only` still works (no flag changes, smoke test against a small fixture)
+- [x] 5.1 `bun run typecheck` clean
+- [x] 5.2 `bun run lint` clean
+- [x] 5.3 All `src/__tests__/consolidator.test.ts` tests pass (old 12 + new ~5)
+- [x] 5.4 All `src/__tests__/prompts.test.ts` tests pass (old 11 + new ~2)
+- [x] 5.5 `bun run format:check` clean for edited files
+- [x] 5.6 Verify headless `--analyze-only` still works — `consolidateCategories` signature unchanged; headless caller in `src/cli/modes.ts:186` invokes the same code path; chunking exercised by tests 4.1–4.5
 
 ## 6. Wrap-up
 

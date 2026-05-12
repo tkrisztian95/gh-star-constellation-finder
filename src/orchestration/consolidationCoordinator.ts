@@ -119,9 +119,7 @@ async function runChunkedConsolidation(
   // the global budget, run one extra LLM call to merge them semantically.
   // enforcebudget below still acts as a deterministic safety net if reducer
   // fails or under-merges.
-  const existingListLower = new Set(
-    effectiveExistingLists.map((l) => l.name.toLowerCase().trim()),
-  );
+  const existingListLower = new Set(effectiveExistingLists.map((l) => l.name.toLowerCase().trim()));
   const distinctNewCanonicals = new Set<string>();
   for (const canonical of composedRemapping.values()) {
     if (!existingListLower.has(canonical.toLowerCase().trim())) {
