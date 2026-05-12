@@ -130,7 +130,11 @@ export function createOllamaProvider(
           body: JSON.stringify({
             model,
             stream: false,
-            options: { num_ctx: 8192 },
+            // JSON mode + larger ctx + predict cap: keeps the consolidation
+            // remap parseable on chatty models (e.g. gemma3 thinking variants)
+            // that would otherwise overrun ctx and return unterminated JSON.
+            format: "json",
+            options: { num_ctx: 16384, num_predict: 2048 },
             messages: [{ role: "user", content: prompt }],
           }),
         });
