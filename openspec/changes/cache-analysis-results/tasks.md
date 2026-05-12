@@ -1,8 +1,8 @@
 ## 1. Cache Module
 
-- [ ] 1.1 Create `src/cache/analysisCache.ts` with `loadCache()`, `saveEntry()`, and cache key (repoId + SHA-256 of README) logic
-- [ ] 1.2 Implement `loadCache()` with try/catch that returns an empty map on missing or corrupt JSON, logging a warning on parse error
-- [ ] 1.3 Implement `saveEntry()` that updates the in-memory cache map and writes the full map to `.cache/analysis.json` atomically
+- [x] 1.1 Create `src/cache/analysisCache.ts` with `loadCache()`, `saveEntry()`, and cache key (repoId + SHA-256 of README) logic
+- [x] 1.2 Implement `loadCache()` with try/catch that returns an empty map on missing or corrupt JSON, logging a warning on parse error
+- [x] 1.3 Implement `saveEntry()` that updates the in-memory cache map and writes the full map to `.cache/analysis.json` atomically
 
 ## 2. CLI Integration
 
