@@ -2,7 +2,7 @@ import { authenticate, AuthError } from "../github/auth.js";
 import type { AuthResult } from "../github/auth.js";
 import { fetchStarredRepos, fetchUserLists } from "../github/starFetcher.js";
 import { fetchAllReadmes } from "../github/readmeFetcher.js";
-import { createProvider, resolveBackend } from "../ai/index.js";
+import { createProvider, resolveBackend, resolveModelId } from "../ai/index.js";
 import {
   createLangfuseClient,
   createRunTrace,
@@ -77,7 +77,8 @@ export async function main() {
   // TUI setup
   const interruptedRef = { value: false };
   const abortController = new AbortController();
-  const tui = setupTui({ interruptedRef, abortController });
+  const modelId = resolveModelId(cliArgs.backend);
+  const tui = setupTui({ interruptedRef, abortController, modelId });
 
   const phaseTimings: PhaseTimings = {};
 
