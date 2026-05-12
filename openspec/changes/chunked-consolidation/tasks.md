@@ -1,8 +1,8 @@
 ## 1. Chunking primitives
 
-- [ ] 1.1 Add `CONSOLIDATION_CHUNK_SIZE` constant (25) to `src/ai/consolidatorDelegator.ts` next to `GITHUB_MAX_LISTS`
-- [ ] 1.2 Add `chunkProposedNames(names: string[], size: number): string[][]` pure helper to `src/ai/consolidatorDelegator.ts`
-- [ ] 1.3 Unit test `chunkProposedNames` for: empty input, exact multiple, last partial chunk, single chunk under size
+- [x] 1.1 Add `CONSOLIDATION_CHUNK_SIZE` constant (25) to `src/ai/consolidatorDelegator.ts` next to `GITHUB_MAX_LISTS`
+- [x] 1.2 Add `chunkProposedNames(names: string[], size: number): string[][]` pure helper to `src/ai/consolidatorDelegator.ts`
+- [x] 1.3 Unit test `chunkProposedNames` for: empty input, exact multiple, last partial chunk, single chunk under size
 
 ## 2. Chunked map step
 

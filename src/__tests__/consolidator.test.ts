@@ -1,4 +1,8 @@
-import { buildMergeWarnings, enforcebudget } from "../ai/consolidatorDelegator.js";
+import {
+  buildMergeWarnings,
+  chunkProposedNames,
+  enforcebudget,
+} from "../ai/consolidatorDelegator.js";
 import {
   consolidateCategories,
   rerouteOrphanRepos,
@@ -92,6 +96,45 @@ function runTests() {
   console.log("consolidator tests\n");
 
   const tests: Promise<void>[] = [];
+
+  // --- chunkProposedNames ---
+
+  tests.push(
+    test("chunkProposedNames: empty input returns empty array", () => {
+      const out = chunkProposedNames([], 25);
+      assertEqual(out.length, 0, "no chunks for empty input");
+    }),
+  );
+
+  tests.push(
+    test("chunkProposedNames: single chunk when under size", () => {
+      const names = ["A", "B", "C"];
+      const out = chunkProposedNames(names, 25);
+      assertEqual(out.length, 1, "one chunk");
+      assertEqual(out[0].length, 3, "all 3 names in the single chunk");
+    }),
+  );
+
+  tests.push(
+    test("chunkProposedNames: exact multiple splits evenly", () => {
+      const names = Array.from({ length: 50 }, (_, i) => `N${i}`);
+      const out = chunkProposedNames(names, 25);
+      assertEqual(out.length, 2, "two chunks");
+      assertEqual(out[0].length, 25, "first chunk full");
+      assertEqual(out[1].length, 25, "second chunk full");
+    }),
+  );
+
+  tests.push(
+    test("chunkProposedNames: last chunk is partial when not a multiple", () => {
+      const names = Array.from({ length: 60 }, (_, i) => `N${i}`);
+      const out = chunkProposedNames(names, 25);
+      assertEqual(out.length, 3, "three chunks");
+      assertEqual(out[0].length, 25, "first chunk full");
+      assertEqual(out[1].length, 25, "second chunk full");
+      assertEqual(out[2].length, 10, "last chunk holds remainder");
+    }),
+  );
 
   // --- buildMergeWarnings ---
 
