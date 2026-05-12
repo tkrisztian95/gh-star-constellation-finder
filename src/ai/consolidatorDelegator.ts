@@ -3,6 +3,21 @@ import type { ConsolidationResult } from "./types.js";
 
 export const GITHUB_MAX_LISTS = 32;
 
+// Max number of proposed names per consolidation pass-2 batch. Keeps each
+// LLM prompt + output small enough to never overrun model budgets at scale —
+// the structural fix behind #32 (and the failure class of #26, #28, #30).
+export const CONSOLIDATION_CHUNK_SIZE = 25;
+
+export function chunkProposedNames(names: string[], size: number): string[][] {
+  if (size <= 0) throw new Error("chunkProposedNames: size must be > 0");
+  if (names.length === 0) return [];
+  const chunks: string[][] = [];
+  for (let i = 0; i < names.length; i += size) {
+    chunks.push(names.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export function identityResult(names: string[]): ConsolidationResult {
   return {
     remapping: new Map(names.map((n) => [n, n])),

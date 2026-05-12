@@ -1,8 +1,5 @@
-# category-consolidation Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change use-existing-lists-in-ai-analysis. Update Purpose after archive.
-## Requirements
 ### Requirement: Consolidation runs after per-repo analysis
 After all per-repo AI analysis completes, the system SHALL run a consolidation step that receives all proposed new category names (those not matching any existing list) and returns a remapping to consolidated names. The step MAY split work across multiple AI calls (chunked map plus an optional reducer) provided the externally observable remapping behaviour is preserved.
 
@@ -22,27 +19,7 @@ After all per-repo AI analysis completes, the system SHALL run a consolidation s
 - **WHEN** all repos matched existing lists during per-repo analysis
 - **THEN** no consolidation AI call is made
 
-### Requirement: Consolidation remapping is applied before suggestion generation
-The system SHALL apply the consolidation remapping to `analyzedRepos` results before passing them to `generateSuggestions`, so the suggestion engine sees consolidated names.
-
-#### Scenario: Remapped repos produce fewer create-list suggestions
-- **WHEN** three repos had distinct new category names that the consolidation pass merged into one
-- **THEN** `generateSuggestions` SHALL produce one `create-list` suggestion and two `move-to-list` suggestions (rather than three `create-list` suggestions)
-
-#### Scenario: Repos matching existing lists are unaffected
-- **WHEN** a repo's category matched an existing list name during per-repo analysis
-- **THEN** the consolidation remapping SHALL NOT alter its category
-
-### Requirement: Consolidation prompt prefers specificity over over-generalisation
-The consolidation AI prompt SHALL instruct the model to merge names only when they share the same concrete technical domain, and to prefer a specific shared name over a vague generic one.
-
-#### Scenario: Consolidated name is domain-specific, not generic
-- **WHEN** "React Component Libraries" and "Vue Component Libraries" are merged
-- **THEN** the consolidated name SHALL be "Component Libraries" rather than "Frontend Tools" or "JavaScript"
-
-#### Scenario: Language-qualified names are dequalified when language is not the defining trait
-- **WHEN** "Rust HTTP Clients", "Go HTTP Clients", and "Python HTTP Clients" are candidates
-- **THEN** the consolidated name SHALL be "HTTP Clients", not "API Tools" or "Networking"
+## ADDED Requirements
 
 ### Requirement: Consolidation chunks proposed names into bounded batches
 When the deduplicated proposed-name set is larger than the chunk size, the system SHALL split it into batches of at most the chunk size, run each batch through the consolidation prompt in parallel, and combine the per-batch remappings into a single composed remapping. Each batch SHALL receive the same existing-list context and the same effective budget as the original single-call form, so that per-batch outputs honour existing-list and "Other" bucket invariants individually.
@@ -84,4 +61,3 @@ A consolidation batch whose AI call returns a malformed or unparseable response 
 #### Scenario: Failed batch is observable in logs
 - **WHEN** a batch fails to parse
 - **THEN** the system SHALL emit a `logger.warn` entry tagged with `phase: "consolidate-categories"` that includes the failing batch's content head/tail and error message, matching the existing single-call failure log shape
-
