@@ -36,6 +36,7 @@ export const SHOW_STEPS_TAGS = new Set([
 
 export interface AppProps {
   phase: AppPhase;
+  modelId: string;
   onConfirm: (proceed: boolean) => void;
   onScopeSelect: (mode: ScopeMode) => void;
   onStrategySelect: (strategy: ConsolidationStrategy) => void;
@@ -49,6 +50,7 @@ export interface AppProps {
 
 export function App({
   phase,
+  modelId,
   onConfirm,
   onScopeSelect,
   onStrategySelect,
@@ -71,6 +73,10 @@ export function App({
         </Box>
         <Text color="gray" dimColor>
           {"Organize your GitHub starred repositories with AI"}
+        </Text>
+        <Text color="gray" dimColor>
+          {"model · "}
+          {modelId}
         </Text>
       </Box>
 
