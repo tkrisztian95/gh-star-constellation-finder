@@ -10,15 +10,15 @@
 
 ## 2. Call-site Verification
 
-- [ ] 2.1 Confirm `src/orchestration/analysis.ts` and `src/cli/modes.ts` continue to compile and behave unchanged against the new implementation — the `AnalysisCache` interface is the only contract they depend on
-- [ ] 2.2 Confirm `src/orchestration/main.tsx` `loadCache()` / `--no-cache` wiring needs no edits
+- [x] 2.1 Confirm `src/orchestration/analysis.ts` and `src/cli/modes.ts` continue to compile and behave unchanged against the new implementation — the `AnalysisCache` interface is the only contract they depend on (verified by passing typecheck + Tests 5/6/7 in `analysisCache.test.ts`, which drive `runAnalysis` end-to-end through both interface methods)
+- [x] 2.2 Confirm `src/orchestration/main.tsx` `loadCache()` / `--no-cache` wiring needs no edits (no code change required; the path-default move from `.json` to `.db` is encapsulated inside `analysisCache.ts`)
 
 ## 3. Tests
 
-- [ ] 3.1 Rewrite `src/__tests__/analysisCache.test.ts` Test 1 (file written with v1 schema) to open the SQLite file directly via `bun:sqlite`, assert the `entries` table exists, the `PRAGMA user_version` is `1`, and the row carries the expected `key`, `category`, `killer_feature`, `data_quality`, and a non-null `updated_at`
-- [ ] 3.2 Rewrite Test 3 (corrupt-file recovery) to write garbage bytes to `<dir>/analysis.db`, call `loadCache()`, assert `size === 0`, assert the broken file was moved to `<dir>/analysis.db.broken.<timestamp>` (glob-match the suffix), and assert the cache is writable afterward
-- [ ] 3.3 Keep Tests 2 (content-based invalidation), 4 (missing file), 5 (cache hit short-circuits analyzer), 6 (`--no-cache` forces re-analysis), 7 (fresh result persisted) structurally identical — only the on-disk path string changes
-- [ ] 3.4 Add a new test: ten concurrent `saveEntry()` calls against the same cache instance all succeed, the final `size` is 10, and the reloaded cache reads back all ten entries — confirms the `writeQueue` removal is safe
+- [x] 3.1 Rewrite `src/__tests__/analysisCache.test.ts` Test 1 (file written with v1 schema) to open the SQLite file directly via `bun:sqlite`, assert the `entries` table exists, the `PRAGMA user_version` is `1`, and the row carries the expected `key`, `category`, `killer_feature`, `data_quality`, and a non-null `updated_at`
+- [x] 3.2 Rewrite Test 3 (corrupt-file recovery) to write garbage bytes to `<dir>/analysis.db`, call `loadCache()`, assert `size === 0`, assert the broken file was moved to `<dir>/analysis.db.broken.<timestamp>` (glob-match the suffix), and assert the cache is writable afterward
+- [x] 3.3 Keep Tests 2 (content-based invalidation), 4 (missing file), 5 (cache hit short-circuits analyzer), 6 (`--no-cache` forces re-analysis), 7 (fresh result persisted) structurally identical — only the on-disk path string changes
+- [x] 3.4 Add a new test: ten concurrent `saveEntry()` calls against the same cache instance all succeed, the final `size` is 10, and the reloaded cache reads back all ten entries — confirms the `writeQueue` removal is safe (`analysisCache.test.ts` Test 8)
 
 ## 4. Verification
 
