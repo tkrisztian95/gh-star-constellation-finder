@@ -22,9 +22,11 @@ export interface TuiHandles {
 export function setupTui({
   interruptedRef,
   abortController,
+  modelId,
 }: {
   interruptedRef: { value: boolean };
   abortController: AbortController;
+  modelId: string;
 }): TuiHandles {
   let phase: AppPhase = { tag: "fetching-initial" };
   let setPhaseInner: (p: AppPhase) => void = () => {};
@@ -105,6 +107,7 @@ export function setupTui({
     return (
       <App
         phase={currentPhase}
+        modelId={modelId}
         onConfirm={onConfirm}
         onScopeSelect={onScopeSelect}
         onStrategySelect={onStrategySelect}
