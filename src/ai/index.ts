@@ -9,6 +9,14 @@ export function resolveBackend(backend?: Backend): Backend {
   return backend ?? detectBackend();
 }
 
+export function resolveModelId(backend?: Backend): string {
+  const resolved = resolveBackend(backend);
+  if (resolved === "ollama") {
+    return `ollama/${process.env.OLLAMA_MODEL ?? "llama3"}`;
+  }
+  return `openai/${process.env.OPENAI_MODEL ?? "gpt-4o-mini"}`;
+}
+
 export function createProvider(backend?: Backend, trace?: LangfuseTrace | null): AIProvider {
   const resolved = resolveBackend(backend);
 
