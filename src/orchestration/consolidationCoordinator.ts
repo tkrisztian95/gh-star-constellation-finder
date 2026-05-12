@@ -9,13 +9,15 @@ import type { ConsolidationStrategy } from "../types.js";
 import type { LangfuseParent } from "../ai/tracing.js";
 import { createPhaseSpan, endSpanSafe } from "../ai/tracing.js";
 import {
+  CONSOLIDATION_CHUNK_SIZE,
   GITHUB_MAX_LISTS,
-  identityResult,
-  parseRemapping,
-  buildMergeWarnings,
   buildConsolidationResult,
-  parseReroutingResponse,
+  buildMergeWarnings,
+  chunkProposedNames,
+  identityResult,
   nullRerouteMap,
+  parseRemapping,
+  parseReroutingResponse,
 } from "../ai/consolidatorDelegator.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { logger } from "../logger.js";
@@ -28,6 +30,98 @@ function logParseFailure(phase: string, content: string, err: unknown): void {
     contentTail: content.slice(-200),
     error: err instanceof Error ? err.message : String(err),
   });
+}
+
+async function runChunkedConsolidation(
+  deduplicatedNames: string[],
+  provider: AIProvider,
+  effectiveExistingLists: ExistingListContext[],
+  effectiveMaxLists: number,
+  strategy: ConsolidationStrategy,
+  distributionContext: string | undefined,
+  consolidationSpan: LangfuseParent | null,
+): Promise<ConsolidationResult> {
+  const chunks = chunkProposedNames(deduplicatedNames, CONSOLIDATION_CHUNK_SIZE);
+
+  // Single-chunk fast path: behaves identically to the pre-chunking pass-2 —
+  // one call, span name `consolidate-categories`, parse failure propagates to
+  // the outer catch in consolidateCategories (identity fallback for the run).
+  if (chunks.length <= 1) {
+    const prompt = buildConsolidationPrompt(
+      deduplicatedNames,
+      effectiveExistingLists,
+      effectiveMaxLists,
+      strategy,
+      distributionContext,
+    );
+    const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan);
+    let remapping: Map<string, string>;
+    try {
+      remapping = parseRemapping(content, deduplicatedNames);
+    } catch (err) {
+      logParseFailure("consolidate-categories", content, err);
+      throw err;
+    }
+    return buildConsolidationResult(
+      remapping,
+      deduplicatedNames,
+      effectiveExistingLists,
+      effectiveMaxLists,
+    );
+  }
+
+  // Multi-chunk map step: parallel, failure-isolated. Each chunk sees the same
+  // existing-list context and budget so per-chunk invariants hold individually.
+  const chunkOutcomes = await Promise.allSettled(
+    chunks.map(async (chunkNames, i) => {
+      const prompt = buildConsolidationPrompt(
+        chunkNames,
+        effectiveExistingLists,
+        effectiveMaxLists,
+        strategy,
+        distributionContext,
+      );
+      const generationName = `consolidate-categories-chunk-${i + 1}`;
+      let content = "";
+      try {
+        content = await provider.complete(prompt, generationName, consolidationSpan);
+        return { chunkNames, remapping: parseRemapping(content, chunkNames) };
+      } catch (err) {
+        logParseFailure("consolidate-categories", content, err);
+        throw err;
+      }
+    }),
+  );
+
+  let failedChunks = 0;
+  const composedRemapping = new Map<string, string>();
+  for (let i = 0; i < chunkOutcomes.length; i++) {
+    const outcome = chunkOutcomes[i];
+    if (outcome.status === "fulfilled") {
+      for (const [name, canonical] of outcome.value.remapping) {
+        composedRemapping.set(name, canonical);
+      }
+    } else {
+      failedChunks++;
+      // Identity fallback for the names in this chunk; other chunks survive.
+      for (const name of chunks[i]) composedRemapping.set(name, name);
+    }
+  }
+
+  logger.info("consolidation chunks complete", {
+    chunkCount: chunks.length,
+    chunkSize: CONSOLIDATION_CHUNK_SIZE,
+    failedChunks,
+  });
+
+  // Global budget enforcement happens here on the composed remapping —
+  // enforcebudget collapses over-budget canonicals into the largest group.
+  return buildConsolidationResult(
+    composedRemapping,
+    deduplicatedNames,
+    effectiveExistingLists,
+    effectiveMaxLists,
+  );
 }
 
 export async function consolidateCategories(
@@ -104,30 +198,17 @@ export async function consolidateCategories(
 
     const deduplicatedNames = [...new Set(proposedNames.map((n) => pass1Map.get(n) ?? n))];
 
-    // Pass 2: budget-aware consolidation on the reduced set
-    const pass2Result = await (async () => {
-      const prompt = buildConsolidationPrompt(
-        deduplicatedNames,
-        effectiveExistingLists,
-        effectiveMaxLists,
-        strategy,
-        distributionContext,
-      );
-      const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan);
-      let remapping: Map<string, string>;
-      try {
-        remapping = parseRemapping(content, deduplicatedNames);
-      } catch (err) {
-        logParseFailure("consolidate-categories", content, err);
-        throw err;
-      }
-      return buildConsolidationResult(
-        remapping,
-        deduplicatedNames,
-        effectiveExistingLists,
-        effectiveMaxLists,
-      );
-    })();
+    // Pass 2: budget-aware consolidation on the reduced set, chunked to keep
+    // any individual LLM call's prompt and output bounded regardless of N.
+    const pass2Result = await runChunkedConsolidation(
+      deduplicatedNames,
+      provider,
+      effectiveExistingLists,
+      effectiveMaxLists,
+      strategy,
+      distributionContext,
+      consolidationSpan,
+    );
 
     // Compose: original → pass1 deduped → pass2 final
     const composedRemapping = new Map<string, string>();
