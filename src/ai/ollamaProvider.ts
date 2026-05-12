@@ -130,12 +130,19 @@ export function createOllamaProvider(
           body: JSON.stringify({
             model,
             stream: false,
-            // No `format: "json"` here: gemma3/gemma4 under Ollama's
-            // constrained-JSON sampling returns empty content
-            // (`message.content: ""`) which then fails parsing. Rely on the
-            // prompt + parseOllamaResponseBody's {...} extractor instead.
-            // temperature: 0 keeps the remap deterministic and short.
-            options: { num_ctx: 16384, num_predict: 2048, temperature: 0 },
+            // `think: false` skips reasoning tokens on Gemma3/Gemma4 and
+            // other thinking models — those tokens count toward num_predict
+            // but go to `message.thinking`, not `message.content`. Without
+            // this, num_predict was being burned on thinking before any
+            // JSON could be emitted (empty content, or output truncated
+            // mid-pair). Ignored by older Ollama versions.
+            // num_predict: 8192 is generous for ~100-entry remaps; num_ctx
+            // (16384) is the real ceiling.
+            // No `format: "json"`: gemma's constrained sampling under that
+            // mode returns empty content (see #28).
+            // temperature: 0 for deterministic remap.
+            think: false,
+            options: { num_ctx: 16384, num_predict: 8192, temperature: 0 },
             messages: [{ role: "user", content: prompt }],
           }),
         });
@@ -164,6 +171,8 @@ export function createOllamaProvider(
         logger.warn("Ollama returned empty content", {
           generationName,
           evalCount: body.eval_count ?? 0,
+          doneReason: body.done_reason,
+          thinkingLen: body.message?.thinking?.length ?? 0,
         });
         content = "{}";
       }
