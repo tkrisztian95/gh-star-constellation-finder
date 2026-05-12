@@ -22,6 +22,7 @@ import { setupTui } from "./tui.js";
 import { runAnalysis, handleInterrupt } from "./analysis.js";
 import { runReviewPhase } from "./review.js";
 import { runApplyPhase } from "./apply.js";
+import { loadCache, type AnalysisCache } from "../cache/analysisCache.js";
 
 export async function main() {
   const cliArgs = parseArgs();
@@ -66,8 +67,10 @@ export async function main() {
     process.exit(1);
   }
 
+  const cache: AnalysisCache | null = cliArgs.noCache ? null : await loadCache();
+
   if (cliArgs.analyzeOnly) {
-    await runAnalyzeOnly(cliArgs, token, graphqlWithAuth, login);
+    await runAnalyzeOnly(cliArgs, token, graphqlWithAuth, login, cache);
     process.exit(0);
   }
 
@@ -278,6 +281,7 @@ export async function main() {
       setPhase: tui.setPhase,
       phaseTimings,
       parent: agentObs,
+      cache,
     });
   logger.info("analysis complete", {
     analyzedCount: analyzedRepos.length,

@@ -21,6 +21,7 @@ import { buildSessionJson } from "../session/json.js";
 import type { CliArgs } from "./args.js";
 import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
 import type { PhaseTimings } from "../types.js";
+import type { AnalysisCache } from "../cache/analysisCache.js";
 import { logger } from "../logger.js";
 
 export async function runAnalyzeOnly(
@@ -28,6 +29,7 @@ export async function runAnalyzeOnly(
   token: string,
   graphqlWithAuth: AuthResult["graphqlWithAuth"],
   login: string,
+  cache: AnalysisCache | null = null,
 ) {
   const startMs = Date.now();
   const phaseTimings: PhaseTimings = {};
@@ -121,22 +123,34 @@ export async function runAnalyzeOnly(
           };
         } else {
           readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
-          try {
-            analysis = await analyzer.analyze({
-              name: repo.name,
+          const cached = cache?.get(repo.id, readme) ?? null;
+          if (cached) {
+            analysis = cached;
+            logger.debug("repo analysis served from cache", {
               owner: repo.owner,
-              description: repo.description,
-              language: repo.language,
-              topics: repo.topics,
-              readme,
-              isArchived: false,
-              existingListNames,
+              name: repo.name,
             });
-          } catch (err) {
-            status = "failed";
-            throw err;
+          } else {
+            try {
+              analysis = await analyzer.analyze({
+                name: repo.name,
+                owner: repo.owner,
+                description: repo.description,
+                language: repo.language,
+                topics: repo.topics,
+                readme,
+                isArchived: false,
+                existingListNames,
+              });
+            } catch (err) {
+              status = "failed";
+              throw err;
+            }
+            analysis.dataQuality = computeDataQuality(readme);
+            if (cache && analysis.category !== "analysis-failed") {
+              await cache.saveEntry(repo.id, readme, analysis);
+            }
           }
-          analysis.dataQuality = computeDataQuality(readme);
         }
         repo.readme = readme;
         analyzedRepos.push({ repo, analysis, readme });
