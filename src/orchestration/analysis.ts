@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import { consolidateCategories, rerouteOrphanRepos } from "./consolidationCoordinator.js";
 import { generateSuggestions } from "../engine/suggestionEngine.js";
@@ -14,6 +15,7 @@ import type { createRunTrace, LangfuseParent, LangfuseSpan } from "../ai/tracing
 import type { fetchUserLists } from "../github/starFetcher.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
+import { buildDefaultSavePath } from "../session/defaultPath.js";
 import type { Repo, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
@@ -379,9 +381,16 @@ export async function handleInterrupt({
       analysisTimings,
     });
 
-    setPhase({ tag: "save-prompt", suggestions, decisions: new Map(), phaseTimings });
+    setPhase({
+      tag: "save-prompt",
+      suggestions,
+      decisions: new Map(),
+      phaseTimings,
+      defaultPath: buildDefaultSavePath({ modelId }),
+    });
     const savePath = await savePromptPromise;
     if (savePath) {
+      fs.mkdirSync(path.dirname(savePath), { recursive: true });
       fs.writeFileSync(savePath, saveJson);
       logger.info("saved partial session", { path: savePath });
       track("file_saved", { context: "interrupt" });
