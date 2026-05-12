@@ -23,9 +23,10 @@ export function endGenerationSafe(
 }
 
 export interface OllamaResponse {
-  message?: { content?: string };
+  message?: { content?: string; thinking?: string };
   prompt_eval_count?: number;
   eval_count?: number;
+  done_reason?: string;
 }
 
 export function parseOllamaResponseBody(body: OllamaResponse): string {
