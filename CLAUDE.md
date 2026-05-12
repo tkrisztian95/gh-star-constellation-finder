@@ -107,7 +107,7 @@ bun run test        # bun runs src/__tests__/*.test.ts
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **gh-star-constellation-finder** (3000 symbols, 3103 relationships, 11 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **gh-star-constellation-finder** (3089 symbols, 3207 relationships, 13 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

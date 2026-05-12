@@ -7,3 +7,4 @@ dist/
 .claude/.gitnexus-impact-stamp
 .cache/
 *.log
+output/
