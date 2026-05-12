@@ -48,4 +48,5 @@ export type AppPhase =
       mutationResults?: MutationResult[];
       saveError?: string;
       phaseTimings: PhaseTimings;
+      defaultPath: string;
     };
