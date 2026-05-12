@@ -5,4 +5,5 @@ dist/
 .gitnexus
 .claude/.gitnexus-detect-stamp
 .claude/.gitnexus-impact-stamp
+.cache/
 *.log

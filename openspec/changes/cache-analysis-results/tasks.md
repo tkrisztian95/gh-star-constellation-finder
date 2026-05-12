@@ -6,13 +6,13 @@
 
 ## 2. CLI Integration
 
-- [ ] 2.1 Add `--no-cache` flag to `parseArgs()` in `src/index.tsx`
-- [ ] 2.2 Load the cache at startup in `main()` (before the analysis loop) unless `--no-cache` is set
-- [ ] 2.3 Wrap each `analyzer.analyze()` call in `main()` to check the cache first; call `saveEntry()` after each new result
+- [x] 2.1 Add `--no-cache` flag to `parseArgs()` (lives in `src/cli/args.ts`, not `src/index.tsx`)
+- [x] 2.2 Load the cache at startup in `main()` (`src/orchestration/main.tsx`, before the analysis-loop branch) unless `--no-cache` is set
+- [x] 2.3 Wrap each `analyzer.analyze()` call (interactive: `src/orchestration/analysis.ts`; headless: `src/cli/modes.ts`) to check the cache first; call `saveEntry()` after each new result
 
 ## 3. Repository Hygiene
 
-- [ ] 3.1 Add `.cache/` to `.gitignore`
+- [x] 3.1 Add `.cache/` to `.gitignore`
 
 ## 4. Verification
 

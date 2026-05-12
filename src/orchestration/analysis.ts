@@ -18,6 +18,7 @@ import type { Repo, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../ty
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
 import type { AIProvider } from "../ai/index.js";
+import type { AnalysisCache } from "../cache/analysisCache.js";
 import { logger } from "../logger.js";
 
 export type AnalysisTimingStatus = "ok" | "failed" | "skipped-archived" | "aborted";
@@ -49,6 +50,7 @@ export interface RunAnalysisParams {
   setPhase: (p: AppPhase) => void;
   phaseTimings: PhaseTimings;
   parent?: LangfuseParent | null;
+  cache?: AnalysisCache | null;
 }
 
 export async function runAnalysis({
@@ -63,6 +65,7 @@ export async function runAnalysis({
   setPhase,
   phaseTimings,
   parent,
+  cache,
 }: RunAnalysisParams): Promise<AnalysisResult> {
   const analyzedRepos: AnalyzedRepo[] = [];
   const analysisTimings: AnalysisTiming[] = [];
@@ -113,30 +116,42 @@ export async function runAnalysis({
             };
           } else {
             readme = readmes.get(`${repo.owner}/${repo.name}`) ?? "";
-            try {
-              analysis = await analyzer.analyze(
-                {
-                  name: repo.name,
-                  owner: repo.owner,
-                  description: repo.description,
-                  language: repo.language,
-                  topics: repo.topics,
-                  readme,
-                  isArchived: false,
-                  existingListNames,
-                },
-                abortController.signal,
-                analysisSpan,
-              );
-            } catch (err) {
-              if (interruptedRef.value) {
-                status = "aborted";
-                return;
+            const cached = cache?.get(repo.id, readme) ?? null;
+            if (cached) {
+              analysis = cached;
+              logger.debug("repo analysis served from cache", {
+                owner: repo.owner,
+                name: repo.name,
+              });
+            } else {
+              try {
+                analysis = await analyzer.analyze(
+                  {
+                    name: repo.name,
+                    owner: repo.owner,
+                    description: repo.description,
+                    language: repo.language,
+                    topics: repo.topics,
+                    readme,
+                    isArchived: false,
+                    existingListNames,
+                  },
+                  abortController.signal,
+                  analysisSpan,
+                );
+              } catch (err) {
+                if (interruptedRef.value) {
+                  status = "aborted";
+                  return;
+                }
+                status = "failed";
+                throw err;
               }
-              status = "failed";
-              throw err;
+              analysis.dataQuality = computeDataQuality(readme);
+              if (cache && analysis.category !== "analysis-failed") {
+                await cache.saveEntry(repo.id, readme, analysis);
+              }
             }
-            analysis.dataQuality = computeDataQuality(readme);
           }
           repo.readme = readme;
           if (analysis.category === "analysis-failed") {

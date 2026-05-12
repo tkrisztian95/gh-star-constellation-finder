@@ -7,11 +7,17 @@ export interface CliArgs {
   analyzeOnly: boolean;
   outputPath?: string;
   noAnalytics: boolean;
+  noCache: boolean;
 }
 
 export function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
-  const result: CliArgs = { concurrency: 5, analyzeOnly: false, noAnalytics: false };
+  const result: CliArgs = {
+    concurrency: 5,
+    analyzeOnly: false,
+    noAnalytics: false,
+    noCache: false,
+  };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--backend" && args[i + 1]) {
@@ -30,6 +36,8 @@ export function parseArgs(): CliArgs {
       i++;
     } else if (args[i] === "--no-analytics") {
       result.noAnalytics = true;
+    } else if (args[i] === "--no-cache") {
+      result.noCache = true;
     }
   }
 
