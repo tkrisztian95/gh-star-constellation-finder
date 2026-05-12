@@ -18,6 +18,17 @@ import {
   nullRerouteMap,
 } from "../ai/consolidatorDelegator.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
+import { logger } from "../logger.js";
+
+function logParseFailure(phase: string, content: string, err: unknown): void {
+  logger.warn("consolidation JSON parse failed", {
+    phase,
+    contentLen: content.length,
+    contentHead: content.slice(0, 200),
+    contentTail: content.slice(-200),
+    error: err instanceof Error ? err.message : String(err),
+  });
+}
 
 export async function consolidateCategories(
   proposedNames: string[],
@@ -76,14 +87,16 @@ export async function consolidateCategories(
     // Pass 1: merge language/platform qualifier variants only (no budget pressure)
     const pass1Map = await (async () => {
       const prompt = buildLanguageQualifierPrompt(proposedNames);
+      let content = "";
       try {
-        const content = await provider.complete(
+        content = await provider.complete(
           prompt,
           "deduplicate-language-qualifiers",
           consolidationSpan,
         );
         return parseRemapping(content, proposedNames);
-      } catch {
+      } catch (err) {
+        logParseFailure("deduplicate-language-qualifiers", content, err);
         // Safe fallback: pass all names through unchanged; pass 2 will still run
         return new Map(proposedNames.map((n) => [n, n]));
       }
@@ -101,7 +114,13 @@ export async function consolidateCategories(
         distributionContext,
       );
       const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan);
-      const remapping = parseRemapping(content, deduplicatedNames);
+      let remapping: Map<string, string>;
+      try {
+        remapping = parseRemapping(content, deduplicatedNames);
+      } catch (err) {
+        logParseFailure("consolidate-categories", content, err);
+        throw err;
+      }
       return buildConsolidationResult(
         remapping,
         deduplicatedNames,
