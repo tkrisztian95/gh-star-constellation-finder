@@ -130,11 +130,12 @@ export function createOllamaProvider(
           body: JSON.stringify({
             model,
             stream: false,
-            // JSON mode + larger ctx + predict cap: keeps the consolidation
-            // remap parseable on chatty models (e.g. gemma3 thinking variants)
-            // that would otherwise overrun ctx and return unterminated JSON.
-            format: "json",
-            options: { num_ctx: 16384, num_predict: 2048 },
+            // No `format: "json"` here: gemma3/gemma4 under Ollama's
+            // constrained-JSON sampling returns empty content
+            // (`message.content: ""`) which then fails parsing. Rely on the
+            // prompt + parseOllamaResponseBody's {...} extractor instead.
+            // temperature: 0 keeps the remap deterministic and short.
+            options: { num_ctx: 16384, num_predict: 2048, temperature: 0 },
             messages: [{ role: "user", content: prompt }],
           }),
         });
@@ -154,7 +155,18 @@ export function createOllamaProvider(
 
       // Parse response body with type safety
       const body = (await response.json()) as OllamaResponse;
-      const content = parseOllamaResponseBody(body);
+      let content = parseOllamaResponseBody(body);
+
+      // Mirror openaiProvider's `|| "{}"` fallback: when Ollama returns
+      // empty content, fall back to an empty mapping so the consolidator
+      // can complete with identity remapping instead of a parse error.
+      if (!content) {
+        logger.warn("Ollama returned empty content", {
+          generationName,
+          evalCount: body.eval_count ?? 0,
+        });
+        content = "{}";
+      }
 
       // End tracing with output/usage if enabled
       endGenerationSafe(generation, {
