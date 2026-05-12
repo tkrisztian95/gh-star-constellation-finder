@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 
 import { consolidateCategories, rerouteOrphanRepos } from "./consolidationCoordinator.js";
 import { generateSuggestions } from "../engine/suggestionEngine.js";
@@ -8,6 +9,7 @@ import type { LangfuseParent } from "../ai/tracing.js";
 import type { fetchUserLists } from "../github/starFetcher.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
+import { buildDefaultSavePath } from "../session/defaultPath.js";
 import type { Repo, Suggestion, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../types.js";
 import type { AppPhase } from "../state/phases.js";
 import type { ReviewDecision } from "../components/ReviewScreen.js";
@@ -204,6 +206,7 @@ export async function runReviewPhase({
       decisions,
       mutationResults: undefined,
       phaseTimings,
+      defaultPath: buildDefaultSavePath({ modelId }),
     });
     const savePath = await savePromptPromise;
     await analyticsShutdown();
@@ -231,6 +234,7 @@ export async function runReviewPhase({
         decisions: decisionsArray,
       });
       try {
+        fs.mkdirSync(path.dirname(savePath), { recursive: true });
         fs.writeFileSync(savePath, json);
         logger.info("saved session (no changes applied)", { path: savePath });
         track("file_saved", { context: "interactive_no_changes" });

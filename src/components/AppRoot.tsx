@@ -205,6 +205,7 @@ export function App({
       {phase.tag === "save-prompt" && (
         <SavePromptScreen
           onSubmit={onSavePromptSubmit}
+          defaultPath={phase.defaultPath}
           errorMessage={phase.saveError}
           phaseTimings={phase.phaseTimings}
         />
