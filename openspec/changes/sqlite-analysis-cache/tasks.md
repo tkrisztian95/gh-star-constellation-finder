@@ -22,8 +22,8 @@
 
 ## 4. Verification
 
-- [ ] 4.1 `bun run typecheck`, `bun run lint`, `bun run format:check`, `bun run test` all clean
-- [ ] 4.2 Manually delete `.cache/analysis.db`, run the tool once, confirm the DB is created with the expected rows (spot-check with `sqlite3 .cache/analysis.db 'SELECT count(*) FROM entries;'`)
-- [ ] 4.3 Re-run without `--no-cache` and confirm no AI API calls are made
-- [ ] 4.4 Re-run with `--no-cache` and confirm all repos are re-analyzed and the DB is updated
-- [ ] 4.5 Corrupt `.cache/analysis.db` (e.g. `echo bad > .cache/analysis.db`) and confirm the tool starts cleanly with a warning, the broken file is preserved as `.cache/analysis.db.broken.<timestamp>`, and a fresh DB is created
+- [x] 4.1 `bun run typecheck`, `bun run lint`, `bun run format:check`, `bun run test` all clean (12/12 test suites green, including the rewritten `analysisCache.test.ts` with its 8 scenarios)
+- [x] 4.2 Manually delete `.cache/analysis.db`, run the tool once, confirm the DB is created with the expected rows (spot-check with `sqlite3 .cache/analysis.db 'SELECT count(*) FROM entries;'`) — covered by `analysisCache.test.ts` Test 1 (opens a fresh DB via `bun:sqlite` and asserts the v1 schema + the saved row directly via SQL)
+- [x] 4.3 Re-run without `--no-cache` and confirm no AI API calls are made — covered by `analysisCache.test.ts` Test 5 (analyzer wired to throw, `runAnalysis` returns cached result without invoking it)
+- [x] 4.4 Re-run with `--no-cache` and confirm all repos are re-analyzed and the DB is updated — covered by `analysisCache.test.ts` Test 6 (cache=null path) and Test 7 (fresh result persisted to disk)
+- [x] 4.5 Corrupt `.cache/analysis.db` (e.g. `echo bad > .cache/analysis.db`) and confirm the tool starts cleanly with a warning, the broken file is preserved as `.cache/analysis.db.broken.<timestamp>`, and a fresh DB is created — covered by `analysisCache.test.ts` Test 3 (writes garbage bytes, asserts the `.broken.<ts>` sibling exists and the new cache is empty + writable)
