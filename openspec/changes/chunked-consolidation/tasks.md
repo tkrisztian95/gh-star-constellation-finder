@@ -6,12 +6,12 @@
 
 ## 2. Chunked map step
 
-- [ ] 2.1 In `src/orchestration/consolidationCoordinator.ts`, replace the pass-2 IIFE with a new helper `runChunkedConsolidation(deduplicatedNames, provider, effectiveExistingLists, effectiveMaxLists, strategy, distributionContext, consolidationSpan)`
-- [ ] 2.2 Single-chunk fast path: if `deduplicatedNames.length <= CONSOLIDATION_CHUNK_SIZE`, behave identically to the old pass-2 (one `provider.complete` call, same prompt, same span name `consolidate-categories`)
-- [ ] 2.3 Multi-chunk path: build one prompt per chunk via `buildConsolidationPrompt`, pass through `provider.complete` with span name `consolidate-categories-chunk-${i}`, run via `Promise.allSettled`
-- [ ] 2.4 Per-chunk error handling: on rejection or parse failure, identity-map that chunk's names AND emit the existing `logger.warn("consolidation JSON parse failed", { phase: "consolidate-categories", … })` shape
-- [ ] 2.5 Compose per-chunk remappings into one map covering all `deduplicatedNames`
-- [ ] 2.6 Emit `logger.info("consolidation chunks complete", { chunkCount, chunkSize, failedChunks })` after the map step
+- [x] 2.1 In `src/orchestration/consolidationCoordinator.ts`, replace the pass-2 IIFE with a new helper `runChunkedConsolidation(deduplicatedNames, provider, effectiveExistingLists, effectiveMaxLists, strategy, distributionContext, consolidationSpan)`
+- [x] 2.2 Single-chunk fast path: if `deduplicatedNames.length <= CONSOLIDATION_CHUNK_SIZE`, behave identically to the old pass-2 (one `provider.complete` call, same prompt, same span name `consolidate-categories`)
+- [x] 2.3 Multi-chunk path: build one prompt per chunk via `buildConsolidationPrompt`, pass through `provider.complete` with span name `consolidate-categories-chunk-${i}`, run via `Promise.allSettled`
+- [x] 2.4 Per-chunk error handling: on rejection or parse failure, identity-map that chunk's names AND emit the existing `logger.warn("consolidation JSON parse failed", { phase: "consolidate-categories", … })` shape
+- [x] 2.5 Compose per-chunk remappings into one map covering all `deduplicatedNames`
+- [x] 2.6 Emit `logger.info("consolidation chunks complete", { chunkCount, chunkSize, failedChunks })` after the map step
 
 ## 3. Reducer step
 
