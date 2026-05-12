@@ -4,7 +4,7 @@
 TBD - created by archiving change cache-analysis-results. Update Purpose after archive.
 ## Requirements
 ### Requirement: Cache analysis results to local file
-The system SHALL persist AI analysis results to a local JSON file after each successful repo analysis, keyed by a composite of the repo's GitHub node ID and a SHA-256 hash of its README content.
+The system SHALL persist AI analysis results to a local SQLite database after each successful repo analysis, keyed by a composite of the repo's GitHub node ID and a SHA-256 hash of its README content.
 
 #### Scenario: Cache hit skips AI call
 - **WHEN** a repo's analysis is requested and a matching cache entry exists (same repo ID and README hash)
@@ -12,15 +12,15 @@ The system SHALL persist AI analysis results to a local JSON file after each suc
 
 #### Scenario: Cache miss triggers analysis and persists result
 - **WHEN** a repo's analysis is requested and no matching cache entry exists
-- **THEN** the system SHALL call the AI analyzer, store the result in the cache file, and return the result
+- **THEN** the system SHALL call the AI analyzer, store the result in the cache database via `INSERT OR REPLACE`, and return the result
 
 #### Scenario: Cache file created on first run
-- **WHEN** no cache file exists at `.cache/analysis.json`
-- **THEN** the system SHALL create the file and write the first result to it after the first successful analysis
+- **WHEN** no cache file exists at `.cache/analysis.db`
+- **THEN** the system SHALL create the file, run the `CREATE TABLE IF NOT EXISTS entries` schema, set `PRAGMA user_version = 1`, and write the first result to it after the first successful analysis
 
 #### Scenario: Cache survives partial run
 - **WHEN** the process is interrupted mid-analysis (e.g., Ctrl-C)
-- **THEN** all analysis results obtained before the interruption SHALL be persisted in the cache file
+- **THEN** all analysis results obtained before the interruption SHALL be persisted in the cache database, courtesy of SQLite WAL journaling
 
 ### Requirement: Content-based cache invalidation
 The system SHALL invalidate a cache entry when the README content of a repo changes, by recomputing the SHA-256 hash and finding no matching entry.
@@ -45,13 +45,13 @@ The system SHALL accept a `--no-cache` CLI flag that bypasses the cache for the 
 - **THEN** the cache file SHALL be updated with the fresh results (not deleted)
 
 ### Requirement: Corrupt or missing cache file is handled gracefully
-The system SHALL handle a missing or unparseable cache file without crashing.
+The system SHALL handle a missing or unreadable cache database without crashing.
 
 #### Scenario: Missing cache file falls back to empty cache
-- **WHEN** the cache file does not exist at startup
-- **THEN** the system SHALL proceed as if the cache is empty, with no error
+- **WHEN** the cache database does not exist at startup
+- **THEN** the system SHALL create a fresh empty database with the v1 schema and proceed with an empty in-memory cache, with no error
 
 #### Scenario: Corrupt cache file falls back to empty cache
-- **WHEN** the cache file exists but contains invalid JSON
-- **THEN** the system SHALL log a warning and proceed with an empty cache, overwriting the corrupt file on the next write
+- **WHEN** the file at the cache path exists but cannot be opened as a SQLite database (e.g., truncated, garbage bytes, or wrong format)
+- **THEN** the system SHALL log a warning, rename the broken file to `<path>.broken.<timestamp>`, open a fresh empty database at the original path, and proceed with an empty in-memory cache
 
