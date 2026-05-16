@@ -10,6 +10,11 @@
 
 ## How it Works
 
+In short: authenticate → fetch your starred repos + their READMEs → analyse each with AI (cached) → consolidate categories → review suggestions → apply via the GitHub GraphQL API.
+
+<details>
+<summary>📊 Full pipeline flowchart</summary>
+
 ```mermaid
 flowchart TD
     A([Start]) --> B[Authenticate\nGitHub PAT]
@@ -36,6 +41,10 @@ flowchart TD
 
     P & L --> Z([Done])
 ```
+
+</details>
+
+For the engine-level walkthrough (per-phase modules, prompts, consolidation algorithm), see [docs/ai-engine-workflow.md](docs/ai-engine-workflow.md).
 
 ## ✨ Key Features
 
