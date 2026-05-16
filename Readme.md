@@ -243,6 +243,8 @@ A small, fixed set of named events with non-PII properties: backend name, mode (
 
 ## 🧑‍💻 Development
 
+Looking to file an issue or open a PR? See [CONTRIBUTING.md](./CONTRIBUTING.md) for the issue-creation guide, label taxonomy, and PR workflow. The rest of this section covers what you need to run the codebase locally.
+
 Quality gates (also run in CI):
 
 ```bash
