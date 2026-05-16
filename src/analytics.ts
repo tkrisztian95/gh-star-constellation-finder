@@ -1,7 +1,6 @@
 import { PostHog } from "posthog-node";
 
-const POSTHOG_API_KEY = "phc_6ijDAoR6hSveVX79OAuDy5ogb4j36vyvi0nqjTp1VQD";
-const POSTHOG_HOST = "https://eu.i.posthog.com";
+const DEFAULT_POSTHOG_HOST = "https://eu.i.posthog.com";
 const APP_NAME = "gh-star-constellation-finder";
 const SHUTDOWN_TIMEOUT_MS = 2000;
 
@@ -10,9 +9,11 @@ let _distinctId = "anonymous";
 
 export function initAnalytics(optOut: boolean, distinctId: string): void {
   if (optOut) return;
+  const apiKey = process.env.POSTHOG_API_KEY;
+  if (!apiKey) return;
   _distinctId = distinctId;
-  client = new PostHog(POSTHOG_API_KEY, {
-    host: POSTHOG_HOST,
+  client = new PostHog(apiKey, {
+    host: process.env.POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
     flushAt: 20,
     flushInterval: 0,
   });

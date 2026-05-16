@@ -38,21 +38,21 @@ flowchart TD
 
 ## ✨ Key Features
 
-* **TUI-First Experience:** A beautiful, keyboard-driven interface built with [Ink](https://github.com/vadimdemedes/ink).
-* **Deep Analysis:** Goes beyond simple tags by reading repository `README.md` files to understand the "why" behind a project.
-* **Native Integration:** Uses the GitHub GraphQL API to create and manage lists directly on your profile — no third-party database required.
-* **Human-in-the-Loop:** Review AI-generated suggestions and insights before any changes are written to your account.
-* **Health Audits:** Automatically flags archived repositories to help you declutter.
-* **Reserved "Other" Bucket:** One of the 32 GitHub list slots is always reserved for an "Other" catch-all. Any repo that doesn't fit a specific category lands here instead of being forced into an ill-fitting group. The "Other" list is protected — it can never be renamed or deleted by the tool.
-* **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document to stdout for scripting or inspection.
+- **TUI-First Experience:** A beautiful, keyboard-driven interface built with [Ink](https://github.com/vadimdemedes/ink).
+- **Deep Analysis:** Goes beyond simple tags by reading repository `README.md` files to understand the "why" behind a project.
+- **Native Integration:** Uses the GitHub GraphQL API to create and manage lists directly on your profile — no third-party database required.
+- **Human-in-the-Loop:** Review AI-generated suggestions and insights before any changes are written to your account.
+- **Health Audits:** Automatically flags archived repositories to help you declutter.
+- **Reserved "Other" Bucket:** One of the 32 GitHub list slots is always reserved for an "Other" catch-all. Any repo that doesn't fit a specific category lands here instead of being forced into an ill-fitting group. The "Other" list is protected — it can never be renamed or deleted by the tool.
+- **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document to stdout for scripting or inspection.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-* **Bun** (v1.0 or higher) — [install](https://bun.sh/)
-* **GitHub Personal Access Token (PAT):** Requires `repo` and `user` scopes. Note: the `user` scope (not just `read:user`) is required for creating and managing GitHub Lists via the GraphQL API. Use a **classic token** — fine-grained tokens do not support this mutation.
-* **AI Provider:** An OpenAI API Key OR [Ollama](https://ollama.com/) running locally (e.g., `llama3`).
+- **Bun** (v1.0 or higher) — [install](https://bun.sh/)
+- **GitHub Personal Access Token (PAT):** Requires `repo` and `user` scopes. Note: the `user` scope (not just `read:user`) is required for creating and managing GitHub Lists via the GraphQL API. Use a **classic token** — fine-grained tokens do not support this mutation.
+- **AI Provider:** An OpenAI API Key OR [Ollama](https://ollama.com/) running locally (e.g., `llama3`).
 
 ### Installation
 
@@ -93,21 +93,21 @@ The interactive mode walks you through these steps:
 
 After confirming, you pick one of three strategies that controls how the AI's proposed categories are merged with your existing lists:
 
-| # | Strategy | Behaviour |
-|---|---|---|
-| 1 | **Keep existing** _(default)_ | Preserve all current lists; add new ones only for genuinely new categories. |
-| 2 | **Re-create all** | Delete every existing list, then build a fresh set from AI categories. |
-| 3 | **Allow rename** | Keep existing lists but rename them when the AI suggests a better name. |
+| #   | Strategy                      | Behaviour                                                                   |
+| --- | ----------------------------- | --------------------------------------------------------------------------- |
+| 1   | **Keep existing** _(default)_ | Preserve all current lists; add new ones only for genuinely new categories. |
+| 2   | **Re-create all**             | Delete every existing list, then build a fresh set from AI categories.      |
+| 3   | **Allow rename**              | Keep existing lists but rename them when the AI suggests a better name.     |
 
 ## 🛠 CLI Flags
 
-| Flag | Default | Description |
-|---|---|---|
-| `--backend <name>` | `openai` | AI backend to use (`openai` or `ollama`) |
-| `--limit <n>` | _(all)_ | Limit the number of repos analysed |
-| `--concurrency <n>` | `5` | Parallel README fetch concurrency |
-| `--analyze-only` | off | Headless mode — skip the TUI and print JSON to stdout |
-| `--output <path>` | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout |
+| Flag                | Default    | Description                                               |
+| ------------------- | ---------- | --------------------------------------------------------- |
+| `--backend <name>`  | `openai`   | AI backend to use (`openai` or `ollama`)                  |
+| `--limit <n>`       | _(all)_    | Limit the number of repos analysed                        |
+| `--concurrency <n>` | `5`        | Parallel README fetch concurrency                         |
+| `--analyze-only`    | off        | Headless mode — skip the TUI and print JSON to stdout     |
+| `--output <path>`   | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout |
 
 ### `--analyze-only` mode
 
@@ -143,17 +143,19 @@ Output shape:
 
 ## ⚙️ Configuration
 
-| Variable | Required | Description |
-|---|---|---|
-| `GITHUB_TOKEN` | ✅ | Classic PAT with `user` and `repo` scopes |
-| `OPENAI_API_KEY` | One of these | OpenAI API key |
-| `OLLAMA_HOST` | One of these | Ollama base URL (default: `http://localhost:11434`) |
-| `OLLAMA_MODEL` | with Ollama | Model name (e.g. `llama3`) |
-| `LANGFUSE_PUBLIC_KEY` | optional | Langfuse public key (enables prompt tracing) |
-| `LANGFUSE_SECRET_KEY` | optional | Langfuse secret key |
-| `LANGFUSE_BASE_URL` | optional | Custom Langfuse host (default: Langfuse cloud) |
-| `LOG_LEVEL` | optional | Log level: `debug`, `info`, `warn`, or `error` (default: `info`) |
-| `LOG_FILE` | optional | Log file path. Absolute, or relative (resolved against the project root — e.g. `LOG_FILE=app.log`). Default: `$XDG_STATE_HOME/gh-star-constellation-finder/app.log`, falling back to `~/.local/state/...` |
+| Variable              | Required     | Description                                                                                                                                                                                               |
+| --------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GITHUB_TOKEN`        | ✅           | Classic PAT with `user` and `repo` scopes                                                                                                                                                                 |
+| `OPENAI_API_KEY`      | One of these | OpenAI API key                                                                                                                                                                                            |
+| `OLLAMA_HOST`         | One of these | Ollama base URL (default: `http://localhost:11434`)                                                                                                                                                       |
+| `OLLAMA_MODEL`        | with Ollama  | Model name (e.g. `llama3`)                                                                                                                                                                                |
+| `LANGFUSE_PUBLIC_KEY` | optional     | Langfuse public key (enables prompt tracing)                                                                                                                                                              |
+| `LANGFUSE_SECRET_KEY` | optional     | Langfuse secret key                                                                                                                                                                                       |
+| `LANGFUSE_BASE_URL`   | optional     | Custom Langfuse host (default: Langfuse cloud)                                                                                                                                                            |
+| `POSTHOG_API_KEY`     | optional     | PostHog project key (`phc_...`) — enables product analytics. Unset = telemetry disabled                                                                                                                   |
+| `POSTHOG_HOST`        | optional     | Custom PostHog host (default: `https://eu.i.posthog.com`)                                                                                                                                                 |
+| `LOG_LEVEL`           | optional     | Log level: `debug`, `info`, `warn`, or `error` (default: `info`)                                                                                                                                          |
+| `LOG_FILE`            | optional     | Log file path. Absolute, or relative (resolved against the project root — e.g. `LOG_FILE=app.log`). Default: `$XDG_STATE_HOME/gh-star-constellation-finder/app.log`, falling back to `~/.local/state/...` |
 
 ## 📓 Logging
 
