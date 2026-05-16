@@ -1,5 +1,7 @@
 # 🌌 gh-star-constellation-finder
 
+[![CI](https://img.shields.io/github/actions/workflow/status/tkrisztian95/gh-star-constellation-finder/build.yml?branch=main&style=flat-square&label=ci)](https://github.com/tkrisztian95/gh-star-constellation-finder/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/tkrisztian95/gh-star-constellation-finder?style=flat-square)](https://github.com/tkrisztian95/gh-star-constellation-finder/releases/latest)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-000000?style=flat-square&logo=bun&logoColor=white)](https://bun.sh/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
