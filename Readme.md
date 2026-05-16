@@ -1,6 +1,7 @@
 # 🌌 gh-star-constellation-finder
 
 [![CI](https://img.shields.io/github/actions/workflow/status/tkrisztian95/gh-star-constellation-finder/build.yml?branch=main&style=flat-square&label=ci)](https://github.com/tkrisztian95/gh-star-constellation-finder/actions/workflows/build.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tkrisztian95_gh-star-constellation-finder&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tkrisztian95_gh-star-constellation-finder)
 [![Release](https://img.shields.io/github/v/release/tkrisztian95/gh-star-constellation-finder?style=flat-square)](https://github.com/tkrisztian95/gh-star-constellation-finder/releases/latest)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-000000?style=flat-square&logo=bun&logoColor=white)](https://bun.sh/)
