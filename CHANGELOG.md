@@ -4,26 +4,17 @@ All notable changes to this project are documented here. The format is loosely b
 
 The authoritative per-commit history lives in [git log](https://github.com/tkrisztian95/gh-star-constellation-finder/commits/main); this file is the curated story.
 
+> **Pre-1.0 versioning.** While the project sits at `0.x.y`, the session JSON, analysis-cache schema, and CLI flag surface are not frozen — breaking changes ride on minor bumps (`0.1.0` → `0.2.0`), patches fix bugs only. A future `1.0.0` will mark the contract being stable.
+
 ## [Unreleased]
 
-### Changed
+_Nothing yet — first new entry lands here._
 
-- README pipeline mermaid replaced with a one-sentence summary; the diagram-heavy engine doc was rewritten as prose with file/line pointers into [docs/ai-engine-workflow.md](./docs/ai-engine-workflow.md).
-- README now opens with an explicit ⚠️ Disclaimer block flagging that GitHub mutations are real and unrecoverable, AI suggestions are best-effort, and (with OpenAI) repo metadata + README excerpts leave the device.
-- Dev/release dependencies refreshed; the moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is now resolved via a package-lock override pinning to `^5.0.6`.
-
-### Added
-
-- [CONTRIBUTING.md](./CONTRIBUTING.md) at the repo root — GitHub auto-surfaces it in the new-issue and new-PR UI.
-- [SECURITY.md](./SECURITY.md) — private reporting via GitHub Security Advisories; out-of-scope items called out so triage isn't a guessing game.
-- `.github/ISSUE_TEMPLATE/` (`bug_report.md`, `feature_request.md`, `config.yml`) with the existing label taxonomy pre-applied. Blank issues are disabled; the config also links to GitHub Security Advisories for vulnerability reports.
-- `.github/PULL_REQUEST_TEMPLATE.md` enforcing `Closes #N`, OpenSpec change path, and the quality-gate checklist from CONTRIBUTING.md.
-- CI status + release version badges in the README header.
-- `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
-
-## [1.0.0] — 2026-05-16
+## [0.1.0] — 2026-05-16
 
 First public release. The full feature set is captured under [`openspec/specs/`](./openspec/specs/); this section is the high-level tour.
+
+> **Version reset note.** This project was briefly tagged as `v1.0.0` while still private. The tag and release were deleted before going public because pre-1.0 versioning more honestly reflects that the session JSON / cache file formats aren't frozen. `v0.1.0` is the first release ever published to anyone.
 
 ### AI engine
 
@@ -83,5 +74,15 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - **Bun-native** — toolchain is Bun + Husky + lint-staged + ESLint + Prettier + TypeScript. `bun run typecheck`, `lint`, `format:check`, `test`. Pre-commit hooks autoformat staged `src/**/*.{ts,tsx}` files.
 - **OpenSpec workflow** — every non-trivial change has a folder under `openspec/changes/<slug>/` (`proposal.md`, `design.md`, `tasks.md`, `specs/`). Archived on completion to `openspec/changes/archive/<YYYY-MM-DD>-<slug>/` with spec deltas promoted into `openspec/specs/`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/releases/tag/v1.0.0
+### Documentation & opensource readiness
+
+- README pipeline mermaid replaced with a one-sentence summary; the engine doc was rewritten as prose with file/line pointers into [docs/ai-engine-workflow.md](./docs/ai-engine-workflow.md).
+- README opens with a ⚠️ Disclaimer block (GitHub mutations are real and unrecoverable, AI suggestions are best-effort, OpenAI sees repo metadata + README excerpts) and a two-level table of contents.
+- README hero screenshot (cropped review screen) + an inline screenshot of the analyse phase under `docs/screenshots/`.
+- [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md), `.github/ISSUE_TEMPLATE/` (`bug_report.md`, `feature_request.md`, `config.yml`), and `.github/PULL_REQUEST_TEMPLATE.md` added so GitHub auto-surfaces them in the issue / PR UI.
+- CI status + release version badges in the README header.
+- `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
+- The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
+
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/releases/tag/v0.1.0
