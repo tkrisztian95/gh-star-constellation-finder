@@ -8,7 +8,7 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 ## [Unreleased]
 
-_Nothing yet — first new entry lands here._
+_Nothing yet — first new entry lands here. The targeted scope for the next release is documented in [docs/milestone-v0.2.0.md](./docs/milestone-v0.2.0.md): the project is pivoting from "TUI that organises starred repos into GitHub Lists" to "local-first knowledge base over your starred repos" (headless `--ask`, MCP server, eval harness). Until that milestone ships, this section captures incremental work landing on `main`._
 
 ## [0.1.0] — 2026-05-16
 
