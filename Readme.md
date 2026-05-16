@@ -10,41 +10,9 @@
 
 ## How it Works
 
-In short: authenticate → fetch your starred repos + their READMEs → analyse each with AI (cached) → consolidate categories → review suggestions → apply via the GitHub GraphQL API.
+In short: authenticate → fetch your starred repos + their READMEs → analyse each with AI (results cached locally) → consolidate categories (two AI passes) → generate suggestions → review and apply via the GitHub GraphQL API.
 
-<details>
-<summary>📊 Full pipeline flowchart</summary>
-
-```mermaid
-flowchart TD
-    A([Start]) --> B[Authenticate\nGitHub PAT]
-    B --> C[Fetch Starred Repos\n& Existing Lists]
-    C --> D{Mode?}
-
-    D -->|Interactive| E[Choose Scope & Strategy\nTUI prompt]
-    D -->|--analyze-only| F[Skip TUI setup]
-
-    E & F --> G[Fetch READMEs\nconcurrently]
-    G --> H[Cache lookup per repo\nhit -> reuse, miss -> AI]
-    H --> H1[AI Analysis\nparallel for cache misses]
-    H1 --> I[Category Consolidation\ndedup + budget enforcement]
-    I --> J[Generate Suggestions\ncreate / move / rename / delete]
-
-    J --> K{Mode?}
-
-    K -->|--analyze-only| L[(JSON Output\nstdout or file)]
-    K -->|Interactive| M[Review Suggestions\naccept / skip / reject each]
-
-    M --> N[Summary Preview\ndiff of accepted changes]
-    N --> O[Apply to GitHub\nGraphQL mutations]
-    O --> P[Save Session JSON\noptional]
-
-    P & L --> Z([Done])
-```
-
-</details>
-
-For the engine-level walkthrough (per-phase modules, prompts, consolidation algorithm), see [docs/ai-engine-workflow.md](docs/ai-engine-workflow.md).
+For a phase-by-phase walkthrough of the engine — prompt builders, consolidation algorithm, caching key, suggestion types, file pointers into the source — see [docs/ai-engine-workflow.md](docs/ai-engine-workflow.md).
 
 ## ✨ Key Features
 
