@@ -9,7 +9,7 @@ Every non-trivial change in this repo follows the same five-step pipeline. Skipp
 1. **Capture the idea.** Add a one-line entry to `docs/ideas.md` while it's fresh. Don't open an issue yet — `docs/ideas.md` is the rough inbox, the GitHub issue tracker is the triaged queue.
 2. **File the GitHub issue.** Use the `/issues-from-ideas` skill (see [.claude/skills/issues-from-ideas/SKILL.md](.claude/skills/issues-from-ideas/SKILL.md)) to convert lines in `docs/ideas.md` into issues with cleaned titles, verbatim bodies, and labels from the project taxonomy (`area:*` + one of `bug` / `enhancement` / `documentation` / `type:*`). After issues are filed, empty `docs/ideas.md` — the tracker is now the source of truth.
 3. **Propose the OpenSpec change.** Run `/opsx:propose` against the issue. The first line of `proposal.md` MUST reference the issue: `Tracks #<N>` (or `Tracks #<N>, #<M>` for bundled work). The change slug should be obviously related to the issue's intent — they don't have to be identical strings, but the chain `issue ↔ change folder ↔ branch ↔ PR` must be trivially greppable.
-4. **Branch and implement.** Create the branch from `main` using the change slug verbatim as the branch name (see "Branches & git workflow"). **Commit the proposal artifacts first** — `proposal.md`, `design.md`, `tasks.md`, and the `specs/` subtree — as a single `docs(<slug>): propose <slug>` commit *before* running `/opsx:apply`. Then work through `tasks.md` with `/opsx:apply`, committing per numbered task section.
+4. **Branch and implement.** Create the branch from `main` using the change slug verbatim as the branch name (see "Branches & git workflow"). **Commit the proposal artifacts first** — `proposal.md`, `design.md`, `tasks.md`, and the `specs/` subtree — as a single `docs(<slug>): propose <slug>` commit _before_ running `/opsx:apply`. Then work through `tasks.md` with `/opsx:apply`, committing per numbered task section.
 5. **Open the PR, link the issue, archive on merge.**
    - PR title: same style as commit subjects, e.g. `feat(cache-analysis-results): cache module + reuse`.
    - PR body MUST end with `Closes #<N>` (or `Closes #<N>, closes #<M>`) so GitHub auto-closes the issue on merge.
@@ -52,7 +52,7 @@ Active change artifacts live in `openspec/changes/<change-slug>/` and include `p
 ### Best practices
 
 - **Split complex tasks:** If a task is too large or ambiguous, break it into smaller steps — propose first, then apply, then archive. Avoids context overload and implementation drift.
-- **Commit the proposal before applying:** After `/opsx:propose` generates the change folder and *before* you touch any source code with `/opsx:apply`, stage and commit the entire `openspec/changes/<slug>/` tree as `docs(<slug>): propose <slug>`. This pins the originally agreed-upon scope into git history, makes reviewer diffs clean (spec lands separately from implementation), and gives you a stable revert point if the implementation goes sideways. Do this on the change branch, not on `main`.
+- **Commit the proposal before applying:** After `/opsx:propose` generates the change folder and _before_ you touch any source code with `/opsx:apply`, stage and commit the entire `openspec/changes/<slug>/` tree as `docs(<slug>): propose <slug>`. This pins the originally agreed-upon scope into git history, makes reviewer diffs clean (spec lands separately from implementation), and gives you a stable revert point if the implementation goes sideways. Do this on the change branch, not on `main`.
 - **Commit after each task section during `/opsx:apply`:** When working through `tasks.md`, create a git commit at the end of every numbered task group (each `## N. <Group Name>` section) — once every checkbox in that group is marked `[x]` and the work is verified. Subject line should reference the change slug and the section, e.g. `feat(cache-analysis-results): cache module (tasks 1.x)`. Keeps the branch reviewable in slices that match the spec, makes bisecting easy, prevents one giant end-of-change commit. Do **not** commit mid-section unless the user asks — wait until the section is fully done. The final `/opsx:archive` commit then carries only the spec-archive move plus any leftover doc edits.
 - **Commit after archiving:** `/opsx:archive` produces a single `chore(openspec): archive <change-slug>` commit that moves the change folder into `archive/<date>-<slug>/` and promotes the spec deltas. Mirrors the existing history (`git log --oneline | grep "archive"`).
 - **Validate specs before applying:** Run `openspec validate --strict` after propose and before apply to catch JSON/Markdown formatting errors early.
@@ -65,6 +65,14 @@ Active change artifacts live in `openspec/changes/<change-slug>/` and include `p
 - **Branch from `main`, PR back into `main`.** `main` is the only long-lived branch. Squash-merging is fine for small changes; for multi-section changes, prefer a normal merge so the per-section commits survive in history (matches the bisect-friendliness rationale above).
 - **Never commit directly to `main`** for code changes once a branch is open. The only exceptions are tiny doc/typo fixes and the `chore(openspec): archive ...` commit produced by `/opsx:archive` (which is conventionally landed via the same PR as the implementation).
 - **PRs close issues.** Every PR body MUST contain `Closes #<N>` for the issue the change implements. Multi-issue bundles use `Closes #<N>, closes #<M>` — GitHub only auto-closes when each issue is preceded by its own keyword.
+- **CHANGELOG.md MUST be updated before suggesting or creating a new version tag.** Whenever a new `v*` tag is about to be cut (whether you're suggesting it to the user or executing the tag yourself), first land a commit on `main` that:
+  - Adds a `## [<version>] — <YYYY-MM-DD>` section to [CHANGELOG.md](./CHANGELOG.md) with the actual release date.
+  - Moves any qualifying entries out of the `Unreleased` section into the new version section, grouped under standard Keep-a-Changelog headings (`Added`, `Changed`, `Fixed`, `Removed`, `Deprecated`, `Security`) as appropriate. Pull in commit subjects + linked issues since the previous tag if `Unreleased` was empty.
+  - Updates the comparison links at the bottom (`[Unreleased]: ...vNEW...HEAD`, `[NEW]: .../releases/tag/vNEW`).
+  - Keeps the pre-1.0 versioning disclaimer at the top intact.
+
+  Reference: the [v0.1.0](./CHANGELOG.md) section is the canonical format example. If the version is a patch (e.g. `v0.1.1`) and ships only one fix, a single-bullet section is fine — but the section MUST exist before the tag is pushed. Push the tag first and the GitHub release auto-notes will be the only record of what shipped; the curated changelog never catches up later. Never suggest `git tag vX.Y.Z` to the user without confirming the changelog entry already exists or is included in the same suggestion.
+
 - **Hooks are real.** Husky + lint-staged run `prettier --write` and `eslint --fix` on staged `src/**/*.{ts,tsx}` files. Do not bypass with `--no-verify` — if a hook fails, fix the underlying issue.
 
 ## Testing & quality gates
@@ -90,21 +98,22 @@ bun run test        # bun runs src/__tests__/*.test.ts
 
 ## Where things live
 
-| Area                                                | Where                                                                        |
-| --------------------------------------------------- | ---------------------------------------------------------------------------- |
-| TUI entry / CLI flag parsing                        | `src/index.tsx`                                                              |
-| AI provider abstraction (OpenAI + Ollama)           | `src/ai/`                                                                    |
-| Analysis / consolidation / suggestion orchestration | `src/orchestration/`, `src/engine/`                                          |
-| GitHub fetch + mutate                               | `src/github/`, `src/graphql/`                                                |
-| Ink components (screens, cards, prompts)            | `src/components/`                                                            |
-| Phase state machine                                 | `src/state/`                                                                 |
-| Session JSON (analyze-only + interactive save)      | `src/session/`                                                               |
-| CLI flag handlers (e.g. `--analyze-only`)           | `src/cli/`                                                                   |
-| PostHog event names + capture helpers               | `src/analytics.ts`                                                           |
-| Tests                                               | `src/__tests__/*.test.ts`                                                    |
-| End-to-end pipeline doc                             | [docs/ai-engine-workflow.md](docs/ai-engine-workflow.md)                     |
+| Area                                                | Where                                                    |
+| --------------------------------------------------- | -------------------------------------------------------- |
+| TUI entry / CLI flag parsing                        | `src/index.tsx`                                          |
+| AI provider abstraction (OpenAI + Ollama)           | `src/ai/`                                                |
+| Analysis / consolidation / suggestion orchestration | `src/orchestration/`, `src/engine/`                      |
+| GitHub fetch + mutate                               | `src/github/`, `src/graphql/`                            |
+| Ink components (screens, cards, prompts)            | `src/components/`                                        |
+| Phase state machine                                 | `src/state/`                                             |
+| Session JSON (analyze-only + interactive save)      | `src/session/`                                           |
+| CLI flag handlers (e.g. `--analyze-only`)           | `src/cli/`                                               |
+| PostHog event names + capture helpers               | `src/analytics.ts`                                       |
+| Tests                                               | `src/__tests__/*.test.ts`                                |
+| End-to-end pipeline doc                             | [docs/ai-engine-workflow.md](docs/ai-engine-workflow.md) |
 
 <!-- gitnexus:start -->
+
 # GitNexus — Code Intelligence
 
 This project is indexed by GitNexus as **gh-star-constellation-finder** (3089 symbols, 3207 relationships, 13 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
@@ -128,22 +137,22 @@ This project is indexed by GitNexus as **gh-star-constellation-finder** (3089 sy
 
 ## Resources
 
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/gh-star-constellation-finder/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/gh-star-constellation-finder/clusters` | All functional areas |
-| `gitnexus://repo/gh-star-constellation-finder/processes` | All execution flows |
-| `gitnexus://repo/gh-star-constellation-finder/process/{name}` | Step-by-step execution trace |
+| Resource                                                      | Use for                                  |
+| ------------------------------------------------------------- | ---------------------------------------- |
+| `gitnexus://repo/gh-star-constellation-finder/context`        | Codebase overview, check index freshness |
+| `gitnexus://repo/gh-star-constellation-finder/clusters`       | All functional areas                     |
+| `gitnexus://repo/gh-star-constellation-finder/processes`      | All execution flows                      |
+| `gitnexus://repo/gh-star-constellation-finder/process/{name}` | Step-by-step execution trace             |
 
 ## CLI
 
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
+| Task                                         | Read this skill file                                        |
+| -------------------------------------------- | ----------------------------------------------------------- |
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md`       |
+| Blast radius / "What breaks if I change X?"  | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?"             | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md`       |
+| Rename / extract / split / refactor          | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md`     |
+| Tools, resources, schema reference           | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md`           |
+| Index, status, clean, wiki CLI commands      | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md`             |
 
 <!-- gitnexus:end -->
