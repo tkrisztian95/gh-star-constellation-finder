@@ -1,4 +1,5 @@
 import type { Backend } from "../ai/index.js";
+import pkg from "../../package.json" with { type: "json" };
 
 export interface CliArgs {
   backend?: Backend;
@@ -12,6 +13,14 @@ export interface CliArgs {
 
 export function wantsHelp(argv: string[]): boolean {
   return argv.includes("--help") || argv.includes("-h");
+}
+
+export function wantsVersion(argv: string[]): boolean {
+  return argv.includes("--version") || argv.includes("-v");
+}
+
+export function getVersionText(): string {
+  return `${pkg.name} v${pkg.version}\n`;
 }
 
 export function getHelpText(): string {
@@ -29,6 +38,7 @@ Options:
   --no-cache            Skip the local analysis cache (re-analyse every repo)
   --no-analytics        Disable PostHog product analytics for this run
   -h, --help            Show this help and exit
+  -v, --version         Show the version and exit
 
 Environment variables:
   GITHUB_TOKEN          (required) Classic PAT with user + repo scopes
@@ -51,6 +61,11 @@ export function parseArgs(): CliArgs {
 
   if (wantsHelp(args)) {
     process.stdout.write(getHelpText());
+    process.exit(0);
+  }
+
+  if (wantsVersion(args)) {
+    process.stdout.write(getVersionText());
     process.exit(0);
   }
 
