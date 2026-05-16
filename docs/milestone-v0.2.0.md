@@ -33,16 +33,16 @@ The pivot also unlocks discoverability. "MCP server for your GitHub stars" pulls
 
 ## Order of work
 
-The numbered items in "In scope" above are the intended commit order. Each becomes its own OpenSpec change under `openspec/changes/<slug>/`. Suggested slugs:
+The numbered items in "In scope" above are the intended commit order. Each becomes its own OpenSpec change under `openspec/changes/<slug>/`.
 
-| #   | Slug                     | Effort   | Depends on |
-| --- | ------------------------ | -------- | ---------- |
-| 1   | `harness-reframe-readme` | ~0.5 day | —          |
-| 2   | `analyzer-description`   | ~1 day   | 1          |
-| 3   | `eval-harness`           | ~2 days  | 2          |
-| 4   | `analysis-embeddings`    | ~3 days  | 2, 3       |
-| 5   | `ask-headless-mode`      | ~3 days  | 4          |
-| 6   | `mcp-server`             | ~4 days  | 5          |
+| #   | Slug                     | Tracking issue                                                                                                                                                      | Effort   | Depends on   |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------ |
+| 1   | `harness-reframe-readme` | [#41](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/41)                                                                                       | ~0.5 day | —            |
+| 2   | `analyzer-description`   | [#42](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/42)                                                                                       | ~1 day   | #41          |
+| 3   | `eval-harness`           | [#43](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/43)                                                                                       | ~2 days  | #42          |
+| 4   | `analysis-embeddings`    | [#44](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/44)                                                                                       | ~3 days  | #42, #43     |
+| 5   | `ask-headless-mode`      | [#21](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/21) phase A                                                                               | ~3 days  | #44          |
+| 6   | `mcp-server`             | [#21](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/21) phase B + [#7](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/7) | ~4 days  | #21A (= #21) |
 
 Effort is calendar days for a single person at evening-and-weekend pace, padded for the OpenSpec proposal + design cycle each change carries. The realistic timeline is **8–12 weeks elapsed**, not the ~13 dev-days summed above.
 
