@@ -10,6 +10,12 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 _Nothing yet — first new entry lands here. The targeted scope for the next release is documented in [docs/milestone-v0.2.0.md](./docs/milestone-v0.2.0.md): the project is pivoting from "TUI that organises starred repos into GitHub Lists" to "local-first knowledge base over your starred repos" (headless `--ask`, MCP server, eval harness). Until that milestone ships, this section captures incremental work landing on `main`._
 
+## [0.1.3] — 2026-05-16
+
+### Added
+
+- `--help` now ships an `Examples:` block with copy-pasteable one-liners: Ollama local inference with `OLLAMA_MODEL=gemma4` (recommended), a multi-line variant with custom `OLLAMA_HOST` plus `--analyze-only`, a llama3 fallback, and the default OpenAI invocation. Cuts the "what env vars do I need to set?" round-trip — every example inlines the required vars next to the command.
+
 ## [0.1.2] — 2026-05-16
 
 ### Added
@@ -103,7 +109,8 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
 - The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/releases/tag/v0.1.0
