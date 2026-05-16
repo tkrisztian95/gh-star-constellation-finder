@@ -1,0 +1,51 @@
+#!/usr/bin/env sh
+
+# Release-sync guard.
+#
+# When pushing a v* tag, verify that the tagged commit has:
+#   1. package.json "version" matching the tag (without leading v).
+#   2. CHANGELOG.md containing a "## [<version>]" section.
+#
+# Encodes the rule from CLAUDE.md (Branches & git workflow). Bypass with
+# `git push --no-verify` for emergencies; CI will still notice a missing
+# changelog later, but the bypass exists for genuine edge cases.
+
+# stdin format (one line per ref being pushed):
+#   <local_ref> <local_sha> <remote_ref> <remote_sha>
+while read local_ref local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/tags/v*)
+      tag="${remote_ref#refs/tags/}"
+      version="${tag#v}"
+
+      # 1. package.json version must match the tag.
+      pkg_version=$(git show "$local_sha:package.json" 2>/dev/null \
+        | grep -E '"version"[[:space:]]*:' \
+        | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' \
+        | head -n1)
+      if [ -z "$pkg_version" ]; then
+        echo "pre-push: cannot read package.json version at $local_sha — aborting push of $tag." >&2
+        exit 1
+      fi
+      if [ "$pkg_version" != "$version" ]; then
+        echo "pre-push: refusing to push tag $tag" >&2
+        echo "          package.json version is \"$pkg_version\", not \"$version\"." >&2
+        echo "          Bump package.json (and CHANGELOG.md per CLAUDE.md) before retagging." >&2
+        echo "          To bypass intentionally: git push --no-verify ..." >&2
+        exit 1
+      fi
+
+      # 2. CHANGELOG.md must have a section for this version.
+      if ! git show "$local_sha:CHANGELOG.md" 2>/dev/null \
+        | grep -qF "## [$version]"; then
+        echo "pre-push: refusing to push tag $tag" >&2
+        echo "          CHANGELOG.md has no \"## [$version]\" section at $local_sha." >&2
+        echo "          Add the section (Keep-a-Changelog format) before retagging." >&2
+        echo "          To bypass intentionally: git push --no-verify ..." >&2
+        exit 1
+      fi
+      ;;
+    *) ;;
+  esac
+done
+exit 0
