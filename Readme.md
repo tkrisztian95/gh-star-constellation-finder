@@ -10,6 +10,8 @@
 
 `gh-star-constellation-finder` is an AI-powered Terminal User Interface (TUI) designed to rescue your GitHub stars from the "void." It analyzes your repositories using local or OpenAI models, proposing smart categorizations for your **native GitHub lists** based on actual code intent, health, and project depth.
 
+![Review screen: an AI-generated suggestion proposing to move a repo into the "Curated Software Resources" list, with keyboard shortcuts for accept / skip / reject / quit](docs/screenshots/review-phase-cropped.png)
+
 ## Table of contents
 
 - [How it Works](#how-it-works)
@@ -106,6 +108,9 @@ The interactive mode walks you through these steps:
 1. **Confirm** — shows how many starred repos will be analysed; press `y` to proceed.
 2. **Strategy** — choose how existing GitHub Lists are handled (see [Consolidation Strategies](#consolidation-strategies) below).
 3. **Fetch & Analyse** — READMEs are fetched concurrently and each repo is sent to the AI for categorization.
+
+   ![Analysis phase: a step indicator showing "3 Analyze" with the spinner on the current repo and an ESC-to-interrupt hint](docs/screenshots/analyze-phase.png)
+
 4. **Review** — browse every suggestion, accept or skip individual ones with keyboard shortcuts.
 5. **Summary** — see a final diff of what will be created/updated before any writes happen.
 6. **Apply** — accepted suggestions are written to GitHub via GraphQL mutations.
