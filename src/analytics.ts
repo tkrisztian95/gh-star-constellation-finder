@@ -9,7 +9,10 @@ let _distinctId = "anonymous";
 
 export function initAnalytics(optOut: boolean, distinctId: string): void {
   if (optOut) return;
-  const apiKey = process.env.POSTHOG_API_KEY;
+  // BAKED_POSTHOG_API_KEY is substituted at release-build time via
+  // `bun build --define`; in source / dev builds it stays undefined so the
+  // runtime POSTHOG_API_KEY env var is required.
+  const apiKey = process.env.POSTHOG_API_KEY ?? process.env.BAKED_POSTHOG_API_KEY;
   if (!apiKey) return;
   _distinctId = distinctId;
   client = new PostHog(apiKey, {

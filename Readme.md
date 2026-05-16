@@ -231,6 +231,8 @@ POSTHOG_API_KEY=phc_...
 # POSTHOG_HOST=https://eu.i.posthog.com  # override for US cloud or self-hosted
 ```
 
+> **Released binaries:** the official binaries published on GitHub Releases ship with the project's PostHog key baked in at build time (via `bun build --define`), so analytics are on by default in the released CLI. Setting `POSTHOG_API_KEY` at runtime overrides the baked default; `--no-analytics` turns it off entirely. Building from source (`bun run dev`, your own `bun build`) never bakes a key — it relies on the env var.
+
 ### Disable per run / persist opt-out
 
 Pass `--no-analytics` on any run — the choice is persisted to user config so subsequent runs also stay off until you re-enable it manually.
