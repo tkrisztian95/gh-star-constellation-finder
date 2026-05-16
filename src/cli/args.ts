@@ -24,7 +24,7 @@ export function getVersionText(): string {
 }
 
 export function getHelpText(): string {
-  return `gh-star-constellation-finder — organise your GitHub stars into native lists with AI
+  return String.raw`gh-star-constellation-finder — organise your GitHub stars into native lists with AI
 
 Usage:
   gh-star-constellation-finder [options]
@@ -40,6 +40,20 @@ Options:
   -h, --help            Show this help and exit
   -v, --version         Show the version and exit
 
+Examples:
+  # Local inference with Ollama using Gemma 4 (recommended — much better than llama3)
+  GITHUB_TOKEN=ghp_xxx OLLAMA_MODEL=gemma4 gh-star-constellation-finder --backend ollama
+
+  # Same, plus a custom Ollama host and a 20-repo dry run
+  GITHUB_TOKEN=ghp_xxx OLLAMA_HOST=http://localhost:11434 OLLAMA_MODEL=gemma4 \\
+    gh-star-constellation-finder --backend ollama --limit 20 --analyze-only
+
+  # Or pin to llama3 if you already have it pulled
+  GITHUB_TOKEN=ghp_xxx OLLAMA_MODEL=llama3 gh-star-constellation-finder --backend ollama
+
+  # OpenAI backend (default)
+  GITHUB_TOKEN=ghp_xxx OPENAI_API_KEY=sk-xxx gh-star-constellation-finder
+
 Environment variables:
   GITHUB_TOKEN          (required) Classic PAT with user + repo scopes
   OPENAI_API_KEY        OpenAI key (when --backend openai)
@@ -51,8 +65,9 @@ Environment variables:
   LOG_FILE              JSONL log path (default: $XDG_STATE_HOME/gh-star-constellation-finder/app.log)
 
 Docs:
-  README   https://github.com/tkrisztian95/gh-star-constellation-finder
-  Issues   https://github.com/tkrisztian95/gh-star-constellation-finder/issues
+  README     https://github.com/tkrisztian95/gh-star-constellation-finder
+  Issues     https://github.com/tkrisztian95/gh-star-constellation-finder/issues
+  GitHub PAT https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic
 `;
 }
 
