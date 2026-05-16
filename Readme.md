@@ -20,8 +20,9 @@ flowchart TD
     D -->|--analyze-only| F[Skip TUI setup]
 
     E & F --> G[Fetch READMEs\nconcurrently]
-    G --> H[AI Analysis\nper repo in parallel]
-    H --> I[Category Consolidation\ndedup + budget enforcement]
+    G --> H[Cache lookup per repo\nhit -> reuse, miss -> AI]
+    H --> H1[AI Analysis\nparallel for cache misses]
+    H1 --> I[Category Consolidation\ndedup + budget enforcement]
     I --> J[Generate Suggestions\ncreate / move / rename / delete]
 
     J --> K{Mode?}
@@ -44,7 +45,9 @@ flowchart TD
 - **Human-in-the-Loop:** Review AI-generated suggestions and insights before any changes are written to your account.
 - **Health Audits:** Automatically flags archived repositories to help you declutter.
 - **Reserved "Other" Bucket:** One of the 32 GitHub list slots is always reserved for an "Other" catch-all. Any repo that doesn't fit a specific category lands here instead of being forced into an ill-fitting group. The "Other" list is protected — it can never be renamed or deleted by the tool.
+- **Persistent Analysis Cache:** Per-repo AI results are cached in a local SQLite DB keyed on README contents — re-runs only pay for repos whose README has changed. Disable with `--no-cache`.
 - **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document to stdout for scripting or inspection.
+- **Privacy by Default:** Both prompt tracing (Langfuse) and product analytics (PostHog) are strictly opt-in via env vars. With nothing configured, no telemetry leaves your machine.
 
 ## 🚀 Getting Started
 
@@ -58,7 +61,7 @@ flowchart TD
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/gh-star-constellation-finder.git
+git clone https://github.com/tkrisztian95/gh-star-constellation-finder.git
 cd gh-star-constellation-finder
 
 # Install dependencies
@@ -87,7 +90,21 @@ The interactive mode walks you through these steps:
 4. **Review** — browse every suggestion, accept or skip individual ones with keyboard shortcuts.
 5. **Summary** — see a final diff of what will be created/updated before any writes happen.
 6. **Apply** — accepted suggestions are written to GitHub via GraphQL mutations.
-7. **Save** — optionally save the full session JSON (suggestions + decisions + mutation results) to a file.
+7. **Save** — optionally save the full session JSON (suggestions + decisions + mutation results) to a file. The default path is `output/<model>/session-<YYYYMMDD-HHMMSS>.json`.
+
+### Review keyboard shortcuts
+
+While reviewing suggestions:
+
+| Key                             | Action                                                   |
+| ------------------------------- | -------------------------------------------------------- |
+| <kbd>a</kbd> / <kbd>Enter</kbd> | Accept the current suggestion (default)                  |
+| <kbd>s</kbd>                    | Skip — don't apply, don't mark as rejected               |
+| <kbd>r</kbd>                    | Reject — applied as feedback if the AI is asked to retry |
+| <kbd>Ctrl+A</kbd>               | Accept all remaining suggestions at once                 |
+| <kbd>q</kbd> / <kbd>Esc</kbd>   | Quit review (optionally save session before exit)        |
+
+For yes/no prompts (confirm, apply, save), <kbd>Enter</kbd> picks the default — usually "no" for destructive actions, "yes" for save prompts. The exact default is shown highlighted in the prompt.
 
 ### Consolidation Strategies
 
@@ -101,13 +118,15 @@ After confirming, you pick one of three strategies that controls how the AI's pr
 
 ## 🛠 CLI Flags
 
-| Flag                | Default    | Description                                               |
-| ------------------- | ---------- | --------------------------------------------------------- |
-| `--backend <name>`  | `openai`   | AI backend to use (`openai` or `ollama`)                  |
-| `--limit <n>`       | _(all)_    | Limit the number of repos analysed                        |
-| `--concurrency <n>` | `5`        | Parallel README fetch concurrency                         |
-| `--analyze-only`    | off        | Headless mode — skip the TUI and print JSON to stdout     |
-| `--output <path>`   | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout |
+| Flag                | Default    | Description                                                                    |
+| ------------------- | ---------- | ------------------------------------------------------------------------------ |
+| `--backend <name>`  | `openai`   | AI backend to use (`openai` or `ollama`)                                       |
+| `--limit <n>`       | _(all)_    | Limit the number of repos analysed                                             |
+| `--concurrency <n>` | `5`        | Parallel README fetch concurrency                                              |
+| `--analyze-only`    | off        | Headless mode — skip the TUI and print JSON to stdout                          |
+| `--output <path>`   | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout                      |
+| `--no-cache`        | off        | Skip the local analysis cache — every repo is sent to the AI even if unchanged |
+| `--no-analytics`    | off        | Disable PostHog product analytics for this run (also persisted to user config) |
 
 ### `--analyze-only` mode
 
@@ -208,3 +227,74 @@ docker run --name langfuse \
 Then set `LANGFUSE_BASE_URL=http://localhost:3000` in your `.env`.
 
 > Note: Ollama responses do not include token usage data, so the `usage` field will be omitted from Ollama traces.
+
+## 💾 Analysis Cache
+
+Each repo's AI analysis is cached in a local SQLite database at `.cache/analysis.db`. Re-running against the same starred set only sends repos whose README has changed back to the AI — repeat runs converge to near-zero AI cost.
+
+- **Cache key:** `<repoId>:sha256(readme)`. When upstream edits a README, the next run re-analyses that repo automatically.
+- **Schema versioned:** if the schema changes in a future release, the cache is rebuilt safely.
+- **Self-healing:** if the DB file is unreadable (corrupted, partial write, wrong schema), it is quarantined to `analysis.db.broken.<timestamp>` and a fresh cache is started.
+- **Disable per-run:** pass `--no-cache` to bypass entirely — useful for benchmarking, prompt-iteration runs, or forcing a fresh analysis.
+- **Wipe:** delete `.cache/analysis.db` to start over.
+
+The cache is gitignored — it's a local-only artefact and never leaves your machine.
+
+## 📊 Product Analytics (optional)
+
+Anonymous usage events (run started, phase completed, suggestions applied, etc.) can be sent to [PostHog](https://posthog.com) to help understand which flows are used and where they fail. Like prompt tracing, this is **strictly opt-in**: with `POSTHOG_API_KEY` unset, the analytics module no-ops and no events are emitted.
+
+### Enable
+
+1. Create a PostHog project and grab the project key (`phc_...`).
+2. Add to your `.env`:
+
+```
+POSTHOG_API_KEY=phc_...
+# POSTHOG_HOST=https://eu.i.posthog.com  # override for US cloud or self-hosted
+```
+
+### Disable per run / persist opt-out
+
+Pass `--no-analytics` on any run — the choice is persisted to user config so subsequent runs also stay off until you re-enable it manually.
+
+### What's captured
+
+A small, fixed set of named events with non-PII properties: backend name, mode (interactive vs `--analyze-only`), phase outcomes, suggestion counts, and decision aggregates. No repo names, no README contents, no GitHub login, no tokens. A stable per-install pseudo-random distinct ID is used (also persisted in user config) so a single user's events can be grouped without identifying them.
+
+## 🧑‍💻 Development
+
+Quality gates (also run in CI):
+
+```bash
+bun run typecheck    # tsc --noEmit
+bun run lint         # eslint src
+bun run format:check # prettier --check src
+bun run test         # bun test runner over src/__tests__
+```
+
+Husky + lint-staged run `prettier --write` and `eslint --fix` on staged `src/**/*.{ts,tsx}` files at commit time. Tests live in `src/__tests__/`. The AI provider and Octokit are mocked at the `AIProvider` / GraphQL-client seam — don't mock deeper than that.
+
+### Planning changes with OpenSpec
+
+Non-trivial changes are planned through [OpenSpec](https://github.com/Fission-AI/OpenSpec) before implementation. Each change gets a folder under `openspec/changes/<change-slug>/` containing `proposal.md`, `design.md`, `tasks.md`, and a `specs/` subtree. On completion the folder is archived under `openspec/changes/archive/<YYYY-MM-DD>-<slug>/` and the spec deltas are promoted into `openspec/specs/`. The promoted specs are the canonical source of truth for current behaviour — `openspec/specs/` is a good starting point for understanding the system in depth.
+
+### Where things live
+
+| Area                                                | Where                               |
+| --------------------------------------------------- | ----------------------------------- |
+| TUI entry / CLI flag parsing                        | `src/index.tsx`, `src/cli/`         |
+| AI provider abstraction (OpenAI + Ollama)           | `src/ai/`                           |
+| Analysis / consolidation / suggestion orchestration | `src/orchestration/`, `src/engine/` |
+| GitHub fetch + mutate                               | `src/github/`, `src/graphql/`       |
+| Ink components (screens, cards, prompts)            | `src/components/`                   |
+| Phase state machine                                 | `src/state/`                        |
+| Session JSON (analyze-only + interactive save)      | `src/session/`                      |
+| Analysis cache (SQLite)                             | `src/cache/`                        |
+| PostHog event capture                               | `src/analytics.ts`                  |
+| Structured file logging                             | `src/logger.ts`                     |
+| Tests                                               | `src/__tests__/*.test.ts`           |
+
+### License
+
+[MIT](./LICENSE).
