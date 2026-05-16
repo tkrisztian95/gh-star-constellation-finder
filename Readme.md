@@ -8,6 +8,8 @@
 
 **Stop hoarding stars. Start building constellations.**
 
+> 🚧 **Heads up — v0.2.0 is a pivot.** The next release reframes this project from "TUI to organise GitHub Lists" to "local-first knowledge base over your starred repos" (headless `--ask`, MCP server, eval harness). See [docs/milestone-v0.2.0.md](docs/milestone-v0.2.0.md) for scope and timeline. Everything described below still works on v0.1.0; the categorizer isn't going away — it's becoming one consumer of a richer corpus.
+
 `gh-star-constellation-finder` is an AI-powered Terminal User Interface (TUI) designed to rescue your GitHub stars from the "void." It analyzes your repositories using local or OpenAI models, proposing smart categorizations for your **native GitHub lists** based on actual code intent, health, and project depth.
 
 ![Review screen: an AI-generated suggestion proposing to move a repo into the "Curated Software Resources" list, with keyboard shortcuts for accept / skip / reject / quit](docs/screenshots/review-phase-cropped.png)
