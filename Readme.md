@@ -10,6 +10,37 @@
 
 `gh-star-constellation-finder` is an AI-powered Terminal User Interface (TUI) designed to rescue your GitHub stars from the "void." It analyzes your repositories using local or OpenAI models, proposing smart categorizations for your **native GitHub lists** based on actual code intent, health, and project depth.
 
+## Table of contents
+
+- [How it Works](#how-it-works)
+- [⚠️ Disclaimer](#%EF%B8%8F-disclaimer)
+- [✨ Key Features](#-key-features)
+- [🚀 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running](#running)
+- [🔄 TUI Workflow](#-tui-workflow)
+  - [Review keyboard shortcuts](#review-keyboard-shortcuts)
+  - [Consolidation Strategies](#consolidation-strategies)
+- [🛠 CLI Flags](#-cli-flags)
+  - [`--analyze-only` mode](#--analyze-only-mode)
+- [⚙️ Configuration](#%EF%B8%8F-configuration)
+- [📓 Logging](#-logging)
+- [🔍 Prompt Tracing (optional)](#-prompt-tracing-optional)
+  - [Cloud setup](#cloud-setup)
+  - [Local setup with Docker](#local-setup-with-docker)
+- [💾 Analysis Cache](#-analysis-cache)
+- [📊 Product Analytics (optional)](#-product-analytics-optional)
+  - [Enable](#enable)
+  - [Disable per run / persist opt-out](#disable-per-run--persist-opt-out)
+  - [What's captured](#whats-captured)
+- [🧑‍💻 Development](#-development)
+  - [Planning changes with OpenSpec](#planning-changes-with-openspec)
+  - [Where things live](#where-things-live)
+  - [License](#license)
+
+Also see [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md), [CHANGELOG.md](./CHANGELOG.md), and the engine deep-dive in [docs/ai-engine-workflow.md](./docs/ai-engine-workflow.md).
+
 ## How it Works
 
 In short: authenticate → fetch your starred repos + their READMEs → analyse each with AI (results cached locally) → consolidate categories (two AI passes) → generate suggestions → review and apply via the GitHub GraphQL API.
