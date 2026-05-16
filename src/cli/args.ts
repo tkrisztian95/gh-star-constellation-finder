@@ -68,6 +68,7 @@ Docs:
   README     https://github.com/tkrisztian95/gh-star-constellation-finder
   Issues     https://github.com/tkrisztian95/gh-star-constellation-finder/issues
   GitHub PAT https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic
+  Ollama     https://ollama.com/download
 `;
 }
 
