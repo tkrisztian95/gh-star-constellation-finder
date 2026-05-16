@@ -14,6 +14,15 @@ In short: authenticate → fetch your starred repos + their READMEs → analyse 
 
 For a phase-by-phase walkthrough of the engine — prompt builders, consolidation algorithm, caching key, suggestion types, file pointers into the source — see [docs/ai-engine-workflow.md](docs/ai-engine-workflow.md).
 
+## ⚠️ Disclaimer
+
+This tool is provided **as is, with no warranty**, under the [MIT License](./LICENSE). Before you run it against your account, know what it does:
+
+- **It mutates real GitHub state.** Accepted suggestions create, rename, and delete lists, and move starred repos between them, via authenticated GraphQL mutations. There is no built-in undo — GitHub doesn't keep a history of list memberships. Decide what you'd lose before you accept anything.
+- **AI suggestions are best-effort.** The model is asked to classify based on description, language, topics, and a README excerpt. It can be wrong, inconsistent, or miss context. You are the reviewer; every suggestion goes through the TUI review step (or the `--analyze-only` JSON) before any write happens.
+- **External services see your repo metadata.** When using the OpenAI backend, the repo name, description, language, topics, and a preprocessed README excerpt (capped at 4 000 chars) are sent to the OpenAI API. Use `--backend ollama` for fully local inference if that matters to you. Public README content is, by definition, already public; private-repo READMEs go through the same path if you have any starred.
+- **You own the outcome.** Neither the author nor any contributor is liable for lost lists, mis-categorised repos, accidental deletes, exceeded GitHub or OpenAI rate limits, or any other consequence of using this tool. Start with `--analyze-only` or `--limit <small N>` if you're unsure.
+
 ## ✨ Key Features
 
 - **TUI-First Experience:** A beautiful, keyboard-driven interface built with [Ink](https://github.com/vadimdemedes/ink).
