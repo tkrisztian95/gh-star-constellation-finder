@@ -26,5 +26,7 @@
   "prisma/prisma",
   "supabase/supabase",
   "tauri-apps/tauri",
-  "neovim/neovim"
+  "neovim/neovim",
+  "request/request",
+  "facebook/draft-js"
 ]

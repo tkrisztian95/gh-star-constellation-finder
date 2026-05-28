@@ -12,6 +12,9 @@ export const corpusEntrySchema = z.object({
   category: z.string(),
   killerFeature: z.string(),
   description: z.string(),
+  /** GitHub archived flag, captured at build time. Lets health-check queries
+   * ("which of my stars are archived?") be scored. */
+  isArchived: z.boolean(),
 });
 
 export type CorpusEntry = z.infer<typeof corpusEntrySchema>;
@@ -26,7 +29,9 @@ export const corpusSchema = z.array(corpusEntrySchema);
 export const querySchema = z.object({
   question: z.string().min(1),
   expected: z.array(z.string().min(1)).min(1),
-  style: z.enum(["exact-recall", "categorical", "health-check", "property-based"]).optional(),
+  style: z
+    .enum(["exact-recall", "categorical", "health-check", "property-based", "logical"])
+    .optional(),
 });
 
 export type Query = z.infer<typeof querySchema>;

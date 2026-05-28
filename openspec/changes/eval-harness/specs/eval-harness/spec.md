@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Frozen public-repo corpus fixture
-The system SHALL provide a committed JSON corpus fixture of curated, well-known **public** repositories that the eval harness searches over. Each corpus entry SHALL carry repo identity (`owner`, `name`, `topics`) and the per-repo analysis shape the tool produces (`category`, `killerFeature`, `description`). The corpus SHALL be generated once via the existing `--analyze-only` path over a curated repo list and committed verbatim; the harness SHALL NOT fetch from GitHub or call an AI backend at eval time. The corpus loader SHALL validate the fixture with `zod` at load and fail with a clear error if the shape is invalid.
+The system SHALL provide a committed JSON corpus fixture of curated, well-known **public** repositories that the eval harness searches over. Each corpus entry SHALL carry repo identity (`owner`, `name`, `topics`), the per-repo analysis shape the tool produces (`category`, `killerFeature`, `description`), and an `isArchived` boolean captured at build time (so health-check queries can be scored). The corpus SHALL be generated once via a build-time corpus-builder that fetches each repo's public metadata + README and runs the real analyzer, then committed verbatim; the harness SHALL NOT fetch from GitHub or call an AI backend at eval time. The corpus loader SHALL validate the fixture with `zod` at load and fail with a clear error if the shape is invalid.
 
 #### Scenario: Corpus loaded without network or AI
 - **WHEN** `bun run evals` runs with no `GITHUB_TOKEN`, no AI backend configured, and no network access
@@ -9,14 +9,14 @@ The system SHALL provide a committed JSON corpus fixture of curated, well-known 
 
 #### Scenario: Corpus entry exposes identity and analysis
 - **WHEN** a corpus entry is loaded
-- **THEN** it SHALL contain `owner`, `name`, `topics`, `category`, `killerFeature`, and `description`, and its repo URL SHALL be derivable as `github.com/<owner>/<name>`
+- **THEN** it SHALL contain `owner`, `name`, `topics`, `category`, `killerFeature`, `description`, and `isArchived`, and its repo URL SHALL be derivable as `github.com/<owner>/<name>`
 
 #### Scenario: Malformed corpus fails fast
 - **WHEN** the corpus fixture is missing a required field or has the wrong type
 - **THEN** the harness SHALL exit with a non-zero status and a message naming the offending entry, rather than scoring against partial data
 
 ### Requirement: Golden queryset fixture
-The system SHALL provide a committed JSON queryset fixture of 50–100 hand-authored questions. Each query SHALL declare the question text and one or more ground-truth answers expressed as repo URLs (`github.com/<owner>/<name>`). Every ground-truth URL SHALL resolve to a repository present in the frozen corpus. The queryset SHALL cover, at minimum, exact-recall, categorical-lookup, health-check, and property-based query styles. The queryset loader SHALL validate the fixture with `zod`.
+The system SHALL provide a committed JSON queryset fixture of hand-authored questions. Each query SHALL declare the question text and one or more ground-truth answers expressed as repo URLs (`github.com/<owner>/<name>`). Every ground-truth URL SHALL resolve to a repository present in the frozen corpus. The queryset SHALL cover a range of query styles — at minimum exact-recall, categorical-lookup, health-check, property-based, and logical (AND/OR/negation) — and a range of query lengths from one- or two-word terms to long natural-language sentences. The queryset loader SHALL validate the fixture with `zod`.
 
 #### Scenario: Every ground-truth answer exists in the corpus
 - **WHEN** the harness loads the queryset and corpus

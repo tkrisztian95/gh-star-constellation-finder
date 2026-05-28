@@ -15,17 +15,7 @@
     "style": "exact-recall"
   },
   {
-    "question": "run large language models locally on my own machine",
-    "expected": ["github.com/ollama/ollama", "github.com/ggerganov/llama.cpp"],
-    "style": "categorical"
-  },
-  {
-    "question": "vector database for similarity search",
-    "expected": ["github.com/qdrant/qdrant", "github.com/pgvector/pgvector"],
-    "style": "categorical"
-  },
-  {
-    "question": "add vector search to postgres",
+    "question": "add vector similarity search to postgres",
     "expected": ["github.com/pgvector/pgvector"],
     "style": "exact-recall"
   },
@@ -35,18 +25,8 @@
     "style": "exact-recall"
   },
   {
-    "question": "frontend framework for building component-based user interfaces",
-    "expected": ["github.com/facebook/react", "github.com/vuejs/core", "github.com/sveltejs/svelte"],
-    "style": "categorical"
-  },
-  {
     "question": "compiler that turns components into vanilla javascript with no runtime",
     "expected": ["github.com/sveltejs/svelte"],
-    "style": "exact-recall"
-  },
-  {
-    "question": "utility-first css framework",
-    "expected": ["github.com/tailwindlabs/tailwindcss"],
     "style": "exact-recall"
   },
   {
@@ -60,23 +40,13 @@
     "style": "exact-recall"
   },
   {
-    "question": "static typing on top of javascript",
+    "question": "add static typing on top of javascript",
     "expected": ["github.com/microsoft/TypeScript"],
     "style": "exact-recall"
   },
   {
-    "question": "javascript runtime alternatives to node",
-    "expected": ["github.com/denoland/deno", "github.com/oven-sh/bun"],
-    "style": "categorical"
-  },
-  {
     "question": "secure typescript runtime with permissions",
     "expected": ["github.com/denoland/deno"],
-    "style": "exact-recall"
-  },
-  {
-    "question": "fast all-in-one javascript toolkit and runtime",
-    "expected": ["github.com/oven-sh/bun"],
     "style": "exact-recall"
   },
   {
@@ -88,11 +58,6 @@
     "question": "declarative infrastructure as code provisioning",
     "expected": ["github.com/hashicorp/terraform"],
     "style": "exact-recall"
-  },
-  {
-    "question": "python web framework for building APIs",
-    "expected": ["github.com/pallets/flask", "github.com/fastapi/fastapi"],
-    "style": "categorical"
   },
   {
     "question": "python api framework that uses type hints and auto-generates docs",
@@ -112,11 +77,6 @@
   {
     "question": "promise-based http client for the browser and node",
     "expected": ["github.com/axios/axios"],
-    "style": "exact-recall"
-  },
-  {
-    "question": "typescript-first schema validation with static type inference",
-    "expected": ["github.com/colinhacks/zod"],
     "style": "exact-recall"
   },
   {
@@ -140,7 +100,31 @@
     "style": "exact-recall"
   },
   {
-    "question": "tools written in rust for the command line",
+    "question": "run large language models locally on my own machine",
+    "expected": ["github.com/ollama/ollama", "github.com/ggerganov/llama.cpp"],
+    "style": "categorical"
+  },
+  {
+    "question": "vector database for similarity search",
+    "expected": ["github.com/qdrant/qdrant", "github.com/pgvector/pgvector"],
+    "style": "categorical"
+  },
+  {
+    "question": "frontend framework for building component-based user interfaces",
+    "expected": [
+      "github.com/facebook/react",
+      "github.com/vuejs/core",
+      "github.com/sveltejs/svelte"
+    ],
+    "style": "categorical"
+  },
+  {
+    "question": "python web framework for building APIs",
+    "expected": ["github.com/pallets/flask", "github.com/fastapi/fastapi"],
+    "style": "categorical"
+  },
+  {
+    "question": "command line tools written in rust",
     "expected": [
       "github.com/BurntSushi/ripgrep",
       "github.com/sharkdp/fd",
@@ -149,26 +133,82 @@
     "style": "property-based"
   },
   {
-    "question": "http clients across different languages",
-    "expected": ["github.com/axios/axios", "github.com/psf/requests"],
-    "style": "categorical"
-  },
-  {
     "question": "where can I store and query embeddings",
-    "expected": [
-      "github.com/qdrant/qdrant",
-      "github.com/pgvector/pgvector",
-      "github.com/redis/redis"
-    ],
+    "expected": ["github.com/qdrant/qdrant", "github.com/pgvector/pgvector"],
     "style": "property-based"
   },
   {
-    "question": "python tools in my stars",
-    "expected": [
-      "github.com/pallets/flask",
-      "github.com/fastapi/fastapi",
-      "github.com/psf/requests"
-    ],
+    "question": "archived repositories I starred",
+    "expected": ["github.com/facebook/draft-js"],
     "style": "health-check"
+  },
+  {
+    "question": "react or vue for building user interfaces",
+    "expected": ["github.com/facebook/react", "github.com/vuejs/core"],
+    "style": "logical"
+  },
+  {
+    "question": "deno or bun",
+    "expected": ["github.com/denoland/deno", "github.com/oven-sh/bun"],
+    "style": "logical"
+  },
+  {
+    "question": "a frontend component framework that is not react",
+    "expected": ["github.com/vuejs/core", "github.com/sveltejs/svelte"],
+    "style": "logical"
+  },
+  {
+    "question": "a vector database that is not a postgres extension",
+    "expected": ["github.com/qdrant/qdrant"],
+    "style": "logical"
+  },
+  {
+    "question": "a rust tool for both searching and viewing files",
+    "expected": [
+      "github.com/BurntSushi/ripgrep",
+      "github.com/sharkdp/fd",
+      "github.com/sharkdp/bat"
+    ],
+    "style": "logical"
+  },
+  {
+    "question": "ripgrep",
+    "expected": ["github.com/BurntSushi/ripgrep"],
+    "style": "exact-recall"
+  },
+  {
+    "question": "terraform",
+    "expected": ["github.com/hashicorp/terraform"],
+    "style": "exact-recall"
+  },
+  {
+    "question": "neovim",
+    "expected": ["github.com/neovim/neovim"],
+    "style": "exact-recall"
+  },
+  {
+    "question": "css",
+    "expected": ["github.com/tailwindlabs/tailwindcss"],
+    "style": "exact-recall"
+  },
+  {
+    "question": "orm",
+    "expected": ["github.com/prisma/prisma"],
+    "style": "exact-recall"
+  },
+  {
+    "question": "vue",
+    "expected": ["github.com/vuejs/core"],
+    "style": "exact-recall"
+  },
+  {
+    "question": "I am building a TypeScript application and I need a library that can validate untrusted input data coming from an external API at runtime while also inferring the corresponding static TypeScript types from a single schema definition so I never have to declare my types twice",
+    "expected": ["github.com/colinhacks/zod"],
+    "style": "property-based"
+  },
+  {
+    "question": "what can I use to run open source large language models locally on my own computer without relying on a hosted cloud API or paying per token for inference",
+    "expected": ["github.com/ollama/ollama", "github.com/ggerganov/llama.cpp"],
+    "style": "property-based"
   }
 ]

@@ -8,7 +8,9 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 0);
 }
 
-/** Searchable token bag for a corpus entry, across all text fields. */
+/** Searchable token bag for a corpus entry, across all text fields. The
+ * archived flag is surfaced as a synthetic token so health-check queries can
+ * match on it. */
 function entryTokens(entry: CorpusEntry): Set<string> {
   const fields = [
     entry.name,
@@ -17,7 +19,9 @@ function entryTokens(entry: CorpusEntry): Set<string> {
     entry.killerFeature,
     entry.description,
   ];
-  return new Set(tokenize(fields.join(" ")));
+  const tokens = new Set(tokenize(fields.join(" ")));
+  tokens.add(entry.isArchived ? "archived" : "active");
+  return tokens;
 }
 
 interface Scored {
