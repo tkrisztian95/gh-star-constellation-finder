@@ -8,11 +8,15 @@ The system SHALL send a structured prompt to the configured AI backend (OpenAI o
 
 #### Scenario: Successful analysis
 - **WHEN** the AI backend returns a valid response
-- **THEN** the system SHALL parse a `category` (2-3 words) and a `killerFeature` (≤10 words) from the response
+- **THEN** the system SHALL parse a `category` (2-3 words), a `killerFeature` (≤10 words), and a `description` (1–2 technical sentences) from the response
 
 #### Scenario: AI response is malformed
 - **WHEN** the AI response cannot be parsed into the expected structure
-- **THEN** the system SHALL use the raw response text as the category and set killerFeature to an empty string, logging a parse warning
+- **THEN** the system SHALL use the raw response text as the category, set killerFeature to an empty string, set description to an empty string, and log a parse warning
+
+#### Scenario: Response omits the description field
+- **WHEN** the AI response is valid JSON with `category` and `killerFeature` but no `description` key
+- **THEN** the system SHALL accept the response and set `description` to an empty string rather than failing validation
 
 ### Requirement: Support OpenAI API backend
 The system SHALL use the OpenAI Chat Completions API (`gpt-4o-mini` by default) when `OPENAI_API_KEY` is set and the `--backend openai` flag is used (or default when key is present).
@@ -41,5 +45,5 @@ The system SHALL request JSON-formatted output from the AI backend (using OpenAI
 
 #### Scenario: JSON output requested
 - **WHEN** making an API call to either backend
-- **THEN** the user message SHALL instruct the model to respond in JSON with keys `category` and `killerFeature`
+- **THEN** the user message SHALL instruct the model to respond in JSON with keys `category`, `killerFeature`, and `description`
 
