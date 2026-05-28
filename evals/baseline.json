@@ -1,0 +1,567 @@
+{
+  "k": 5,
+  "queryCount": 32,
+  "precisionAtK": 0.2688,
+  "recallAtK": 0.9792,
+  "mrr": 0.9323,
+  "noAnswerRate": 0,
+  "perQuery": [
+    {
+      "question": "rust command-line tool that searches file contents with regex",
+      "expected": [
+        "github.com/BurntSushi/ripgrep"
+      ],
+      "returned": [
+        "github.com/BurntSushi/ripgrep",
+        "github.com/sharkdp/bat",
+        "github.com/sharkdp/fd",
+        "github.com/prettier/prettier",
+        "github.com/denoland/deno"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "fast find replacement for locating files on disk",
+      "expected": [
+        "github.com/sharkdp/fd"
+      ],
+      "returned": [
+        "github.com/hashicorp/terraform",
+        "github.com/sharkdp/fd",
+        "github.com/BurntSushi/ripgrep",
+        "github.com/denoland/deno",
+        "github.com/ggerganov/llama.cpp"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 0.5,
+      "noAnswer": false
+    },
+    {
+      "question": "cat clone with syntax highlighting in the terminal",
+      "expected": [
+        "github.com/sharkdp/bat"
+      ],
+      "returned": [
+        "github.com/sharkdp/bat",
+        "github.com/sharkdp/fd",
+        "github.com/kubernetes/kubernetes",
+        "github.com/oven-sh/bun",
+        "github.com/tailwindlabs/tailwindcss"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "run large language models locally on my own machine",
+      "expected": [
+        "github.com/ollama/ollama",
+        "github.com/ggerganov/llama.cpp"
+      ],
+      "returned": [
+        "github.com/ollama/ollama",
+        "github.com/ggerganov/llama.cpp",
+        "github.com/microsoft/TypeScript",
+        "github.com/denoland/deno",
+        "github.com/eslint/eslint"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "vector database for similarity search",
+      "expected": [
+        "github.com/qdrant/qdrant",
+        "github.com/pgvector/pgvector"
+      ],
+      "returned": [
+        "github.com/qdrant/qdrant",
+        "github.com/pgvector/pgvector",
+        "github.com/redis/redis",
+        "github.com/supabase/supabase",
+        "github.com/BurntSushi/ripgrep"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "add vector search to postgres",
+      "expected": [
+        "github.com/pgvector/pgvector"
+      ],
+      "returned": [
+        "github.com/pgvector/pgvector",
+        "github.com/BurntSushi/ripgrep",
+        "github.com/eslint/eslint",
+        "github.com/microsoft/TypeScript",
+        "github.com/qdrant/qdrant"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "in-memory key-value store for caching and sessions",
+      "expected": [
+        "github.com/redis/redis"
+      ],
+      "returned": [
+        "github.com/redis/redis",
+        "github.com/oven-sh/bun",
+        "github.com/qdrant/qdrant",
+        "github.com/axios/axios",
+        "github.com/BurntSushi/ripgrep"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "frontend framework for building component-based user interfaces",
+      "expected": [
+        "github.com/facebook/react",
+        "github.com/vuejs/core",
+        "github.com/sveltejs/svelte"
+      ],
+      "returned": [
+        "github.com/vuejs/core",
+        "github.com/facebook/react",
+        "github.com/sveltejs/svelte",
+        "github.com/tailwindlabs/tailwindcss",
+        "github.com/tauri-apps/tauri"
+      ],
+      "precisionAtK": 0.6,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "compiler that turns components into vanilla javascript with no runtime",
+      "expected": [
+        "github.com/sveltejs/svelte"
+      ],
+      "returned": [
+        "github.com/sveltejs/svelte",
+        "github.com/denoland/deno",
+        "github.com/oven-sh/bun",
+        "github.com/colinhacks/zod",
+        "github.com/kubernetes/kubernetes"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "utility-first css framework",
+      "expected": [
+        "github.com/tailwindlabs/tailwindcss"
+      ],
+      "returned": [
+        "github.com/tailwindlabs/tailwindcss",
+        "github.com/tauri-apps/tauri",
+        "github.com/BurntSushi/ripgrep",
+        "github.com/fastapi/fastapi",
+        "github.com/ggerganov/llama.cpp"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "automatically format my source code to a consistent style",
+      "expected": [
+        "github.com/prettier/prettier"
+      ],
+      "returned": [
+        "github.com/prettier/prettier",
+        "github.com/BurntSushi/ripgrep",
+        "github.com/denoland/deno",
+        "github.com/hashicorp/terraform",
+        "github.com/microsoft/TypeScript"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "lint javascript to catch errors and enforce coding standards",
+      "expected": [
+        "github.com/eslint/eslint"
+      ],
+      "returned": [
+        "github.com/eslint/eslint",
+        "github.com/denoland/deno",
+        "github.com/prettier/prettier",
+        "github.com/colinhacks/zod",
+        "github.com/facebook/react"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "static typing on top of javascript",
+      "expected": [
+        "github.com/microsoft/TypeScript"
+      ],
+      "returned": [
+        "github.com/microsoft/TypeScript",
+        "github.com/colinhacks/zod",
+        "github.com/denoland/deno",
+        "github.com/eslint/eslint",
+        "github.com/ollama/ollama"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "javascript runtime alternatives to node",
+      "expected": [
+        "github.com/denoland/deno",
+        "github.com/oven-sh/bun"
+      ],
+      "returned": [
+        "github.com/colinhacks/zod",
+        "github.com/denoland/deno",
+        "github.com/oven-sh/bun",
+        "github.com/axios/axios",
+        "github.com/eslint/eslint"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 1,
+      "reciprocalRank": 0.5,
+      "noAnswer": false
+    },
+    {
+      "question": "secure typescript runtime with permissions",
+      "expected": [
+        "github.com/denoland/deno"
+      ],
+      "returned": [
+        "github.com/denoland/deno",
+        "github.com/oven-sh/bun",
+        "github.com/colinhacks/zod",
+        "github.com/prisma/prisma",
+        "github.com/kubernetes/kubernetes"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "fast all-in-one javascript toolkit and runtime",
+      "expected": [
+        "github.com/oven-sh/bun"
+      ],
+      "returned": [
+        "github.com/oven-sh/bun",
+        "github.com/denoland/deno",
+        "github.com/axios/axios",
+        "github.com/colinhacks/zod",
+        "github.com/eslint/eslint"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "orchestrate and scale containers across many hosts",
+      "expected": [
+        "github.com/kubernetes/kubernetes"
+      ],
+      "returned": [
+        "github.com/kubernetes/kubernetes",
+        "github.com/eslint/eslint",
+        "github.com/microsoft/TypeScript",
+        "github.com/sharkdp/fd",
+        "github.com/axios/axios"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "declarative infrastructure as code provisioning",
+      "expected": [
+        "github.com/hashicorp/terraform"
+      ],
+      "returned": [
+        "github.com/hashicorp/terraform",
+        "github.com/sveltejs/svelte",
+        "github.com/oven-sh/bun",
+        "github.com/sharkdp/bat",
+        "github.com/BurntSushi/ripgrep"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "python web framework for building APIs",
+      "expected": [
+        "github.com/pallets/flask",
+        "github.com/fastapi/fastapi"
+      ],
+      "returned": [
+        "github.com/fastapi/fastapi",
+        "github.com/pallets/flask",
+        "github.com/tauri-apps/tauri",
+        "github.com/vuejs/core",
+        "github.com/facebook/react"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "python api framework that uses type hints and auto-generates docs",
+      "expected": [
+        "github.com/fastapi/fastapi"
+      ],
+      "returned": [
+        "github.com/fastapi/fastapi",
+        "github.com/neovim/neovim",
+        "github.com/ollama/ollama",
+        "github.com/hashicorp/terraform",
+        "github.com/microsoft/TypeScript"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "minimal python micro web framework",
+      "expected": [
+        "github.com/pallets/flask"
+      ],
+      "returned": [
+        "github.com/pallets/flask",
+        "github.com/fastapi/fastapi",
+        "github.com/tauri-apps/tauri",
+        "github.com/vuejs/core",
+        "github.com/denoland/deno"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "python library for making http requests",
+      "expected": [
+        "github.com/psf/requests"
+      ],
+      "returned": [
+        "github.com/axios/axios",
+        "github.com/psf/requests",
+        "github.com/facebook/react",
+        "github.com/fastapi/fastapi",
+        "github.com/pallets/flask"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 0.5,
+      "noAnswer": false
+    },
+    {
+      "question": "promise-based http client for the browser and node",
+      "expected": [
+        "github.com/axios/axios"
+      ],
+      "returned": [
+        "github.com/axios/axios",
+        "github.com/kubernetes/kubernetes",
+        "github.com/ollama/ollama",
+        "github.com/oven-sh/bun",
+        "github.com/prisma/prisma"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "typescript-first schema validation with static type inference",
+      "expected": [
+        "github.com/colinhacks/zod"
+      ],
+      "returned": [
+        "github.com/colinhacks/zod",
+        "github.com/fastapi/fastapi",
+        "github.com/microsoft/TypeScript",
+        "github.com/prisma/prisma",
+        "github.com/denoland/deno"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "type-safe ORM for querying databases",
+      "expected": [
+        "github.com/prisma/prisma"
+      ],
+      "returned": [
+        "github.com/prisma/prisma",
+        "github.com/redis/redis",
+        "github.com/colinhacks/zod",
+        "github.com/fastapi/fastapi",
+        "github.com/microsoft/TypeScript"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "open source firebase alternative backend on postgres",
+      "expected": [
+        "github.com/supabase/supabase"
+      ],
+      "returned": [
+        "github.com/supabase/supabase",
+        "github.com/ollama/ollama",
+        "github.com/pgvector/pgvector",
+        "github.com/kubernetes/kubernetes",
+        "github.com/redis/redis"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "build cross-platform desktop apps with a web frontend",
+      "expected": [
+        "github.com/tauri-apps/tauri"
+      ],
+      "returned": [
+        "github.com/tauri-apps/tauri",
+        "github.com/facebook/react",
+        "github.com/vuejs/core",
+        "github.com/denoland/deno",
+        "github.com/pallets/flask"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "extensible vim-based text editor",
+      "expected": [
+        "github.com/neovim/neovim"
+      ],
+      "returned": [
+        "github.com/neovim/neovim",
+        "github.com/axios/axios",
+        "github.com/facebook/react",
+        "github.com/hashicorp/terraform",
+        "github.com/ollama/ollama"
+      ],
+      "precisionAtK": 0.2,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "tools written in rust for the command line",
+      "expected": [
+        "github.com/BurntSushi/ripgrep",
+        "github.com/sharkdp/fd",
+        "github.com/sharkdp/bat"
+      ],
+      "returned": [
+        "github.com/BurntSushi/ripgrep",
+        "github.com/sharkdp/bat",
+        "github.com/sharkdp/fd",
+        "github.com/kubernetes/kubernetes",
+        "github.com/oven-sh/bun"
+      ],
+      "precisionAtK": 0.6,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "http clients across different languages",
+      "expected": [
+        "github.com/axios/axios",
+        "github.com/psf/requests"
+      ],
+      "returned": [
+        "github.com/axios/axios",
+        "github.com/eslint/eslint",
+        "github.com/kubernetes/kubernetes",
+        "github.com/neovim/neovim",
+        "github.com/psf/requests"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "where can I store and query embeddings",
+      "expected": [
+        "github.com/qdrant/qdrant",
+        "github.com/pgvector/pgvector",
+        "github.com/redis/redis"
+      ],
+      "returned": [
+        "github.com/qdrant/qdrant",
+        "github.com/redis/redis",
+        "github.com/prisma/prisma",
+        "github.com/supabase/supabase",
+        "github.com/axios/axios"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 0.6667,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "python tools in my stars",
+      "expected": [
+        "github.com/pallets/flask",
+        "github.com/fastapi/fastapi",
+        "github.com/psf/requests"
+      ],
+      "returned": [
+        "github.com/BurntSushi/ripgrep",
+        "github.com/eslint/eslint",
+        "github.com/fastapi/fastapi",
+        "github.com/pallets/flask",
+        "github.com/prettier/prettier"
+      ],
+      "precisionAtK": 0.4,
+      "recallAtK": 0.6667,
+      "reciprocalRank": 0.3333,
+      "noAnswer": false
+    }
+  ]
+}

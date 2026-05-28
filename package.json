@@ -36,7 +36,8 @@
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
     "test": "bun run src/__tests__/*.test.ts",
-    "evals": "bun run src/evals/index.ts"
+    "evals": "bun run src/evals/index.ts",
+    "evals:build-corpus": "bun run src/evals/buildCorpus.entry.ts"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
