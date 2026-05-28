@@ -34,7 +34,7 @@ function makeList(overrides: Partial<GitHubList> = {}): GitHubList {
 }
 
 function makeAnalysis(category: string, killerFeature = ""): AnalysisResult {
-  return { category, killerFeature };
+  return { category, killerFeature, description: "" };
 }
 
 // --- Tests ---
