@@ -1,10 +1,10 @@
 {
   "retriever": "baseline-keyword",
   "k": 5,
-  "queryCount": 40,
-  "precisionAtK": 0.265,
-  "recallAtK": 0.9917,
-  "mrr": 0.9229,
+  "queryCount": 41,
+  "precisionAtK": 0.2634,
+  "recallAtK": 0.9919,
+  "mrr": 0.9248,
   "noAnswerRate": 0,
   "perQuery": [
     {
@@ -671,6 +671,23 @@
         "github.com/colinhacks/zod"
       ],
       "precisionAtK": 0.4,
+      "recallAtK": 1,
+      "reciprocalRank": 1,
+      "noAnswer": false
+    },
+    {
+      "question": "manage database schema migrations with type-safe queries",
+      "expected": [
+        "github.com/prisma/prisma"
+      ],
+      "returned": [
+        "github.com/prisma/prisma",
+        "github.com/colinhacks/zod",
+        "github.com/fastapi/fastapi",
+        "github.com/hashicorp/terraform",
+        "github.com/oven-sh/bun"
+      ],
+      "precisionAtK": 0.2,
       "recallAtK": 1,
       "reciprocalRank": 1,
       "noAnswer": false

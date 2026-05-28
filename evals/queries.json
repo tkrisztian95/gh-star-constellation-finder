@@ -210,5 +210,10 @@
     "question": "what can I use to run open source large language models locally on my own computer without relying on a hosted cloud API or paying per token for inference",
     "expected": ["github.com/ollama/ollama", "github.com/ggerganov/llama.cpp"],
     "style": "property-based"
+  },
+  {
+    "question": "manage database schema migrations with type-safe queries",
+    "expected": ["github.com/prisma/prisma"],
+    "style": "exact-recall"
   }
 ]
