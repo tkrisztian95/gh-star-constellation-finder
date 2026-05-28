@@ -27,4 +27,8 @@ export function parseOpenAIContent(completion: OpenAICompletion): string {
   return completion.choices[0]?.message?.content ?? "";
 }
 
-export const ANALYSIS_FAILED_RESULT = { category: "analysis-failed", killerFeature: "" };
+export const ANALYSIS_FAILED_RESULT = {
+  category: "analysis-failed",
+  killerFeature: "",
+  description: "",
+};

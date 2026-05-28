@@ -55,7 +55,7 @@ function makeRecordingProvider(opts: { throwOnAnalyze?: boolean } = {}): Recordi
     async analyze(input) {
       calls.push(`${input.owner}/${input.name}`);
       if (opts.throwOnAnalyze) throw new Error("analyzer should not have been called");
-      return { category: "FreshCategory", killerFeature: "fresh" };
+      return { category: "FreshCategory", killerFeature: "fresh", description: "" };
     },
     async complete() {
       throw new Error("not used");
@@ -73,6 +73,7 @@ async function runTests(): Promise<void> {
     await cache.saveEntry("a/repo", "README CONTENTS", {
       category: "Tools",
       killerFeature: "does the thing",
+      description: "A command-line tool that does the thing.",
       dataQuality: "full",
     });
 
@@ -82,7 +83,7 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 1, "PRAGMA user_version is 1");
+      assertEqual(userVersion, 2, "PRAGMA user_version is 2");
 
       const tables = db
         .query<
@@ -99,17 +100,23 @@ async function runTests(): Promise<void> {
             key: string;
             category: string;
             killer_feature: string;
+            description: string;
             data_quality: string | null;
             updated_at: number;
           },
           [string]
         >(
-          "SELECT key, category, killer_feature, data_quality, updated_at FROM entries WHERE key = ?",
+          "SELECT key, category, killer_feature, description, data_quality, updated_at FROM entries WHERE key = ?",
         )
         .get(key);
       assert(row !== null, "row stored under cacheKey(repoId, readme)");
       assertEqual(row?.category, "Tools", "category persisted");
       assertEqual(row?.killer_feature, "does the thing", "killer_feature persisted");
+      assertEqual(
+        row?.description,
+        "A command-line tool that does the thing.",
+        "description persisted",
+      );
       assertEqual(row?.data_quality, "full", "data_quality persisted");
       assert(typeof row?.updated_at === "number" && row.updated_at > 0, "updated_at populated");
     } finally {
@@ -124,12 +131,18 @@ async function runTests(): Promise<void> {
     await cache.saveEntry("a/repo", "v1 readme", {
       category: "Original",
       killerFeature: "orig",
+      description: "Original tool description.",
       dataQuality: "full",
     });
 
     const sameReadme = cache.get("a/repo", "v1 readme");
     assert(sameReadme !== null, "cache hit when README matches");
     assertEqual(sameReadme?.category, "Original", "returns saved category");
+    assertEqual(
+      sameReadme?.description,
+      "Original tool description.",
+      "description round-trips through cache API",
+    );
 
     const changedReadme = cache.get("a/repo", "v2 readme");
     assertEqual(changedReadme, null, "cache miss when README content changed");
@@ -158,6 +171,7 @@ async function runTests(): Promise<void> {
     await cache.saveEntry("a/repo", "readme", {
       category: "Recovered",
       killerFeature: "ok",
+      description: "Recovered tool description.",
       dataQuality: "full",
     });
     assertEqual(cache.size, 1, "cache writable after corruption recovery");
@@ -179,6 +193,7 @@ async function runTests(): Promise<void> {
     await cache.saveEntry("a/cached", "MATCHING README", {
       category: "Cached",
       killerFeature: "stored",
+      description: "Cached tool description.",
       dataQuality: "full",
     });
 
@@ -210,6 +225,7 @@ async function runTests(): Promise<void> {
     await seed.saveEntry("a/repo", "README", {
       category: "Stale",
       killerFeature: "old",
+      description: "Stale tool description.",
       dataQuality: "full",
     });
 
@@ -268,6 +284,7 @@ async function runTests(): Promise<void> {
         cache.saveEntry(`a/repo-${i}`, `readme-${i}`, {
           category: `cat-${i}`,
           killerFeature: `feature-${i}`,
+          description: `description-${i}`,
           dataQuality: "full",
         }),
       ),
@@ -280,6 +297,65 @@ async function runTests(): Promise<void> {
       const hit = reloaded.get(`a/repo-${i}`, `readme-${i}`);
       assertEqual(hit?.category, `cat-${i}`, `entry ${i} category persisted`);
     }
+  });
+
+  // --- Test 9 (task 3.3): opening a v1-schema db drops the table and starts empty
+  await withTempDir(async (dir) => {
+    const cachePath = join(dir, "analysis.db");
+
+    // Hand-build a v1-shaped db: old schema (no description column), user_version = 1.
+    const v1 = new Database(cachePath);
+    v1.exec(`
+      CREATE TABLE entries (
+        key            TEXT PRIMARY KEY,
+        category       TEXT NOT NULL,
+        killer_feature TEXT NOT NULL,
+        data_quality   TEXT,
+        updated_at     INTEGER NOT NULL
+      ) WITHOUT ROWID;
+    `);
+    v1.query(
+      "INSERT INTO entries (key, category, killer_feature, data_quality, updated_at) VALUES (?, ?, ?, ?, ?)",
+    ).run("legacy:key", "Legacy", "old feature", "full", 1);
+    v1.exec("PRAGMA user_version = 1;");
+    v1.close();
+
+    const cache = await loadCache(cachePath);
+    assertEqual(cache.size, 0, "v1 entries dropped on open under v2 schema");
+
+    const db = new Database(cachePath, { readonly: true });
+    try {
+      const userVersion = db
+        .query<{ user_version: number }, []>("PRAGMA user_version")
+        .get()?.user_version;
+      assertEqual(userVersion, 2, "user_version bumped to 2 after migration");
+
+      // The new description column must exist on the recreated table.
+      const cols = db
+        .query<{ name: string }, []>("PRAGMA table_info(entries)")
+        .all()
+        .map((c) => c.name);
+      assert(cols.includes("description"), "recreated table has description column");
+    } finally {
+      db.close();
+    }
+  });
+
+  // --- Test 10 (task 3.3): a v2 db preserves its entries across reopen
+  await withTempDir(async (dir) => {
+    const cachePath = join(dir, "analysis.db");
+    const cache = await loadCache(cachePath);
+    await cache.saveEntry("a/keep", "readme", {
+      category: "Keep",
+      killerFeature: "kept",
+      description: "Kept across reopen.",
+      dataQuality: "full",
+    });
+
+    const reopened = await loadCache(cachePath);
+    assertEqual(reopened.size, 1, "v2 db preserves entries on reopen (no drop)");
+    const hit = reopened.get("a/keep", "readme");
+    assertEqual(hit?.description, "Kept across reopen.", "description survives reopen");
   });
 
   console.log("  ✓ all analysisCache assertions passed");

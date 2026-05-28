@@ -4,6 +4,7 @@ import type { LangfuseParent } from "./tracing.js";
 export const responseSchema = z.object({
   category: z.string(),
   killerFeature: z.string(),
+  description: z.string().default(""),
 });
 
 export function parseAnalysisResponse(
@@ -19,11 +20,12 @@ export function parseAnalysisResponse(
       const raw = JSON.parse(jsonStr) as Record<string, unknown>;
       const category = typeof raw["category"] === "string" ? raw["category"] : "";
       const killerFeature = typeof raw["killerFeature"] === "string" ? raw["killerFeature"] : "";
-      if (category) return { category, killerFeature };
+      const description = typeof raw["description"] === "string" ? raw["description"] : "";
+      if (category) return { category, killerFeature, description };
     } catch {
       // not valid JSON at all
     }
-    return { category: content.trim() || fallback, killerFeature: "" };
+    return { category: content.trim() || fallback, killerFeature: "", description: "" };
   }
 }
 
@@ -41,6 +43,7 @@ export interface RepoInput {
 export interface AnalysisResult {
   category: string;
   killerFeature: string;
+  description: string;
   dataQuality?: "full" | "sparse" | "truncated";
 }
 

@@ -38,7 +38,7 @@ function makeRecordingProvider(responses: string[]): AIProvider & { calls: strin
   return {
     modelId: "mock-recording",
     calls,
-    analyze: async () => ({ category: "Test", killerFeature: "" }),
+    analyze: async () => ({ category: "Test", killerFeature: "", description: "" }),
     complete: async (prompt: string) => {
       calls.push(prompt);
       const response = responses[idx] ?? "{}";
@@ -63,7 +63,7 @@ function makeHandlerProvider(handler: ChunkedHandler): AIProvider & {
     modelId: "mock-handler",
     callCount: 0,
     generationNames,
-    analyze: async () => ({ category: "Test", killerFeature: "" }),
+    analyze: async () => ({ category: "Test", killerFeature: "", description: "" }),
     complete: async (prompt: string, generationName: string) => {
       const callIndex = provider.callCount;
       provider.callCount = callIndex + 1;
@@ -89,7 +89,7 @@ function makeAnalyzedRepo(category: string, name = "repo"): AnalyzedRepo {
       listIds: [],
       isArchived: false,
     },
-    analysis: { category, killerFeature: "does stuff" },
+    analysis: { category, killerFeature: "does stuff", description: "" },
   };
 }
 

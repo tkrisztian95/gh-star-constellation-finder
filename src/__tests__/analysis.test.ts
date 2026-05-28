@@ -39,7 +39,7 @@ function makeFakeProvider(opts: FakeProviderOpts = {}): AIProvider {
         throw new Error("simulated failure");
       }
       if (opts.delayMs) await new Promise((r) => setTimeout(r, opts.delayMs));
-      return { category: "TestCategory", killerFeature: "fake" };
+      return { category: "TestCategory", killerFeature: "fake", description: "" };
     },
     async complete() {
       throw new Error("not used");

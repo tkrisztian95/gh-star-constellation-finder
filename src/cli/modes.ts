@@ -119,6 +119,7 @@ export async function runAnalyzeOnly(
           analysis = {
             category: "Archived",
             killerFeature: "(archived repository)",
+            description: "",
             dataQuality: "sparse" as const,
           };
         } else {

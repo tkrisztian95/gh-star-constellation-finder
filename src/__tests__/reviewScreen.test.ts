@@ -33,7 +33,7 @@ function makeMoveToList(
     repo: makeRepo({ id: repoId, owner: repoOwner, name: repoName }),
     targetListId,
     targetListName: "Some List",
-    analysis: { category: "Cat", killerFeature: "" },
+    analysis: { category: "Cat", killerFeature: "", description: "" },
   };
 }
 

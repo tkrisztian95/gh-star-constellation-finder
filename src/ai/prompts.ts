@@ -10,9 +10,10 @@ import type { ConsolidationStrategy } from "../types.js";
 const BASE_SYSTEM_PROMPT = `You are a technical librarian organising a developer's GitHub starred repositories into named lists.
 
 TASK
-Analyse the provided repository data and return a JSON object with two fields:
+Analyse the provided repository data and return a JSON object with three fields:
 - "category": the GitHub List name this repo belongs to
 - "killerFeature": the single most compelling reason to use this repo
+- "description": a factual, retrieval-oriented summary of what the repo is and does
 
 INSTRUCTIONS
 Read the repository name, description, language, topics, and README. Use all available signals together. When the README is absent or very short, rely on name, description, language, and topics.
@@ -39,6 +40,17 @@ KILLER FEATURE RULES — DO NOT:
 - Do not start with "It", "This", "The", or a noun phrase
 - Do not describe what the repo is ("A library for…") — describe what it lets you do
 - Do not exceed 12 words
+
+DESCRIPTION RULES — DO:
+- Write 1–2 factual technical sentences describing what the repo IS and what it does
+- Optimise for semantic search: name the concrete domain, technology, and capabilities so the text matches a developer's query
+- Mention the primary language/runtime and the core mechanism when relevant
+- Example (good): "A Rust command-line tool that searches file contents using regular expressions, with automatic recursive directory traversal and gitignore-aware filtering. Comparable to grep but optimised for speed on large codebases."
+
+DESCRIPTION RULES — DO NOT:
+- Do not use marketing language ("blazing fast", "the best", "revolutionary", "effortless")
+- Do not write a sales pitch or call to action — describe, don't sell
+- Example (bad, marketing fluff): "The blazingly fast, developer-loved search tool that will revolutionise how you work and save you countless hours every day."
 
 Respond ONLY with a valid JSON object. No prose, no markdown, no code fences.`;
 
@@ -82,7 +94,7 @@ export function buildAnalyzeRepoPrompt(input: RepoInput): string {
     "",
     readmeSection,
     "",
-    'Respond in JSON with keys "category" and "killerFeature".',
+    'Respond in JSON with keys "category", "killerFeature", and "description".',
   ].join("\n");
 }
 
