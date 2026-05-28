@@ -148,7 +148,11 @@ export async function buildCorpus(argv: string[]): Promise<number> {
   entries.sort((a, b) =>
     `${a.owner}/${a.name}`.toLowerCase() < `${b.owner}/${b.name}`.toLowerCase() ? -1 : 1,
   );
-  writeFileSync(args.outPath, JSON.stringify(entries, null, 2) + "\n");
+  const corpusFile = {
+    meta: { model: analyzer.modelId, generatedAt: new Date().toISOString() },
+    entries,
+  };
+  writeFileSync(args.outPath, JSON.stringify(corpusFile, null, 2) + "\n");
   process.stdout.write(`\nWrote ${entries.length}/${repos.length} entries to ${args.outPath}\n`);
   return entries.length === repos.length ? 0 : 1;
 }

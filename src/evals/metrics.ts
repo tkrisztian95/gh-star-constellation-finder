@@ -32,12 +32,13 @@ export function scoreQuery(query: Query, returned: string[], k: number): QueryRe
 }
 
 /** Aggregate per-query results into the committed scorecard shape. */
-export function aggregate(perQuery: QueryResult[], k: number): Scorecard {
+export function aggregate(perQuery: QueryResult[], k: number, retriever: string): Scorecard {
   const n = perQuery.length;
   const mean = (sel: (r: QueryResult) => number): number =>
     n === 0 ? 0 : perQuery.reduce((acc, r) => acc + sel(r), 0) / n;
 
   return {
+    retriever,
     k,
     queryCount: n,
     precisionAtK: mean((r) => r.precisionAtK),

@@ -1,4 +1,5 @@
 {
+  "retriever": "baseline-keyword",
   "k": 5,
   "queryCount": 40,
   "precisionAtK": 0.265,

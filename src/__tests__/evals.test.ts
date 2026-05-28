@@ -110,7 +110,7 @@ function runTests() {
       scoreQuery({ question: "a", expected: ["github.com/o/hit"] }, ["github.com/o/hit"], 5),
       scoreQuery({ question: "b", expected: ["github.com/o/hit"] }, [], 5),
     ];
-    const sc = aggregate(perQuery, 5);
+    const sc = aggregate(perQuery, 5, "test");
     assertClose(sc.mrr, (1 + 0) / 2, "mrr average");
     assertClose(sc.noAnswerRate, 0.5, "no-answer rate average");
     assert(sc.queryCount === 2, "queryCount");

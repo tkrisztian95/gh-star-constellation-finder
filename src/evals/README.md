@@ -8,8 +8,8 @@ Design intent: a deterministic, offline measuring stick built **before** the ret
 
 | File | Responsibility |
 | --- | --- |
-| `types.ts` | zod schemas for the corpus + queryset, the `Scorecard` shape, the `Retriever` interface, and `repoUrl` / `repoKey` helpers (case/protocol/slash-insensitive). |
-| `loaders.ts` | Load + zod-validate the corpus and queryset; `crossCheck` rejects any ground-truth URL absent from the corpus (`FixtureError`). |
+| `types.ts` | zod schemas for the corpus file (`{ meta, entries }`, with `meta` = `model` + `generatedAt`) and queryset, the `Scorecard` shape (carries `retriever`, no date), the `Retriever` interface, and `repoUrl` / `repoKey` helpers (case/protocol/slash-insensitive). |
+| `loaders.ts` | Load + zod-validate the corpus (returns `entries`) and queryset; `crossCheck` rejects any ground-truth URL absent from the corpus (`FixtureError`). |
 | `baselineRetriever.ts` | Deterministic keyword/token-overlap retriever over `name`, `topics`, `category`, `killerFeature`, `description` (+ an `archived`/`active` token). No AI, no network, no time/random. The floor #44 must beat. |
 | `metrics.ts` | Per-query precision@k, recall@k (multi-answer aware), reciprocal rank, no-answer; aggregation into the `Scorecard`. |
 | `run.ts` | Orchestration: load → cross-check → score → print + emit JSON. `main(argv)` returns an exit code. |

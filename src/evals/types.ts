@@ -2,8 +2,9 @@ import { z } from "zod";
 
 /**
  * A frozen corpus entry: repo identity plus the per-repo analysis shape the
- * tool produces. Generated once via the `--analyze-only` path over a curated
- * public-repo list, then committed verbatim. See design.md decision 1–2.
+ * tool produces. Generated once by the corpus-builder over a curated public-repo
+ * list, then committed verbatim inside a `{ meta, entries }` file. See design.md
+ * decision 1–2.
  */
 export const corpusEntrySchema = z.object({
   owner: z.string().min(1),
@@ -19,7 +20,21 @@ export const corpusEntrySchema = z.object({
 
 export type CorpusEntry = z.infer<typeof corpusEntrySchema>;
 
-export const corpusSchema = z.array(corpusEntrySchema);
+/** Provenance for the frozen corpus: which model wrote the analysis, and when. */
+export const corpusMetaSchema = z.object({
+  model: z.string(),
+  generatedAt: z.string(),
+});
+
+export type CorpusMeta = z.infer<typeof corpusMetaSchema>;
+
+/** The corpus file is `{ meta, entries }` so provenance travels with the data. */
+export const corpusFileSchema = z.object({
+  meta: corpusMetaSchema,
+  entries: z.array(corpusEntrySchema),
+});
+
+export type CorpusFile = z.infer<typeof corpusFileSchema>;
 
 /**
  * A golden query: a hand-authored question and one or more ground-truth repo
@@ -54,6 +69,9 @@ export interface QueryResult {
 
 /** Aggregate metrics plus per-query breakdown — the committed scorecard shape. */
 export interface Scorecard {
+  /** Identity of the retriever that produced this scorecard (e.g. "baseline-keyword").
+   * No timestamp here on purpose — git records when; a date would churn every run. */
+  retriever: string;
   k: number;
   queryCount: number;
   precisionAtK: number;

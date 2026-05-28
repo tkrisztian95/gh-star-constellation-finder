@@ -1,550 +1,556 @@
-[
-  {
-    "owner": "axios",
-    "name": "axios",
-    "topics": [
-      "http-client",
-      "javascript",
-      "nodejs",
-      "promise",
-      "hacktoberfest"
-    ],
-    "category": "JavaScript HTTP Client",
-    "killerFeature": "Intercept requests and responses, unifying browser and Node.js API calls.",
-    "description": "An API-driven, Promise-based HTTP client for JavaScript environments. It facilitates making requests in both the browser (via XMLHttpRequest) and Node.js, supporting built-in interceptors, automatic JSON handling, and form serialization.",
-    "isArchived": false
+{
+  "meta": {
+    "model": "ollama/gemma4",
+    "generatedAt": "2026-05-28T20:52:45.023Z"
   },
-  {
-    "owner": "BurntSushi",
-    "name": "ripgrep",
-    "topics": [
-      "ripgrep",
-      "recursively-search",
-      "search",
-      "regex",
-      "gitignore",
-      "grep",
-      "command-line-tool",
-      "command-line",
-      "cli",
-      "rust"
-    ],
-    "category": "Text Pattern Matching CLI",
-    "killerFeature": "Query file contents recursively using regex, automatically ignoring gitignore rules.",
-    "description": "A fast, line-oriented command-line tool written in Rust. It recursively searches directories for specified regular expression patterns, offering automatic filtering for gitignored paths and binary files.",
-    "isArchived": false
-  },
-  {
-    "owner": "colinhacks",
-    "name": "zod",
-    "topics": [
-      "typescript",
-      "schema-validation",
-      "type-inference",
-      "runtime-validation",
-      "static-types"
-    ],
-    "category": "TypeScript Schema Validation",
-    "killerFeature": "Validate runtime data and gain compile-time type safety automatically",
-    "description": "Zod is a TypeScript library used for defining robust data schemas and performing runtime validation. It ensures that incoming data conforms to a defined structure while simultaneously providing static type inference for reliable TypeScript code.",
-    "isArchived": false
-  },
-  {
-    "owner": "denoland",
-    "name": "deno",
-    "topics": [
-      "deno",
-      "typescript",
-      "javascript",
-      "rust"
-    ],
-    "category": "JavaScript Runtime Environments",
-    "killerFeature": "Execute JavaScript, TypeScript, and WebAssembly with built-in security sandboxing.",
-    "description": "A full-stack runtime environment supporting JavaScript, TypeScript, and WebAssembly (Wasm). It is built on Rust and V8, providing secure, sandboxed execution capabilities with modern default permissions.",
-    "isArchived": false
-  },
-  {
-    "owner": "eslint",
-    "name": "eslint",
-    "topics": [
-      "eslint",
-      "javascript",
-      "ecmascript",
-      "static-code-analysis",
-      "linter"
-    ],
-    "category": "Static JavaScript Analysis Tools",
-    "killerFeature": "Identify and fix potential bugs and enforce best practices across codebases.",
-    "description": "ESLint is a configurable static analysis linter for JavaScript and ECMAScript. It uses an Abstract Syntax Tree (AST) to detect and report coding patterns, style violations, and potential bugs.",
-    "isArchived": false
-  },
-  {
-    "owner": "facebook",
-    "name": "draft-js",
-    "topics": [],
-    "category": "Rich Text React Editors",
-    "killerFeature": "Build scalable, customizable text editors with a declarative React API.",
-    "description": "A JavaScript framework for building rich text editors within React applications. It manages editor state using an immutable model, providing building blocks for styling and embedded media.",
-    "isArchived": true
-  },
-  {
-    "owner": "facebook",
-    "name": "react",
-    "topics": [
-      "javascript",
-      "react",
-      "frontend",
-      "declarative",
-      "ui",
-      "library"
-    ],
-    "category": "React User Interface Libraries",
-    "killerFeature": "Build predictable user interfaces by defining component views based on application state.",
-    "description": "A JavaScript library used for building declarative, component-based user interfaces (UIs). It allows developers to define views for different application states, which React efficiently updates and renders.",
-    "isArchived": false
-  },
-  {
-    "owner": "fastapi",
-    "name": "fastapi",
-    "topics": [
-      "python",
-      "json",
-      "swagger-ui",
-      "redoc",
-      "starlette",
-      "openapi",
-      "api",
-      "openapi3",
-      "framework",
-      "async",
-      "asyncio",
-      "uvicorn",
-      "python3",
-      "python-types",
-      "pydantic",
-      "json-schema",
-      "fastapi",
-      "swagger",
-      "rest",
-      "web"
-    ],
-    "category": "Python Web API Frameworks",
-    "killerFeature": "Generate OpenAPI documentation and validate payloads using Python type hints.",
-    "description": "A high-performance Python framework designed for building APIs using standard Python type hints. It automatically provides data validation using Pydantic models and generates interactive OpenAPI (Swagger/Redoc) documentation.",
-    "isArchived": false
-  },
-  {
-    "owner": "ggerganov",
-    "name": "llama.cpp",
-    "topics": [
-      "ggml"
-    ],
-    "category": "Local LLM Inference Engines",
-    "killerFeature": "Run sophisticated language models efficiently using low-level C++ implementation.",
-    "description": "A C++ implementation utilizing the GGML framework designed for high-performance Large Language Model (LLM) inference. It enables local execution of complex transformer models on various hardware backends.",
-    "isArchived": false
-  },
-  {
-    "owner": "hashicorp",
-    "name": "terraform",
-    "topics": [
-      "graph",
-      "infrastructure-as-code",
-      "terraform",
-      "cloud",
-      "cloud-management"
-    ],
-    "category": "Infrastructure As Code Tools",
-    "killerFeature": "Manage cloud and on-prem resources with declarative, version-controlled configuration code.",
-    "description": "A source-available Go tool for defining and managing cloud and on-premises infrastructure resources using declarative configuration. It enables the predictable provisioning and modification of infrastructure defined as code.",
-    "isArchived": false
-  },
-  {
-    "owner": "kubernetes",
-    "name": "kubernetes",
-    "topics": [
-      "kubernetes",
-      "go",
-      "cncf",
-      "containers"
-    ],
-    "category": "Container Orchestration Systems",
-    "killerFeature": "Deploy and manage containerized applications across multiple hosts at scale",
-    "description": "A production-grade open-source system written in Go for automating the deployment, scaling, and management of containerized applications across a cluster of machines.",
-    "isArchived": false
-  },
-  {
-    "owner": "microsoft",
-    "name": "TypeScript",
-    "topics": [
-      "typescript",
-      "javascript",
-      "language",
-      "typechecker"
-    ],
-    "category": "TypeScript Language Tooling",
-    "killerFeature": "Enforce robust types at compile time for large-scale JavaScript applications",
-    "description": "TypeScript is a superset of JavaScript that adds an optional static type system. It compiles to clean, standards-based JavaScript, enabling type checking and better tooling for large-scale application development.",
-    "isArchived": false
-  },
-  {
-    "owner": "neovim",
-    "name": "neovim",
-    "topics": [
-      "neovim",
-      "c",
-      "vim",
-      "lua",
-      "nvim",
-      "text-editor",
-      "api"
-    ],
-    "category": "Terminal Text Editors",
-    "killerFeature": "Extend editor functionality using Lua and robust API bindings.",
-    "description": "Neovim is a powerful, modern fork of the Vim editor focused on maximizing extensibility and usability. It supports modern GUIs, integrated job control, and exposes a comprehensive API allowing advanced scripting and automation in multiple languages, including Lua and Python.",
-    "isArchived": false
-  },
-  {
-    "owner": "ollama",
-    "name": "ollama",
-    "topics": [
-      "llama",
-      "llm",
-      "llms",
-      "go",
-      "golang",
-      "ollama",
-      "mistral",
-      "gemma",
-      "llama3",
-      "deepseek",
-      "gemma3",
-      "qwen",
-      "gpt-oss",
-      "glm",
-      "minimax"
-    ],
-    "category": "LLM Inference Engines",
-    "killerFeature": "Serve diverse open models from a consistent, local API endpoint",
-    "description": "A Go framework designed to simplify the management and deployment of diverse open-source Large Language Models (LLMs). It provides a local API endpoint for models such as Llama 3, Gemma, and Mistral.",
-    "isArchived": false
-  },
-  {
-    "owner": "oven-sh",
-    "name": "bun",
-    "topics": [
-      "bun",
-      "bundler",
-      "javascript",
-      "javascriptcore",
-      "jsx",
-      "nodejs",
-      "npm",
-      "react",
-      "transpiler",
-      "typescript",
-      "zig",
-      "ziglang"
-    ],
-    "category": "JavaScript Runtime Bundler",
-    "killerFeature": "Execute tests, bundle code, and manage dependencies with unparalleled speed.",
-    "description": "Bun is an all-in-one JavaScript and TypeScript toolkit that functions as a drop-in replacement for the Node.js runtime. It provides integrated capabilities including a fast package manager, test runner, and bundler, all implemented in Zig.",
-    "isArchived": false
-  },
-  {
-    "owner": "pallets",
-    "name": "flask",
-    "topics": [
-      "python",
-      "flask",
-      "wsgi",
-      "web-framework",
-      "werkzeug",
-      "jinja",
-      "pallets"
-    ],
-    "category": "Python Web Application Frameworks",
-    "killerFeature": "Use decorators to define simple, scalable endpoints adhering to WSGI standards",
-    "description": "Flask is a lightweight, micro web application framework written in Python. It handles HTTP requests using Werkzeug and supports templating via Jinja, adhering to the WSGI standard.",
-    "isArchived": false
-  },
-  {
-    "owner": "pgvector",
-    "name": "pgvector",
-    "topics": [
-      "nearest-neighbor-search",
-      "approximate-nearest-neighbor-search"
-    ],
-    "category": "Vector Databases Extension",
-    "killerFeature": "Perform vector similarity searches directly within your existing Postgres database.",
-    "description": "A Postgres extension written in C that enables open-source vector similarity search capabilities. It supports various distance metrics like L2, cosine, and inner product, allowing users to store and query vectors alongside traditional relational data within Postgres.",
-    "isArchived": false
-  },
-  {
-    "owner": "prettier",
-    "name": "prettier",
-    "topics": [
-      "formatter",
-      "printer",
-      "prettier",
-      "ast",
-      "javascript",
-      "flow",
-      "typescript",
-      "css",
-      "scss",
-      "less",
-      "jsx",
-      "vue",
-      "graphql",
-      "json",
-      "markdown",
-      "yaml",
-      "html",
-      "angular"
-    ],
-    "category": "Code Style Formatters",
-    "killerFeature": "Enforce consistent code style across multiple languages automatically",
-    "description": "A JavaScript library that acts as an opinionated code formatter, capable of parsing and re-printing code from many languages including JavaScript, CSS, HTML, GraphQL, and JSON.",
-    "isArchived": false
-  },
-  {
-    "owner": "prisma",
-    "name": "prisma",
-    "topics": [
-      "prisma",
-      "orm",
-      "database",
-      "typescript",
-      "javascript",
-      "nodejs",
-      "mariadb",
-      "mysql",
-      "postgresql",
-      "sqlserver",
-      "sql-server",
-      "mssql",
-      "sqlite",
-      "mongodb",
-      "mongo",
-      "prisma-client",
-      "mongodb-orm",
-      "postgres",
-      "cockroachdb",
-      "query-builder"
-    ],
-    "category": "Database ORM Tools",
-    "killerFeature": "Build type-safe query builders and manage schema migrations across multiple databases.",
-    "description": "Prisma is a next-generation ORM for Node.js and TypeScript. It provides a type-safe query builder (Prisma Client) and a declarative migration system that supports relational databases (SQL) and NoSQL databases like MongoDB.",
-    "isArchived": false
-  },
-  {
-    "owner": "psf",
-    "name": "requests",
-    "topics": [
-      "python",
-      "http",
-      "forhumans",
-      "requests",
-      "python-requests",
-      "client",
-      "humans",
-      "cookies"
-    ],
-    "category": "Python HTTP Client",
-    "killerFeature": "Send HTTP requests simply, automatically handling credentials and JSON data.",
-    "description": "A widely used Python library designed for sending robust and reliable HTTP/1.1 requests. It simplifies client operations by managing sessions, persisting cookies, and supporting automatic serialization of JSON and form-encoded data.",
-    "isArchived": false
-  },
-  {
-    "owner": "qdrant",
-    "name": "qdrant",
-    "topics": [
-      "neural-network",
-      "search-engine",
-      "knn-algorithm",
-      "hnsw",
-      "vector-search",
-      "nearest-neighbor-search",
-      "image-search",
-      "embeddings-similarity",
-      "recommender-system",
-      "vector-search-engine",
-      "mlops",
-      "search-engines",
-      "neural-search",
-      "similarity-search",
-      "vector-database",
-      "machine-learning",
-      "search",
-      "ai-search",
-      "ai-search-engine",
-      "hybrid-search"
-    ],
-    "category": "Vector Search Databases",
-    "killerFeature": "Perform high-performance, massive-scale vector similarity searches across your data.",
-    "description": "Qdrant is a high-performance vector database written in Rust that provides a robust API for storing, indexing, and managing high-dimensional vectors. It specializes in executing nearest-neighbor and similarity searches using algorithms like HNSW, while supporting extensive filtering and payload management for advanced retrieval.",
-    "isArchived": false
-  },
-  {
-    "owner": "redis",
-    "name": "redis",
-    "topics": [
-      "database",
-      "key-value",
-      "nosql",
-      "redis",
-      "caching",
-      "distributed-systems",
-      "open-source",
-      "real-time",
-      "time-series",
-      "cache",
-      "in-memory",
-      "in-memory-database",
-      "key-value-store",
-      "message-broker",
-      "no-sql",
-      "message-queue",
-      "realtime",
-      "vector-search",
-      "vector-databases",
-      "json"
-    ],
-    "category": "In-Memory Data Structure Store",
-    "killerFeature": "Manage complex data structures, queues, and caches at unmatched real-time speeds.",
-    "description": "A highly optimized, open-source key-value and data structure server written in C. It supports advanced features like caching, pub/sub messaging, and document/vector indexing for real-time applications.",
-    "isArchived": false
-  },
-  {
-    "owner": "request",
-    "name": "request",
-    "topics": [],
-    "category": "HTTP Request Clients",
-    "killerFeature": "Stream data easily to files or pipe data between requests.",
-    "description": "A JavaScript package designed to simplify making HTTP requests, supporting HTTPS and automatic redirect following. It enables streaming responses to file systems and allows piping file streams into PUT or POST requests.",
-    "isArchived": false
-  },
-  {
-    "owner": "sharkdp",
-    "name": "bat",
-    "topics": [
-      "command-line",
-      "tool",
-      "syntax-highlighting",
-      "git",
-      "terminal",
-      "cli",
-      "rust",
-      "hacktoberfest"
-    ],
-    "category": "Terminal File Viewers",
-    "killerFeature": "Display file contents with syntax highlighting and git-aware status markers.",
-    "description": "A Rust-based command-line utility that functions as an enhanced clone of the standard 'cat' command. It improves file viewing by providing integrated syntax highlighting for multiple languages and displaying git-specific modifications.",
-    "isArchived": false
-  },
-  {
-    "owner": "sharkdp",
-    "name": "fd",
-    "topics": [
-      "command-line",
-      "tool",
-      "filesystem",
-      "search",
-      "regex",
-      "rust",
-      "cli",
-      "terminal",
-      "hacktoberfest"
-    ],
-    "category": "Filesystem Search Utilities",
-    "killerFeature": "Find files instantly using intuitive, simplified syntax and regex.",
-    "description": "A fast Rust command-line tool designed as a modern, opinionated alternative to the standard `find` utility. It supports pattern matching, regex searching, and ignores files listed in `.gitignore` by default.",
-    "isArchived": false
-  },
-  {
-    "owner": "supabase",
-    "name": "supabase",
-    "topics": [
-      "firebase",
-      "supabase",
-      "realtime",
-      "postgrest",
-      "postgres",
-      "postgresql",
-      "websockets",
-      "deno",
-      "embeddings",
-      "vectors",
-      "alternative",
-      "auth",
-      "database",
-      "example",
-      "nextjs",
-      "oauth2",
-      "pgvector",
-      "postgis",
-      "ai"
-    ],
-    "category": "Postgres Backend Services",
-    "killerFeature": "Build full-stack apps using Postgres with built-in auth, APIs, and realtime",
-    "description": "Supabase is a developer platform that extends PostgreSQL, providing a comprehensive backend solution. It facilitates building web and mobile applications by offering features such as authentication, auto-generated REST/GraphQL APIs, real-time subscriptions, and vector embedding support.",
-    "isArchived": false
-  },
-  {
-    "owner": "sveltejs",
-    "name": "svelte",
-    "topics": [
-      "template",
-      "ui",
-      "compiler"
-    ],
-    "category": "Web Component Frameworks",
-    "killerFeature": "Compile components to surgical, efficient JavaScript for minimal runtime overhead",
-    "description": "A web application framework written in JavaScript that functions as a compiler. It converts declarative components into highly efficient JavaScript, focusing on direct DOM manipulation during updates.",
-    "isArchived": false
-  },
-  {
-    "owner": "tailwindlabs",
-    "name": "tailwindcss",
-    "topics": [
-      "tailwindcss",
-      "css",
-      "css-framework",
-      "postcss",
-      "functional-css",
-      "utility-classes",
-      "responsive"
-    ],
-    "category": "Utility Css Frameworks",
-    "killerFeature": "Build complex, responsive user interfaces using utility-first classes.",
-    "description": "A utility-first CSS framework designed for rapid UI development. It utilizes utility classes and processes styles via PostCSS, enabling highly customizable and responsive web designs.",
-    "isArchived": false
-  },
-  {
-    "owner": "tauri-apps",
-    "name": "tauri",
-    "topics": [
-      "rust",
-      "webview",
-      "high-performance",
-      "desktop-app",
-      "mobile-app",
-      "native-app",
-      "web-frontend"
-    ],
-    "category": "Cross-Platform Desktop Applications",
-    "killerFeature": "Compile blazing fast, cross-platform desktop binaries from web frontends.",
-    "description": "Tauri is a Rust framework for creating cross-platform desktop and mobile applications. It integrates a web frontend (HTML/JS/CSS) with a native Rust backend utilizing system webviews for rendering.",
-    "isArchived": false
-  },
-  {
-    "owner": "vuejs",
-    "name": "core",
-    "topics": [],
-    "category": "Vue Component Frameworks",
-    "killerFeature": "Build reactive and progressive UIs with a simple component-based structure.",
-    "description": "Vue.js is a progressive, incrementally-adoptable JavaScript framework designed for building Single Page Applications (SPAs). It utilizes a component-based architecture and a powerful reactivity system to manage state and efficiently update the Virtual DOM.",
-    "isArchived": false
-  }
-]
+  "entries": [
+    {
+      "owner": "axios",
+      "name": "axios",
+      "topics": [
+        "http-client",
+        "javascript",
+        "nodejs",
+        "promise",
+        "hacktoberfest"
+      ],
+      "category": "JavaScript HTTP Client",
+      "killerFeature": "Intercept requests and responses, unifying browser and Node.js API calls.",
+      "description": "An API-driven, Promise-based HTTP client for JavaScript environments. It facilitates making requests in both the browser (via XMLHttpRequest) and Node.js, supporting built-in interceptors, automatic JSON handling, and form serialization.",
+      "isArchived": false
+    },
+    {
+      "owner": "BurntSushi",
+      "name": "ripgrep",
+      "topics": [
+        "ripgrep",
+        "recursively-search",
+        "search",
+        "regex",
+        "gitignore",
+        "grep",
+        "command-line-tool",
+        "command-line",
+        "cli",
+        "rust"
+      ],
+      "category": "Text Pattern Matching CLI",
+      "killerFeature": "Query file contents recursively using regex, automatically ignoring gitignore rules.",
+      "description": "A fast, line-oriented command-line tool written in Rust. It recursively searches directories for specified regular expression patterns, offering automatic filtering for gitignored paths and binary files.",
+      "isArchived": false
+    },
+    {
+      "owner": "colinhacks",
+      "name": "zod",
+      "topics": [
+        "typescript",
+        "schema-validation",
+        "type-inference",
+        "runtime-validation",
+        "static-types"
+      ],
+      "category": "TypeScript Schema Validation",
+      "killerFeature": "Validate runtime data and gain compile-time type safety automatically",
+      "description": "Zod is a TypeScript library used for defining robust data schemas and performing runtime validation. It ensures that incoming data conforms to a defined structure while simultaneously providing static type inference for reliable TypeScript code.",
+      "isArchived": false
+    },
+    {
+      "owner": "denoland",
+      "name": "deno",
+      "topics": [
+        "deno",
+        "typescript",
+        "javascript",
+        "rust"
+      ],
+      "category": "JavaScript Runtime Environments",
+      "killerFeature": "Execute JavaScript, TypeScript, and WebAssembly with built-in security sandboxing.",
+      "description": "A full-stack runtime environment supporting JavaScript, TypeScript, and WebAssembly (Wasm). It is built on Rust and V8, providing secure, sandboxed execution capabilities with modern default permissions.",
+      "isArchived": false
+    },
+    {
+      "owner": "eslint",
+      "name": "eslint",
+      "topics": [
+        "eslint",
+        "javascript",
+        "ecmascript",
+        "static-code-analysis",
+        "linter"
+      ],
+      "category": "Static JavaScript Analysis Tools",
+      "killerFeature": "Identify and fix potential bugs and enforce best practices across codebases.",
+      "description": "ESLint is a configurable static analysis linter for JavaScript and ECMAScript. It uses an Abstract Syntax Tree (AST) to detect and report coding patterns, style violations, and potential bugs.",
+      "isArchived": false
+    },
+    {
+      "owner": "facebook",
+      "name": "draft-js",
+      "topics": [],
+      "category": "Rich Text React Editors",
+      "killerFeature": "Build scalable, customizable text editors with a declarative React API.",
+      "description": "A JavaScript framework for building rich text editors within React applications. It manages editor state using an immutable model, providing building blocks for styling and embedded media.",
+      "isArchived": true
+    },
+    {
+      "owner": "facebook",
+      "name": "react",
+      "topics": [
+        "javascript",
+        "react",
+        "frontend",
+        "declarative",
+        "ui",
+        "library"
+      ],
+      "category": "React User Interface Libraries",
+      "killerFeature": "Build predictable user interfaces by defining component views based on application state.",
+      "description": "A JavaScript library used for building declarative, component-based user interfaces (UIs). It allows developers to define views for different application states, which React efficiently updates and renders.",
+      "isArchived": false
+    },
+    {
+      "owner": "fastapi",
+      "name": "fastapi",
+      "topics": [
+        "python",
+        "json",
+        "swagger-ui",
+        "redoc",
+        "starlette",
+        "openapi",
+        "api",
+        "openapi3",
+        "framework",
+        "async",
+        "asyncio",
+        "uvicorn",
+        "python3",
+        "python-types",
+        "pydantic",
+        "json-schema",
+        "fastapi",
+        "swagger",
+        "rest",
+        "web"
+      ],
+      "category": "Python Web API Frameworks",
+      "killerFeature": "Generate OpenAPI documentation and validate payloads using Python type hints.",
+      "description": "A high-performance Python framework designed for building APIs using standard Python type hints. It automatically provides data validation using Pydantic models and generates interactive OpenAPI (Swagger/Redoc) documentation.",
+      "isArchived": false
+    },
+    {
+      "owner": "ggerganov",
+      "name": "llama.cpp",
+      "topics": [
+        "ggml"
+      ],
+      "category": "Local LLM Inference Engines",
+      "killerFeature": "Run sophisticated language models efficiently using low-level C++ implementation.",
+      "description": "A C++ implementation utilizing the GGML framework designed for high-performance Large Language Model (LLM) inference. It enables local execution of complex transformer models on various hardware backends.",
+      "isArchived": false
+    },
+    {
+      "owner": "hashicorp",
+      "name": "terraform",
+      "topics": [
+        "graph",
+        "infrastructure-as-code",
+        "terraform",
+        "cloud",
+        "cloud-management"
+      ],
+      "category": "Infrastructure As Code Tools",
+      "killerFeature": "Manage cloud and on-prem resources with declarative, version-controlled configuration code.",
+      "description": "A source-available Go tool for defining and managing cloud and on-premises infrastructure resources using declarative configuration. It enables the predictable provisioning and modification of infrastructure defined as code.",
+      "isArchived": false
+    },
+    {
+      "owner": "kubernetes",
+      "name": "kubernetes",
+      "topics": [
+        "kubernetes",
+        "go",
+        "cncf",
+        "containers"
+      ],
+      "category": "Container Orchestration Systems",
+      "killerFeature": "Deploy and manage containerized applications across multiple hosts at scale",
+      "description": "A production-grade open-source system written in Go for automating the deployment, scaling, and management of containerized applications across a cluster of machines.",
+      "isArchived": false
+    },
+    {
+      "owner": "microsoft",
+      "name": "TypeScript",
+      "topics": [
+        "typescript",
+        "javascript",
+        "language",
+        "typechecker"
+      ],
+      "category": "TypeScript Language Tooling",
+      "killerFeature": "Enforce robust types at compile time for large-scale JavaScript applications",
+      "description": "TypeScript is a superset of JavaScript that adds an optional static type system. It compiles to clean, standards-based JavaScript, enabling type checking and better tooling for large-scale application development.",
+      "isArchived": false
+    },
+    {
+      "owner": "neovim",
+      "name": "neovim",
+      "topics": [
+        "neovim",
+        "c",
+        "vim",
+        "lua",
+        "nvim",
+        "text-editor",
+        "api"
+      ],
+      "category": "Terminal Text Editors",
+      "killerFeature": "Extend editor functionality using Lua and robust API bindings.",
+      "description": "Neovim is a powerful, modern fork of the Vim editor focused on maximizing extensibility and usability. It supports modern GUIs, integrated job control, and exposes a comprehensive API allowing advanced scripting and automation in multiple languages, including Lua and Python.",
+      "isArchived": false
+    },
+    {
+      "owner": "ollama",
+      "name": "ollama",
+      "topics": [
+        "llama",
+        "llm",
+        "llms",
+        "go",
+        "golang",
+        "ollama",
+        "mistral",
+        "gemma",
+        "llama3",
+        "deepseek",
+        "gemma3",
+        "qwen",
+        "gpt-oss",
+        "glm",
+        "minimax"
+      ],
+      "category": "LLM Inference Engines",
+      "killerFeature": "Serve diverse open models from a consistent, local API endpoint",
+      "description": "A Go framework designed to simplify the management and deployment of diverse open-source Large Language Models (LLMs). It provides a local API endpoint for models such as Llama 3, Gemma, and Mistral.",
+      "isArchived": false
+    },
+    {
+      "owner": "oven-sh",
+      "name": "bun",
+      "topics": [
+        "bun",
+        "bundler",
+        "javascript",
+        "javascriptcore",
+        "jsx",
+        "nodejs",
+        "npm",
+        "react",
+        "transpiler",
+        "typescript",
+        "zig",
+        "ziglang"
+      ],
+      "category": "JavaScript Runtime Bundler",
+      "killerFeature": "Execute tests, bundle code, and manage dependencies with unparalleled speed.",
+      "description": "Bun is an all-in-one JavaScript and TypeScript toolkit that functions as a drop-in replacement for the Node.js runtime. It provides integrated capabilities including a fast package manager, test runner, and bundler, all implemented in Zig.",
+      "isArchived": false
+    },
+    {
+      "owner": "pallets",
+      "name": "flask",
+      "topics": [
+        "python",
+        "flask",
+        "wsgi",
+        "web-framework",
+        "werkzeug",
+        "jinja",
+        "pallets"
+      ],
+      "category": "Python Web Application Frameworks",
+      "killerFeature": "Use decorators to define simple, scalable endpoints adhering to WSGI standards",
+      "description": "Flask is a lightweight, micro web application framework written in Python. It handles HTTP requests using Werkzeug and supports templating via Jinja, adhering to the WSGI standard.",
+      "isArchived": false
+    },
+    {
+      "owner": "pgvector",
+      "name": "pgvector",
+      "topics": [
+        "nearest-neighbor-search",
+        "approximate-nearest-neighbor-search"
+      ],
+      "category": "Vector Databases Extension",
+      "killerFeature": "Perform vector similarity searches directly within your existing Postgres database.",
+      "description": "A Postgres extension written in C that enables open-source vector similarity search capabilities. It supports various distance metrics like L2, cosine, and inner product, allowing users to store and query vectors alongside traditional relational data within Postgres.",
+      "isArchived": false
+    },
+    {
+      "owner": "prettier",
+      "name": "prettier",
+      "topics": [
+        "formatter",
+        "printer",
+        "prettier",
+        "ast",
+        "javascript",
+        "flow",
+        "typescript",
+        "css",
+        "scss",
+        "less",
+        "jsx",
+        "vue",
+        "graphql",
+        "json",
+        "markdown",
+        "yaml",
+        "html",
+        "angular"
+      ],
+      "category": "Code Style Formatters",
+      "killerFeature": "Enforce consistent code style across multiple languages automatically",
+      "description": "A JavaScript library that acts as an opinionated code formatter, capable of parsing and re-printing code from many languages including JavaScript, CSS, HTML, GraphQL, and JSON.",
+      "isArchived": false
+    },
+    {
+      "owner": "prisma",
+      "name": "prisma",
+      "topics": [
+        "prisma",
+        "orm",
+        "database",
+        "typescript",
+        "javascript",
+        "nodejs",
+        "mariadb",
+        "mysql",
+        "postgresql",
+        "sqlserver",
+        "sql-server",
+        "mssql",
+        "sqlite",
+        "mongodb",
+        "mongo",
+        "prisma-client",
+        "mongodb-orm",
+        "postgres",
+        "cockroachdb",
+        "query-builder"
+      ],
+      "category": "Database ORM Tools",
+      "killerFeature": "Build type-safe query builders and manage schema migrations across multiple databases.",
+      "description": "Prisma is a next-generation ORM for Node.js and TypeScript. It provides a type-safe query builder (Prisma Client) and a declarative migration system that supports relational databases (SQL) and NoSQL databases like MongoDB.",
+      "isArchived": false
+    },
+    {
+      "owner": "psf",
+      "name": "requests",
+      "topics": [
+        "python",
+        "http",
+        "forhumans",
+        "requests",
+        "python-requests",
+        "client",
+        "humans",
+        "cookies"
+      ],
+      "category": "Python HTTP Client",
+      "killerFeature": "Send HTTP requests simply, automatically handling credentials and JSON data.",
+      "description": "A widely used Python library designed for sending robust and reliable HTTP/1.1 requests. It simplifies client operations by managing sessions, persisting cookies, and supporting automatic serialization of JSON and form-encoded data.",
+      "isArchived": false
+    },
+    {
+      "owner": "qdrant",
+      "name": "qdrant",
+      "topics": [
+        "neural-network",
+        "search-engine",
+        "knn-algorithm",
+        "hnsw",
+        "vector-search",
+        "nearest-neighbor-search",
+        "image-search",
+        "embeddings-similarity",
+        "recommender-system",
+        "vector-search-engine",
+        "mlops",
+        "search-engines",
+        "neural-search",
+        "similarity-search",
+        "vector-database",
+        "machine-learning",
+        "search",
+        "ai-search",
+        "ai-search-engine",
+        "hybrid-search"
+      ],
+      "category": "Vector Search Databases",
+      "killerFeature": "Perform high-performance, massive-scale vector similarity searches across your data.",
+      "description": "Qdrant is a high-performance vector database written in Rust that provides a robust API for storing, indexing, and managing high-dimensional vectors. It specializes in executing nearest-neighbor and similarity searches using algorithms like HNSW, while supporting extensive filtering and payload management for advanced retrieval.",
+      "isArchived": false
+    },
+    {
+      "owner": "redis",
+      "name": "redis",
+      "topics": [
+        "database",
+        "key-value",
+        "nosql",
+        "redis",
+        "caching",
+        "distributed-systems",
+        "open-source",
+        "real-time",
+        "time-series",
+        "cache",
+        "in-memory",
+        "in-memory-database",
+        "key-value-store",
+        "message-broker",
+        "no-sql",
+        "message-queue",
+        "realtime",
+        "vector-search",
+        "vector-databases",
+        "json"
+      ],
+      "category": "In-Memory Data Structure Store",
+      "killerFeature": "Manage complex data structures, queues, and caches at unmatched real-time speeds.",
+      "description": "A highly optimized, open-source key-value and data structure server written in C. It supports advanced features like caching, pub/sub messaging, and document/vector indexing for real-time applications.",
+      "isArchived": false
+    },
+    {
+      "owner": "request",
+      "name": "request",
+      "topics": [],
+      "category": "HTTP Request Clients",
+      "killerFeature": "Stream data easily to files or pipe data between requests.",
+      "description": "A JavaScript package designed to simplify making HTTP requests, supporting HTTPS and automatic redirect following. It enables streaming responses to file systems and allows piping file streams into PUT or POST requests.",
+      "isArchived": false
+    },
+    {
+      "owner": "sharkdp",
+      "name": "bat",
+      "topics": [
+        "command-line",
+        "tool",
+        "syntax-highlighting",
+        "git",
+        "terminal",
+        "cli",
+        "rust",
+        "hacktoberfest"
+      ],
+      "category": "Terminal File Viewers",
+      "killerFeature": "Display file contents with syntax highlighting and git-aware status markers.",
+      "description": "A Rust-based command-line utility that functions as an enhanced clone of the standard 'cat' command. It improves file viewing by providing integrated syntax highlighting for multiple languages and displaying git-specific modifications.",
+      "isArchived": false
+    },
+    {
+      "owner": "sharkdp",
+      "name": "fd",
+      "topics": [
+        "command-line",
+        "tool",
+        "filesystem",
+        "search",
+        "regex",
+        "rust",
+        "cli",
+        "terminal",
+        "hacktoberfest"
+      ],
+      "category": "Filesystem Search Utilities",
+      "killerFeature": "Find files instantly using intuitive, simplified syntax and regex.",
+      "description": "A fast Rust command-line tool designed as a modern, opinionated alternative to the standard `find` utility. It supports pattern matching, regex searching, and ignores files listed in `.gitignore` by default.",
+      "isArchived": false
+    },
+    {
+      "owner": "supabase",
+      "name": "supabase",
+      "topics": [
+        "firebase",
+        "supabase",
+        "realtime",
+        "postgrest",
+        "postgres",
+        "postgresql",
+        "websockets",
+        "deno",
+        "embeddings",
+        "vectors",
+        "alternative",
+        "auth",
+        "database",
+        "example",
+        "nextjs",
+        "oauth2",
+        "pgvector",
+        "postgis",
+        "ai"
+      ],
+      "category": "Postgres Backend Services",
+      "killerFeature": "Build full-stack apps using Postgres with built-in auth, APIs, and realtime",
+      "description": "Supabase is a developer platform that extends PostgreSQL, providing a comprehensive backend solution. It facilitates building web and mobile applications by offering features such as authentication, auto-generated REST/GraphQL APIs, real-time subscriptions, and vector embedding support.",
+      "isArchived": false
+    },
+    {
+      "owner": "sveltejs",
+      "name": "svelte",
+      "topics": [
+        "template",
+        "ui",
+        "compiler"
+      ],
+      "category": "Web Component Frameworks",
+      "killerFeature": "Compile components to surgical, efficient JavaScript for minimal runtime overhead",
+      "description": "A web application framework written in JavaScript that functions as a compiler. It converts declarative components into highly efficient JavaScript, focusing on direct DOM manipulation during updates.",
+      "isArchived": false
+    },
+    {
+      "owner": "tailwindlabs",
+      "name": "tailwindcss",
+      "topics": [
+        "tailwindcss",
+        "css",
+        "css-framework",
+        "postcss",
+        "functional-css",
+        "utility-classes",
+        "responsive"
+      ],
+      "category": "Utility Css Frameworks",
+      "killerFeature": "Build complex, responsive user interfaces using utility-first classes.",
+      "description": "A utility-first CSS framework designed for rapid UI development. It utilizes utility classes and processes styles via PostCSS, enabling highly customizable and responsive web designs.",
+      "isArchived": false
+    },
+    {
+      "owner": "tauri-apps",
+      "name": "tauri",
+      "topics": [
+        "rust",
+        "webview",
+        "high-performance",
+        "desktop-app",
+        "mobile-app",
+        "native-app",
+        "web-frontend"
+      ],
+      "category": "Cross-Platform Desktop Applications",
+      "killerFeature": "Compile blazing fast, cross-platform desktop binaries from web frontends.",
+      "description": "Tauri is a Rust framework for creating cross-platform desktop and mobile applications. It integrates a web frontend (HTML/JS/CSS) with a native Rust backend utilizing system webviews for rendering.",
+      "isArchived": false
+    },
+    {
+      "owner": "vuejs",
+      "name": "core",
+      "topics": [],
+      "category": "Vue Component Frameworks",
+      "killerFeature": "Build reactive and progressive UIs with a simple component-based structure.",
+      "description": "Vue.js is a progressive, incrementally-adoptable JavaScript framework designed for building Single Page Applications (SPAs). It utilizes a component-based architecture and a powerful reactivity system to manage state and efficiently update the Virtual DOM.",
+      "isArchived": false
+    }
+  ]
+}

@@ -96,12 +96,13 @@ export async function runEvals(
     const returned = await retriever.search(query.question, k);
     perQuery.push(scoreQuery(query, returned, k));
   }
-  return roundScorecard(aggregate(perQuery, k));
+  return roundScorecard(aggregate(perQuery, k, retriever.name));
 }
 
-/** Compare two scorecards on the four aggregate metrics (already rounded). */
+/** Compare two scorecards on retriever identity + the four aggregate metrics. */
 function aggregatesMatch(a: Scorecard, b: Scorecard): boolean {
   return (
+    a.retriever === b.retriever &&
     a.k === b.k &&
     a.queryCount === b.queryCount &&
     a.precisionAtK === b.precisionAtK &&

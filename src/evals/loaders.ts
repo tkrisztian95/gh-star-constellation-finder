@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
 import {
-  corpusSchema,
+  corpusFileSchema,
   querysetSchema,
   repoKey,
   repoUrl,
@@ -30,15 +30,17 @@ function readJson(path: string): unknown {
   }
 }
 
-/** Load + validate the corpus; on invalid shape, throw naming the offending entry. */
+/** Load + validate the corpus (a `{ meta, entries }` file); on invalid shape,
+ * throw naming the offending path. Returns just the entries — `meta` is
+ * provenance and not used at score time. */
 export function loadCorpus(path: string): CorpusEntry[] {
-  const parsed = corpusSchema.safeParse(readJson(path));
+  const parsed = corpusFileSchema.safeParse(readJson(path));
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    const where = issue?.path.length ? ` (entry ${issue.path.join(".")})` : "";
+    const where = issue?.path.length ? ` (at ${issue.path.join(".")})` : "";
     throw new FixtureError(`corpus fixture invalid${where}: ${issue?.message ?? "unknown error"}`);
   }
-  return parsed.data;
+  return parsed.data.entries;
 }
 
 /** Load + validate the queryset. */
