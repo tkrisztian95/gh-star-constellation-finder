@@ -30,19 +30,19 @@
 
 ## 6. Fixtures & baseline
 
-- [ ] 6.1 Curate a list of ~50 well-known public repos covering varied domains.
-- [ ] 6.2 Generate `corpus.json` once via the `--analyze-only` path over the curated list; commit it verbatim.
-- [ ] 6.3 Hand-author 50–100 golden queries in `queries.json` spanning exact-recall, categorical-lookup, health-check, and property-based styles; ensure every `expected` URL is present in the corpus.
-- [ ] 6.4 Run the harness and commit the resulting `baseline.json` scorecard.
+- [x] 6.1 Curate a list of ~50 well-known public repos covering varied domains.
+- [x] 6.2 Generate `corpus.json` once via the `--analyze-only` path over the curated list; commit it verbatim.
+- [x] 6.3 Hand-author 50–100 golden queries in `queries.json` spanning exact-recall, categorical-lookup, health-check, and property-based styles; ensure every `expected` URL is present in the corpus.
+- [x] 6.4 Run the harness and commit the resulting `baseline.json` scorecard.
 
 ## 7. CI & docs
 
-- [ ] 7.1 Add a CI step running `bun run evals` on pushes to `main` and PRs; assert the produced scorecard matches the committed `baseline.json` (reproducibility + regression gate); confirm no secrets/network needed.
-- [ ] 7.2 Add a README section: how to run evals, how to read precision@5 / recall@5 / MRR / no-answer rate, and the single-PR steps to add a golden query.
+- [x] 7.1 Add a CI step running `bun run evals` on pushes to `main` and PRs; assert the produced scorecard matches the committed `baseline.json` (reproducibility + regression gate); confirm no secrets/network needed.
+- [x] 7.2 Add a README section: how to run evals, how to read precision@5 / recall@5 / MRR / no-answer rate, and the single-PR steps to add a golden query.
 - [x] 7.3 File/reframe the follow-up issue (#10) for the deferred multi-model `--compare` runner; link it from the design's future-hooks note.
 
 ## 8. Tests & quality gates
 
 - [x] 8.1 Unit-test the metrics (known retriever output + ground truth → expected precision/recall/MRR/no-answer values) and the baseline retriever's determinism (same input → same ranking).
 - [x] 8.2 Test the queryset↔corpus cross-check fails fast on a dangling URL.
-- [ ] 8.3 Run `bun run typecheck`, `bun run lint`, `bun run format:check`, `bun run test` — all clean.
+- [x] 8.3 Run `bun run typecheck`, `bun run lint`, `bun run format:check`, `bun run test` — all clean.
