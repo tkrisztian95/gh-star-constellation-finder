@@ -21,6 +21,7 @@ export interface GitHubList {
 export interface AnalysisResult {
   category: string;
   killerFeature: string;
+  description: string;
   dataQuality?: "full" | "sparse" | "truncated";
 }
 

@@ -8,13 +8,14 @@ import type { AnalysisResult } from "../types.js";
 
 export const DEFAULT_CACHE_PATH = ".cache/analysis.db";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS entries (
     key            TEXT PRIMARY KEY,
     category       TEXT NOT NULL,
     killer_feature TEXT NOT NULL,
+    description    TEXT NOT NULL,
     data_quality   TEXT,
     updated_at     INTEGER NOT NULL
   ) WITHOUT ROWID;
@@ -23,10 +24,11 @@ const CREATE_TABLE_SQL = `
 interface EntryRow {
   category: string;
   killer_feature: string;
+  description: string;
   data_quality: "full" | "sparse" | "truncated" | null;
 }
 
-type SaveParams = [string, string, string, string | null, number];
+type SaveParams = [string, string, string, string, string | null, number];
 
 export interface AnalysisCache {
   get(repoId: string, readme: string): AnalysisResult | null;
@@ -42,6 +44,19 @@ export function cacheKey(repoId: string, readme: string): string {
 function applySchema(db: Database): void {
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA synchronous = NORMAL;");
+
+  const userVersion = db.query("PRAGMA user_version").get() as { user_version: number } | null;
+  const currentVersion = userVersion?.user_version ?? 0;
+  if (currentVersion < SCHEMA_VERSION) {
+    // The schema shape changed (e.g. a new NOT NULL column). v1 rows have no
+    // description to backfill, so drop and recreate — the next run re-analyses.
+    logger.warn("analysis cache schema outdated; dropping entries and recreating", {
+      from: currentVersion,
+      to: SCHEMA_VERSION,
+    });
+    db.exec("DROP TABLE IF EXISTS entries;");
+  }
+
   db.exec(CREATE_TABLE_SQL);
   db.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
 }
@@ -83,10 +98,10 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
   const db = await openWithRecovery(filePath);
 
   const selectStmt: Statement<EntryRow, [string]> = db.query(
-    "SELECT category, killer_feature, data_quality FROM entries WHERE key = ?",
+    "SELECT category, killer_feature, description, data_quality FROM entries WHERE key = ?",
   );
   const upsertStmt: Statement<unknown, SaveParams> = db.query(
-    "INSERT OR REPLACE INTO entries (key, category, killer_feature, data_quality, updated_at) VALUES (?, ?, ?, ?, ?)",
+    "INSERT OR REPLACE INTO entries (key, category, killer_feature, description, data_quality, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
   );
   const countStmt: Statement<{ n: number }, []> = db.query("SELECT COUNT(*) AS n FROM entries");
 
@@ -102,6 +117,7 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
       return {
         category: row.category,
         killerFeature: row.killer_feature,
+        description: row.description,
         dataQuality: row.data_quality ?? undefined,
       };
     },
@@ -110,6 +126,7 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
         cacheKey(repoId, readme),
         result.category,
         result.killerFeature,
+        result.description,
         result.dataQuality ?? null,
         Date.now(),
       );

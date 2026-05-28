@@ -36,4 +36,8 @@ export function parseOllamaResponseBody(body: OllamaResponse): string {
   return jsonMatch ? jsonMatch[0] : raw;
 }
 
-export const ANALYSIS_FAILED_RESULT = { category: "analysis-failed", killerFeature: "" };
+export const ANALYSIS_FAILED_RESULT = {
+  category: "analysis-failed",
+  killerFeature: "",
+  description: "",
+};
