@@ -7,11 +7,11 @@
 [![Bun](https://img.shields.io/badge/Bun-000000?style=flat-square&logo=bun&logoColor=white)](https://bun.sh/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-**Stop hoarding stars. Start building constellations.**
+**Turn your GitHub stars into a local-first knowledge base.**
 
-> 🚧 **Heads up — v0.2.0 is a pivot.** The next release reframes this project from "TUI to organise GitHub Lists" to "local-first knowledge base over your starred repos" (headless `--ask`, MCP server, eval harness). See [docs/milestone-v0.2.0.md](docs/milestone-v0.2.0.md) for scope and timeline. Everything described below still works on v0.1.0; the categorizer isn't going away — it's becoming one consumer of a richer corpus.
+`gh-star-constellation-finder` analyses your GitHub stars into a **local-first knowledge base**. It fetches every repo you've starred, reads its README, and runs it through a local or OpenAI model — capturing each project's intent, health, and depth into a **SQLite cache on your machine**. Today, one tool reads that corpus: an **AI categorizer** that proposes tidy **native GitHub Lists**. Making the corpus directly queryable — `--ask`, semantic search, an MCP server — is the [v0.2.0 roadmap](docs/milestone-v0.2.0.md), tracked in the open.
 
-`gh-star-constellation-finder` is an AI-powered Terminal User Interface (TUI) designed to rescue your GitHub stars from the "void." It analyzes your repositories using local or OpenAI models, proposing smart categorizations for your **native GitHub lists** based on actual code intent, health, and project depth.
+> **Status:** v0.1.0 ships the analysis cache + categorizer. The retrieval surfaces (`--ask`, search, MCP) are roadmap, not yet implemented — see [docs/milestone-v0.2.0.md](docs/milestone-v0.2.0.md).
 
 ![Review screen: an AI-generated suggestion proposing to move a repo into the "Curated Software Resources" list, with keyboard shortcuts for accept / skip / reject / quit](docs/screenshots/review-phase-cropped.png)
 

@@ -1,7 +1,7 @@
 {
   "name": "gh-star-constellation-finder",
   "version": "0.1.3",
-  "description": "AI-powered TUI to organize GitHub stars into native lists.",
+  "description": "Local-first knowledge base built from your GitHub stars, with an AI categorizer for native GitHub Lists.",
   "type": "module",
   "license": "MIT",
   "author": "Krisztian Toth <ktothdev@gmail.com>",
