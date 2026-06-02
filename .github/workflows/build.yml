@@ -38,3 +38,18 @@ jobs:
 
       - name: Run tests
         run: bun run test
+
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Frozen corpus + deterministic baseline retriever → no secrets, no
+      # network. Reproduces the committed baseline scorecard; fails on drift.
+      - name: Run retrieval evals (baseline regression gate)
+        run: bun run evals --check
