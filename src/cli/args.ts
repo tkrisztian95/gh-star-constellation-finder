@@ -7,6 +7,7 @@ export interface CliArgs {
   concurrency: number;
   analyzeOnly: boolean;
   outputPath?: string;
+  exportCorpusPath?: string;
   noAnalytics: boolean;
   noCache: boolean;
 }
@@ -35,6 +36,8 @@ Options:
   --concurrency <n>     Parallel README fetch concurrency (default: 5)
   --analyze-only        Headless mode: skip TUI, print JSON to stdout
   --output <path>       With --analyze-only: write to a file instead of stdout
+  --export-corpus <path>  Headless: analyse stars, write a corpus.json (the
+                        cross-project contract) and exit (skips suggestions)
   --no-cache            Skip the local analysis cache (re-analyse every repo)
   --no-analytics        Disable PostHog product analytics for this run
   -h, --help            Show this help and exit
@@ -106,6 +109,9 @@ export function parseArgs(): CliArgs {
       result.analyzeOnly = true;
     } else if (args[i] === "--output" && args[i + 1]) {
       result.outputPath = args[i + 1];
+      i++;
+    } else if (args[i] === "--export-corpus" && args[i + 1]) {
+      result.exportCorpusPath = args[i + 1];
       i++;
     } else if (args[i] === "--no-analytics") {
       result.noAnalytics = true;
