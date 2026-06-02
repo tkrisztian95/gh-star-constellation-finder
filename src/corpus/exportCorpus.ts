@@ -7,8 +7,8 @@ import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 /**
  * The cross-project corpus contract. A `{ meta, entries }` file describing each
  * analyzed star: repo identity plus the per-repo analysis. This is the producer
- * side of the contract consumed by the constellation prototype (hp-ner) and the
- * eval harness (#43) — keep this shape identical to `src/evals/types.ts`.
+ * side of the contract consumed by the constellation prototype (ner-structured)
+ * and the eval harness (#43) — keep this shape identical to `src/evals/types.ts`.
  */
 export const corpusEntrySchema = z.object({
   owner: z.string().min(1),
