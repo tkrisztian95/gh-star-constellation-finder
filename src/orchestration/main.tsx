@@ -69,7 +69,9 @@ export async function main() {
 
   const cache: AnalysisCache | null = cliArgs.noCache ? null : await loadCache();
 
-  if (cliArgs.analyzeOnly) {
+  // --export-corpus implies the headless analyze path: it reuses the same
+  // fetch + analyze pipeline, then writes a corpus.json and returns early.
+  if (cliArgs.analyzeOnly || cliArgs.exportCorpusPath) {
     await runAnalyzeOnly(cliArgs, token, graphqlWithAuth, login, cache);
     process.exit(0);
   }

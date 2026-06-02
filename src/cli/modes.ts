@@ -18,6 +18,7 @@ import { generateSuggestions } from "../engine/suggestionEngine.js";
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
+import { writeCorpusFile } from "../corpus/exportCorpus.js";
 import type { CliArgs } from "./args.js";
 import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
 import type { PhaseTimings } from "../types.js";
@@ -174,6 +175,15 @@ export async function runAnalyzeOnly(
     errorCount: analyzeOnlyErrorCount,
     durationMs: phaseTimings.analysisMs,
   });
+
+  // --export-corpus: write the cross-project corpus contract from the analyzed
+  // repos and return early — no consolidation/suggestions needed for a corpus.
+  if (cliArgs.exportCorpusPath) {
+    const count = writeCorpusFile(cliArgs.exportCorpusPath, analyzedRepos, analyzer.modelId);
+    logger.info("corpus exported", { path: cliArgs.exportCorpusPath, entries: count });
+    process.stderr.write(`Wrote ${count} entries to ${cliArgs.exportCorpusPath}\n`);
+    return;
+  }
 
   const existingListNamesLower = new Set(existingListNames.map((n) => n.toLowerCase().trim()));
   const newCategoryNames = [
