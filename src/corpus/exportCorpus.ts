@@ -1,38 +1,18 @@
 import { writeFileSync } from "node:fs";
 
-import { z } from "zod";
-
 import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
+import { corpusFileSchema, type CorpusEntry, type CorpusFile } from "./types.js";
+
+// The corpus contract lives in ./types.ts (shared with the eval harness).
+// Re-export so existing importers of this module keep working.
+export { corpusEntrySchema, corpusMetaSchema, corpusFileSchema } from "./types.js";
+export type { CorpusEntry, CorpusFile, CorpusMeta } from "./types.js";
 
 /**
- * The cross-project corpus contract. A `{ meta, entries }` file describing each
- * analyzed star: repo identity plus the per-repo analysis. This is the producer
- * side of the contract consumed by the constellation prototype (ner-structured)
- * and the eval harness (#43) — keep this shape identical to `src/evals/types.ts`.
+ * The `--export-corpus` producer. Maps the in-memory `AnalyzedRepo[]` to the
+ * corpus contract and writes a `{ meta, entries }` file consumed by the
+ * constellation prototype (ner-structured) and the eval harness.
  */
-export const corpusEntrySchema = z.object({
-  owner: z.string().min(1),
-  name: z.string().min(1),
-  topics: z.array(z.string()),
-  category: z.string(),
-  killerFeature: z.string(),
-  description: z.string(),
-  isArchived: z.boolean(),
-});
-
-export type CorpusEntry = z.infer<typeof corpusEntrySchema>;
-
-export const corpusMetaSchema = z.object({
-  model: z.string(),
-  generatedAt: z.string(),
-});
-
-export const corpusFileSchema = z.object({
-  meta: corpusMetaSchema,
-  entries: z.array(corpusEntrySchema),
-});
-
-export type CorpusFile = z.infer<typeof corpusFileSchema>;
 
 /** Map the in-memory analysis result for one repo to a frozen corpus entry. */
 export function toCorpusEntry(analyzed: AnalyzedRepo): CorpusEntry {

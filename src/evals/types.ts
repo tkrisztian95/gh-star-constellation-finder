@@ -1,40 +1,12 @@
 import { z } from "zod";
 
-/**
- * A frozen corpus entry: repo identity plus the per-repo analysis shape the
- * tool produces. Generated once by the corpus-builder over a curated public-repo
- * list, then committed verbatim inside a `{ meta, entries }` file. See design.md
- * decision 1–2.
- */
-export const corpusEntrySchema = z.object({
-  owner: z.string().min(1),
-  name: z.string().min(1),
-  topics: z.array(z.string()),
-  category: z.string(),
-  killerFeature: z.string(),
-  description: z.string(),
-  /** GitHub archived flag, captured at build time. Lets health-check queries
-   * ("which of my stars are archived?") be scored. */
-  isArchived: z.boolean(),
-});
+// The corpus contract is shared with the --export-corpus producer; the single
+// source of truth lives in ../corpus/types.ts. Re-export so eval modules keep
+// importing corpus schemas/types from "./types.js".
+export { corpusEntrySchema, corpusMetaSchema, corpusFileSchema } from "../corpus/types.js";
+export type { CorpusEntry, CorpusMeta, CorpusFile } from "../corpus/types.js";
 
-export type CorpusEntry = z.infer<typeof corpusEntrySchema>;
-
-/** Provenance for the frozen corpus: which model wrote the analysis, and when. */
-export const corpusMetaSchema = z.object({
-  model: z.string(),
-  generatedAt: z.string(),
-});
-
-export type CorpusMeta = z.infer<typeof corpusMetaSchema>;
-
-/** The corpus file is `{ meta, entries }` so provenance travels with the data. */
-export const corpusFileSchema = z.object({
-  meta: corpusMetaSchema,
-  entries: z.array(corpusEntrySchema),
-});
-
-export type CorpusFile = z.infer<typeof corpusFileSchema>;
+import type { CorpusEntry } from "../corpus/types.js";
 
 /**
  * A golden query: a hand-authored question and one or more ground-truth repo
