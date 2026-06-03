@@ -83,7 +83,7 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 2, "PRAGMA user_version is 2");
+      assertEqual(userVersion, 3, "PRAGMA user_version is 3");
 
       const tables = db
         .query<
@@ -328,14 +328,15 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 2, "user_version bumped to 2 after migration");
+      assertEqual(userVersion, 3, "user_version bumped to 3 after migration");
 
-      // The new description column must exist on the recreated table.
+      // The new columns must exist on the recreated table.
       const cols = db
         .query<{ name: string }, []>("PRAGMA table_info(entries)")
         .all()
         .map((c) => c.name);
       assert(cols.includes("description"), "recreated table has description column");
+      assert(cols.includes("entities"), "recreated table has entities column");
     } finally {
       db.close();
     }
@@ -356,6 +357,26 @@ async function runTests(): Promise<void> {
     assertEqual(reopened.size, 1, "v2 db preserves entries on reopen (no drop)");
     const hit = reopened.get("a/keep", "readme");
     assertEqual(hit?.description, "Kept across reopen.", "description survives reopen");
+  });
+
+  // --- Test 11 (star-entity-extraction): entities survive a save → get round-trip
+  await withTempDir(async (dir) => {
+    const cache = await loadCache(join(dir, "analysis.db"));
+    await cache.saveEntry("a/ent", "readme", {
+      category: "Container Tools",
+      killerFeature: "Inspect layers",
+      description: "Explore docker images.",
+      entities: [
+        { name: "Docker", label: "TOOL" },
+        { name: "Go", label: "LANGUAGE" },
+      ],
+    });
+    const hit = cache.get("a/ent", "readme");
+    assertEqual(
+      (hit?.entities ?? []).map((e) => `${e.name}:${e.label}`).join(","),
+      "Docker:TOOL,Go:LANGUAGE",
+      "entities survive the cache round-trip",
+    );
   });
 
   console.log("  ✓ all analysisCache assertions passed");
