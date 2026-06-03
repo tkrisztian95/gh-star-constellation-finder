@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { LangfuseParent } from "./tracing.js";
-import { coerceEntities, type Entity } from "./entityFilter.js";
+import type { Entity } from "./entityFilter.js";
 
 export const responseSchema = z.object({
   category: z.string(),
@@ -8,35 +8,28 @@ export const responseSchema = z.object({
   description: z.string().default(""),
 });
 
+// Entity extraction is a separate seam (see ./entityExtractor.ts); analysis
+// returns only the three generative fields.
 export function parseAnalysisResponse(
   content: string,
   fallback = "analysis-failed",
 ): AnalysisResult {
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   const jsonStr = jsonMatch ? jsonMatch[0] : content;
-
-  let raw: Record<string, unknown> | null = null;
   try {
-    raw = JSON.parse(jsonStr) as Record<string, unknown>;
+    return responseSchema.parse(JSON.parse(jsonStr));
   } catch {
-    raw = null;
-  }
-
-  // Entities are parsed leniently and independently of the three string fields:
-  // a garbled entities array must never sink an otherwise-valid analysis.
-  const entities: Entity[] = raw ? coerceEntities(raw["entities"]) : [];
-
-  if (raw) {
-    const parsed = responseSchema.safeParse(raw);
-    if (parsed.success) {
-      return { ...parsed.data, entities };
+    try {
+      const raw = JSON.parse(jsonStr) as Record<string, unknown>;
+      const category = typeof raw["category"] === "string" ? raw["category"] : "";
+      const killerFeature = typeof raw["killerFeature"] === "string" ? raw["killerFeature"] : "";
+      const description = typeof raw["description"] === "string" ? raw["description"] : "";
+      if (category) return { category, killerFeature, description };
+    } catch {
+      // not valid JSON at all
     }
-    const category = typeof raw["category"] === "string" ? raw["category"] : "";
-    const killerFeature = typeof raw["killerFeature"] === "string" ? raw["killerFeature"] : "";
-    const description = typeof raw["description"] === "string" ? raw["description"] : "";
-    if (category) return { category, killerFeature, description, entities };
+    return { category: content.trim() || fallback, killerFeature: "", description: "" };
   }
-  return { category: content.trim() || fallback, killerFeature: "", description: "", entities: [] };
 }
 
 export interface RepoInput {

@@ -10,26 +10,13 @@ import type { ConsolidationStrategy } from "../types.js";
 const BASE_SYSTEM_PROMPT = `You are a technical librarian organising a developer's GitHub starred repositories into named lists.
 
 TASK
-Analyse the provided repository data and return a JSON object with four fields:
+Analyse the provided repository data and return a JSON object with three fields:
 - "category": the GitHub List name this repo belongs to
 - "killerFeature": the single most compelling reason to use this repo
 - "description": a factual, retrieval-oriented summary of what the repo is and does
-- "entities": an array of the concrete technical entities the repo is built on or about
 
 INSTRUCTIONS
 Read the repository name, description, language, topics, and README. Use all available signals together. When the README is absent or very short, rely on name, description, language, and topics.
-
-ENTITY RULES — DO:
-- Extract concrete, named technical entities mentioned in the text (especially the README): languages, frameworks/libraries, tools, dependencies, concepts/techniques, organisations, people, and problem domains
-- Tag each with one label: LANGUAGE, FRAMEWORK, TOOL, CONCEPT, ORG, PERSON, DOMAIN
-- Use the canonical name (e.g. "TypeScript" not "TS", "Kubernetes" not "k8s")
-- Prefer specific entities a developer would search for (e.g. "controller-runtime", "OAuth", "HNSW")
-- Each entity is an object: {"name": "...", "label": "..."}
-
-ENTITY RULES — DO NOT:
-- Do not emit licenses (e.g. "MIT", "Apache 2.0"), badges, shields, CI providers, or coverage services
-- Do not emit generic words ("library", "framework", "tool", "API", "web", "data")
-- Do not invent entities not supported by the text; do not emit URLs
 
 CATEGORY RULES — DO:
 - Use Title Case (capitalise each word)
@@ -107,7 +94,7 @@ export function buildAnalyzeRepoPrompt(input: RepoInput): string {
     "",
     readmeSection,
     "",
-    'Respond in JSON with keys "category", "killerFeature", "description", and "entities" (an array of {"name","label"}).',
+    'Respond in JSON with keys "category", "killerFeature", and "description".',
   ].join("\n");
 }
 

@@ -20,6 +20,7 @@ import type { Repo, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../ty
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
 import type { AIProvider } from "../ai/index.js";
+import { LlmEntityExtractor } from "../ai/entityExtractor.js";
 import type { AnalysisCache } from "../cache/analysisCache.js";
 import { logger } from "../logger.js";
 
@@ -69,6 +70,7 @@ export async function runAnalysis({
   parent,
   cache,
 }: RunAnalysisParams): Promise<AnalysisResult> {
+  const entityExtractor = new LlmEntityExtractor(analyzer);
   const analyzedRepos: AnalyzedRepo[] = [];
   const analysisTimings: AnalysisTiming[] = [];
   let analyzed = 0;
@@ -151,6 +153,19 @@ export async function runAnalysis({
                 throw err;
               }
               analysis.dataQuality = computeDataQuality(readme);
+              if (analysis.category !== "analysis-failed") {
+                analysis.entities = await entityExtractor.extract(
+                  {
+                    owner: repo.owner,
+                    name: repo.name,
+                    description: repo.description,
+                    language: repo.language,
+                    topics: repo.topics,
+                    readme,
+                  },
+                  analysisSpan,
+                );
+              }
               if (cache && analysis.category !== "analysis-failed") {
                 await cache.saveEntry(repo.id, readme, analysis);
               }

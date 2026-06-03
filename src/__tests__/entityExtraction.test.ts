@@ -1,5 +1,6 @@
-import { parseAnalysisResponse } from "../ai/types.js";
+import { LlmEntityExtractor, type EntityExtractionInput } from "../ai/entityExtractor.js";
 import { coerceEntities, filterEntities, type Entity } from "../ai/entityFilter.js";
+import type { AIProvider } from "../ai/types.js";
 
 function assertEqual<T>(actual: T, expected: T, message: string): void {
   if (actual !== expected) {
@@ -11,12 +12,29 @@ function names(entities: Entity[] = []): string {
   return entities.map((e) => `${e.name}:${e.label}`).join(",");
 }
 
-function runTests() {
+function mockProvider(complete: () => Promise<string>): AIProvider {
+  return {
+    modelId: "test",
+    analyze: async () => ({ category: "", killerFeature: "", description: "" }),
+    complete,
+  };
+}
+
+const INPUT: EntityExtractionInput = {
+  owner: "o",
+  name: "n",
+  description: "d",
+  language: "Go",
+  topics: [],
+  readme: "uses Docker and Go",
+};
+
+async function runTests(): Promise<void> {
   let passed = 0;
   let failed = 0;
-  function test(name: string, fn: () => void) {
+  async function test(name: string, fn: () => void | Promise<void>): Promise<void> {
     try {
-      fn();
+      await fn();
       console.log(`  ✓ ${name}`);
       passed++;
     } catch (err) {
@@ -27,57 +45,51 @@ function runTests() {
 
   console.log("entityExtraction tests\n");
 
-  // --- parseAnalysisResponse + entities ---
-  test("parses entities alongside the three string fields", () => {
-    const r = parseAnalysisResponse(
-      JSON.stringify({
-        category: "Container Tools",
-        killerFeature: "Inspect image layers",
-        description: "A tool for exploring docker images.",
-        entities: [
-          { name: "Docker", label: "TOOL" },
-          { name: "Go", label: "LANGUAGE" },
-        ],
+  // --- LlmEntityExtractor ---
+  await test("extractor returns entities from the provider's JSON", async () => {
+    const ex = new LlmEntityExtractor(
+      mockProvider(async () =>
+        JSON.stringify({
+          entities: [
+            { name: "Docker", label: "TOOL" },
+            { name: "Go", label: "LANGUAGE" },
+          ],
+        }),
+      ),
+    );
+    assertEqual(names(await ex.extract(INPUT)), "Docker:TOOL,Go:LANGUAGE", "entities extracted");
+  });
+
+  await test("extractor filters license/badge noise from the response", async () => {
+    const ex = new LlmEntityExtractor(
+      mockProvider(async () =>
+        JSON.stringify({
+          entities: [
+            { name: "Apache 2.0", label: "CONCEPT" },
+            { name: "Kubernetes", label: "TOOL" },
+          ],
+        }),
+      ),
+    );
+    assertEqual(names(await ex.extract(INPUT)), "Kubernetes:TOOL", "only real entity kept");
+  });
+
+  await test("extractor returns [] on non-JSON output", async () => {
+    const ex = new LlmEntityExtractor(mockProvider(async () => "sorry, here you go!"));
+    assertEqual((await ex.extract(INPUT)).length, 0, "garbage -> []");
+  });
+
+  await test("extractor returns [] when the provider throws", async () => {
+    const ex = new LlmEntityExtractor(
+      mockProvider(async () => {
+        throw new Error("network");
       }),
     );
-    assertEqual(r.category, "Container Tools", "category still parsed");
-    assertEqual(names(r.entities), "Docker:TOOL,Go:LANGUAGE", "entities parsed");
+    assertEqual((await ex.extract(INPUT)).length, 0, "provider error -> []");
   });
 
-  test("missing entities field yields [] without failing the analysis", () => {
-    const r = parseAnalysisResponse(
-      JSON.stringify({ category: "X", killerFeature: "y", description: "z" }),
-    );
-    assertEqual(r.category, "X", "category parsed");
-    assertEqual((r.entities ?? []).length, 0, "entities default to empty");
-  });
-
-  test("garbled entities (not an array) does not sink the analysis", () => {
-    const r = parseAnalysisResponse(
-      JSON.stringify({ category: "X", killerFeature: "y", description: "z", entities: "nope" }),
-    );
-    assertEqual(r.category, "X", "category still parsed");
-    assertEqual((r.entities ?? []).length, 0, "entities empty on garbage");
-  });
-
-  test("invalid entity (bad label / empty name) is dropped, valid kept", () => {
-    const r = parseAnalysisResponse(
-      JSON.stringify({
-        category: "X",
-        killerFeature: "y",
-        description: "z",
-        entities: [
-          { name: "Rust", label: "LANGUAGE" },
-          { name: "Nope", label: "BOGUS" },
-          { name: "", label: "TOOL" },
-        ],
-      }),
-    );
-    assertEqual(names(r.entities), "Rust:LANGUAGE", "only the valid entity survives");
-  });
-
-  // --- filterEntities ---
-  test("filter drops license / badge / generic noise", () => {
+  // --- filterEntities / coerceEntities ---
+  await test("filter drops license / badge / generic noise", () => {
     const filtered = filterEntities([
       { name: "Apache 2.0", label: "CONCEPT" },
       { name: "badge", label: "TOOL" },
@@ -87,7 +99,7 @@ function runTests() {
     assertEqual(names(filtered), "Kubernetes:TOOL", "only the real entity remains");
   });
 
-  test("filter de-duplicates by normalized name+label", () => {
+  await test("filter de-duplicates by normalized name+label", () => {
     const filtered = filterEntities([
       { name: "TypeScript", label: "LANGUAGE" },
       { name: "typescript", label: "LANGUAGE" },
@@ -95,7 +107,7 @@ function runTests() {
     assertEqual(filtered.length, 1, "duplicate collapsed");
   });
 
-  test("filter drops URLs and over-long names", () => {
+  await test("filter drops URLs and over-long names", () => {
     const filtered = filterEntities([
       { name: "https://img.shields.io/x", label: "TOOL" },
       { name: "x".repeat(60), label: "CONCEPT" },
@@ -104,12 +116,12 @@ function runTests() {
     assertEqual(names(filtered), "React:FRAMEWORK", "only React remains");
   });
 
-  test("coerceEntities validates + filters raw json", () => {
+  await test("coerceEntities validates + filters raw json", () => {
     const out = coerceEntities([
       { name: "Vite", label: "TOOL" },
-      { name: "MIT", label: "CONCEPT" }, // license noise
+      { name: "MIT", label: "CONCEPT" },
       "garbage",
-      { label: "TOOL" }, // missing name
+      { label: "TOOL" },
     ]);
     assertEqual(names(out), "Vite:TOOL", "only the valid, non-noise entity survives");
   });
@@ -118,4 +130,4 @@ function runTests() {
   if (failed > 0) process.exit(1);
 }
 
-runTests();
+await runTests();

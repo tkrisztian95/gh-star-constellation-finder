@@ -1,10 +1,17 @@
 # Design
 
-## Single-call extraction (no second pass)
+## Separate EntityExtractor seam (revised decision)
 
-`analyze()` already builds a prompt containing name + description + language + topics + README and returns `{category, killerFeature, description}`. We add `entities` as a fourth field of the same JSON response. This reuses the README context for free and keeps one LLM call per repo.
+Initial plan bundled `entities` into the `analyze()` JSON as a fourth field (one call). We reversed this: entity extraction lives behind its own `EntityExtractor` interface (`src/ai/entityExtractor.ts`), and `analyze()` returns only the three generative fields.
 
-Rejected: a separate NER pass (as in the `ner-structured` prototype). It doubles per-repo cost and re-fetches/re-reads the same README. The producer-side single call is strictly better here.
+Why the reversal:
+- **Different task types.** category/killerFeature/description are generative/judgment; entities are span extraction. A single overloaded prompt dilutes both, especially on small local models.
+- **Swappability.** The seam lets the entity engine change — LLM today (`LlmEntityExtractor` via the provider's `complete()`), a local zero-shot NER (GLiNER) or a dictionary matcher later — without touching the analysis prompt.
+- **Independent tuning + eval.** Entity rules can change without risking category/description regressions, and each engine can be measured on its own.
+
+Trade-off accepted: a second LLM call per cache-miss repo. For an occasionally-built graph this is acceptable, and cache hits pay nothing (entities are stored in the cache row).
+
+The deterministic `filterEntities()` noise pass and the cache/corpus changes are unchanged by this revision.
 
 ## Label set
 
