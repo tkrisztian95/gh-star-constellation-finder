@@ -9,9 +9,9 @@
 
 **Turn your GitHub stars into a local-first knowledge base.**
 
-`gh-star-constellation-finder` analyses your GitHub stars into a **local-first knowledge base**. It fetches every repo you've starred, reads its README, and runs it through a local or OpenAI model — capturing each project's intent, health, and depth into a **SQLite cache on your machine**. Today, one tool reads that corpus: an **AI categorizer** that proposes tidy **native GitHub Lists**. Making the corpus directly queryable — `--ask`, semantic search, an MCP server — is the [v0.2.0 roadmap](docs/milestone-v0.2.0.md), tracked in the open.
+`gh-star-constellation-finder` analyses your GitHub stars into a **local-first knowledge base**. It fetches every repo you've starred, reads its README, and runs it through a local or OpenAI model — capturing each project's intent, health, depth, and **technical entities** into a **SQLite cache on your machine**. That corpus already powers an **AI categorizer** (native GitHub Lists), can be exported as a portable `corpus.json` (`--export-corpus`), and is the substrate for the **entity "constellation"** — repos linked by the tech they share ([v0.3.0](docs/milestone-v0.3.0.md)). Making it directly queryable — `--ask`, semantic search, an MCP server — is the [v0.2.0 roadmap](docs/milestone-v0.2.0.md), tracked in the open.
 
-> **Status:** v0.1.0 ships the analysis cache + categorizer. The retrieval surfaces (`--ask`, search, MCP) are roadmap, not yet implemented — see [docs/milestone-v0.2.0.md](docs/milestone-v0.2.0.md).
+> **Status:** the categorizer, analysis cache, per-repo **entity extraction** (swappable LLM / GLiNER seam — see [docs/entity-extraction.md](docs/entity-extraction.md)), the **eval harness** (`bun run evals`), and **`--export-corpus`** have shipped. The retrieval surfaces (`--ask`, search, MCP) and the constellation graph are roadmap — see [docs/milestone-v0.2.0.md](docs/milestone-v0.2.0.md) and [docs/milestone-v0.3.0.md](docs/milestone-v0.3.0.md).
 
 ![Review screen: an AI-generated suggestion proposing to move a repo into the "Curated Software Resources" list, with keyboard shortcuts for accept / skip / reject / quit](docs/screenshots/review-phase-cropped.png)
 
@@ -152,6 +152,7 @@ After confirming, you pick one of three strategies that controls how the AI's pr
 | `--concurrency <n>` | `5`        | Parallel README fetch concurrency                                              |
 | `--analyze-only`    | off        | Headless mode — skip the TUI and print JSON to stdout                          |
 | `--output <path>`   | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout                      |
+| `--export-corpus <path>` | _(off)_ | Headless — analyse your stars and write a `corpus.json` (the cross-project contract: repo metadata + analysis + entities), then exit |
 | `--no-cache`        | off        | Skip the local analysis cache — every repo is sent to the AI even if unchanged |
 | `--no-analytics`    | off        | Disable PostHog product analytics for this run (also persisted to user config) |
 
