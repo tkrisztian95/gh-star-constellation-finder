@@ -133,6 +133,7 @@ export async function buildCorpus(argv: string[]): Promise<number> {
         category: analysis.category,
         killerFeature: analysis.killerFeature,
         description: analysis.description,
+        entities: analysis.entities ?? [],
         isArchived: meta.isArchived,
       });
       entries.push(entry);

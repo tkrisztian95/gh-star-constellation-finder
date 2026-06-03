@@ -30,6 +30,7 @@ function makeAnalyzed(over: Partial<AnalyzedRepo> = {}): AnalyzedRepo {
       category: "JavaScript Runtime",
       killerFeature: "Secure by default",
       description: "A secure TypeScript/JavaScript runtime.",
+      entities: [{ name: "TypeScript", label: "LANGUAGE" }],
     },
     ...over,
   };
@@ -58,6 +59,18 @@ function runTests() {
     assertEqual(e.description, "A secure TypeScript/JavaScript runtime.", "description");
     assertEqual(e.isArchived, false, "isArchived");
     assertEqual(e.topics.join(","), "typescript,runtime", "topics");
+    assertEqual(
+      (e.entities ?? []).map((x) => `${x.name}:${x.label}`).join(","),
+      "TypeScript:LANGUAGE",
+      "entities carried into the corpus",
+    );
+  });
+
+  test("entities default to [] when analysis has none", () => {
+    const e = toCorpusEntry(
+      makeAnalyzed({ analysis: { category: "X", killerFeature: "", description: "" } }),
+    );
+    assertEqual((e.entities ?? []).length, 0, "entities default empty");
   });
 
   test("missing topics fall back to empty array", () => {

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { entitySchema } from "../ai/entityFilter.js";
+
 /**
  * The single source of truth for the corpus contract — repo identity plus the
  * per-repo analysis, wrapped as a `{ meta, entries }` file. Both the
@@ -13,6 +15,9 @@ export const corpusEntrySchema = z.object({
   category: z.string(),
   killerFeature: z.string(),
   description: z.string(),
+  /** Technical entities extracted at analysis time; carried so the downstream
+   * constellation needs no second NER pass. Defaults to [] for older corpora. */
+  entities: z.array(entitySchema).default([]),
   /** GitHub archived flag, captured at build time. Lets health-check queries
    * ("which of my stars are archived?") be scored. */
   isArchived: z.boolean(),

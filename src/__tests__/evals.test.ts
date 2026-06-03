@@ -25,6 +25,7 @@ function entry(owner: string, name: string, extra: Partial<CorpusEntry> = {}): C
     category: "",
     killerFeature: "",
     description: "",
+    entities: [],
     isArchived: false,
     ...extra,
   };
