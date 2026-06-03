@@ -1,5 +1,5 @@
 /**
- * SPIKE EVAL: compare entity-extraction variants on the same repos.
+ * Compare entity-extraction variants on the same repos.
  *
  *   A) LLM-full       — LLM reads the whole README (reference / silver standard)
  *   B) GLiNER-raw     — local NER only

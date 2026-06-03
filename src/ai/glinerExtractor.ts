@@ -1,4 +1,8 @@
-import { Gliner } from "gliner/node";
+// Type-only import is erased at compile time, so it triggers NO runtime load.
+// The actual gliner + onnxruntime-node modules load lazily in init() (dynamic
+// import), and are optionalDependencies — nothing is pulled unless GLiNER is
+// actually selected. Default extraction is the LLM; this is opt-in.
+import type { Gliner } from "gliner/node";
 
 import { filterEntities, type Entity, type EntityLabel } from "./entityFilter.js";
 import type { EntityExtractor, EntityExtractionInput } from "./entityExtractor.js";
@@ -30,29 +34,39 @@ export interface GlinerOptions {
 }
 
 export class GlinerExtractor implements EntityExtractor {
-  private gliner: Gliner;
+  private gliner: Gliner | null = null;
   private ready: Promise<void> | null = null;
+  private readonly opts: GlinerOptions;
   private readonly threshold: number;
   private readonly maxChars: number;
 
   constructor(opts: GlinerOptions) {
+    this.opts = opts;
     this.threshold = opts.threshold ?? 0.4;
     this.maxChars = opts.maxChars ?? 4000;
+  }
+
+  private async load(): Promise<void> {
+    // Dynamic import: gliner + onnxruntime-node are optionalDependencies and
+    // load only here, the first time GLiNER is actually used.
+    const { Gliner } = await import("gliner/node");
     this.gliner = new Gliner({
-      tokenizerPath: opts.tokenizerPath ?? "onnx-community/gliner_small-v2",
-      onnxSettings: { modelPath: opts.modelPath, executionProvider: "cpu" },
+      tokenizerPath: this.opts.tokenizerPath ?? "onnx-community/gliner_small-v2",
+      onnxSettings: { modelPath: this.opts.modelPath, executionProvider: "cpu" },
       maxWidth: 12,
       modelType: "span-level",
     });
+    await this.gliner.initialize();
   }
 
   private init(): Promise<void> {
-    if (!this.ready) this.ready = this.gliner.initialize();
+    if (!this.ready) this.ready = this.load();
     return this.ready;
   }
 
   async extract(input: EntityExtractionInput): Promise<Entity[]> {
     await this.init();
+    if (!this.gliner) return [];
     const text = [input.description, input.readme]
       .filter(Boolean)
       .join("\n")
