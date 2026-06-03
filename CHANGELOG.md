@@ -8,7 +8,21 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 ## [Unreleased]
 
-_Nothing yet — first new entry lands here. The targeted scope for the next release is documented in [docs/milestone-v0.2.0.md](./docs/milestone-v0.2.0.md): the project is pivoting from "TUI that organises starred repos into GitHub Lists" to "local-first knowledge base over your starred repos" (headless `--ask`, MCP server, eval harness). Until that milestone ships, this section captures incremental work landing on `main`._
+Incremental work toward [v0.2.0](./docs/milestone-v0.2.0.md) (knowledge-harness pivot) and [v0.3.0](./docs/milestone-v0.3.0.md) (the entity "constellation").
+
+### Added
+
+- **Retrieval eval harness** — `bun run evals` grades retrieval quality (precision@k, recall@k, MRR, no-answer rate) against a committed golden queryset, with a deterministic keyword baseline and a `--check` CI gate. ([#43](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/43))
+- **`--export-corpus <path>`** — headless flag that runs the analyze pipeline over your stars and writes a `corpus.json` in the shared corpus contract, then exits. The producer side of a cross-project contract (consumed by the constellation tooling and the eval harness). ([#57](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/57))
+- **Per-repo entity extraction** — analyses now produce `entities[]` (LANGUAGE/FRAMEWORK/TOOL/CONCEPT/ORG/PERSON/DOMAIN) behind a swappable `EntityExtractor` seam. Default is the LLM (`LlmEntityExtractor`); a deterministic `filterEntities` drops license/badge/generic noise. ([#53](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/53))
+- **Opt-in GLiNER extractor** — local zero-shot ONNX NER (`GlinerExtractor`), plus composable `AliasNormalizingExtractor` and `LlmNormalizingExtractor` layers, and `scripts/compareExtractors.ts`. **Dormant by default**: `gliner` + `onnxruntime-node` are `optionalDependencies`, loaded via dynamic import only when selected; the model is fetched on use. Default extraction is unchanged.
+- **Entity goldset bake-off kit** (`evals/goldset-bakeoff/`) — prompt + 120-repo input + `distill.ts` to build a consensus entity goldset from multiple frontier models (Claude / ChatGPT / Gemini).
+- **Docs:** [docs/entity-extraction.md](./docs/entity-extraction.md) (extractor architecture) and [docs/milestone-v0.3.0.md](./docs/milestone-v0.3.0.md) (constellation milestone).
+
+### Changed
+
+- **Analysis cache schema v2 → v3** (new `entities` column). Existing entries are dropped and re-analysed once on first run, matching the prior v1→v2 migration. _Breaking (pre-1.0): local cache is rebuilt once._
+- **Corpus contract** gains an `entities` field (defaults `[]` for older corpora). Producer and eval-harness share a single schema (`src/corpus/types.ts`). _Breaking (pre-1.0): contract is additive but the shape changed._
 
 ## [0.1.3] — 2026-05-16
 
