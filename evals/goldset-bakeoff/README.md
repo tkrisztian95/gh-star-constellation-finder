@@ -12,43 +12,46 @@ toward any one model (including the local one we're evaluating).
 
 ## Scope
 
-120 repositories — the owner's real starred repos (the corpus we already
-analysed). Input is `description + killerFeature + topics`. READMEs are **not**
-included at this scale: they don't fit a single manual paste and aren't available
-locally for all 120 (a GitHub re-export is needed). So this goldset is
-**description-grade**. When READMEs are re-exported, regenerate `input.md` with
-them for a readme-grade goldset; score extractors on the matching input.
+120 repositories — the owner's real starred repos. **Readme-grade**: each repo's
+input is `description + killerFeature + topics + README` (README truncated to
+~1.5k chars; 115/120 have one). This matches what the extractors being scored
+actually see, so the comparison is fair.
+
+Because READMEs are large, the input is split into **4 self-contained batches**
+(`input-batch-1.md` … `input-batch-4.md`, ~30 repos each). Each batch file
+already includes the full prompt — paste one file = one model message.
 
 ## Workflow (manual — you run the models)
 
-1. **Build the prompt input.** Paste the contents of [`PROMPT.md`](./PROMPT.md)
-   then [`input.md`](./input.md) into each model, in one message:
-   - Claude (claude.ai), ChatGPT, and Gemini.
-2. **Save each model's reply** (the raw JSON object) to:
-   - `outputs/claude.json`
-   - `outputs/chatgpt.json`
-   - `outputs/gemini.json`
-   Each file must be the JSON object keyed by `"owner/name"` — strip any prose or
-   code fences the model adds.
+For **each** model (Claude, ChatGPT, Gemini) and **each** of the 4 batches:
+
+1. Paste the whole `input-batch-N.md` into the model (it's self-contained).
+2. Save the model's raw JSON reply to `outputs/<model>-N.json`, e.g.
+   `outputs/claude-1.json`, `outputs/claude-2.json`, … `outputs/gemini-4.json`.
+   Strip any prose or ``` fences — the file must be just the JSON object keyed by
+   `"owner/name"`.
+
+That's 4 batches × 3 models = 12 files. (Fewer models is fine — `distill.ts
+claude chatgpt` adjusts the majority.)
+
 3. **Distill:**
    ```bash
    bun run evals/goldset-bakeoff/distill.ts
    ```
-   Produces `goldset.json` (entities agreed by ≥ majority of models) and prints
-   an agreement report (per-model counts, pairwise Jaccard, consensus size).
-
-You can run with however many models you have — `distill.ts claude chatgpt`
-works with two; majority adjusts.
+   `distill` automatically **merges all of a model's batch files** (`claude-*.json`
+   → one Claude result), votes entities agreed by ≥ majority of models, writes
+   `goldset.json`, and prints an agreement report (per-model counts, pairwise
+   Jaccard, consensus size). No manual stitching.
 
 ## Files
 
 | File | What |
 |------|------|
-| `PROMPT.md` | model-agnostic extraction instruction + output format |
-| `input.md` | 120 repositories (description + killerFeature + topics), ready to paste in one message |
+| `PROMPT.md` | the extraction instruction (also embedded in each batch) |
+| `input-batch-{1..4}.md` | 120 repos in 4 self-contained, pasteable batches (readme-grade) |
 | `repos.json` | the repo id list (manifest) |
-| `outputs/<model>.json` | **you create these** — each model's raw JSON reply |
-| `distill.ts` | consensus + agreement report → `goldset.json` |
+| `outputs/<model>-<batch>.json` | **you create these** — each model+batch raw JSON reply |
+| `distill.ts` | merge batches per model → consensus + report → `goldset.json` |
 | `goldset.json` | generated consensus golden set |
 
 ## Output format (what each model must return, and what you save)
@@ -63,8 +66,8 @@ works with two; majority adjusts.
 ```
 
 Labels: `LANGUAGE FRAMEWORK TOOL CONCEPT ORG PERSON DOMAIN`. The distiller runs
-each model's output through the same `filterEntities` used in production, so
-license/badge/generic noise is dropped before voting.
+each model's output through a built-in filter (mirrors production `filterEntities`)
+so license/badge/generic noise and bad labels are dropped before voting.
 
 ## Next
 

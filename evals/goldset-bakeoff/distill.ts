@@ -11,7 +11,7 @@
  *
  *   bun run evals/goldset-bakeoff/distill.ts [model1 model2 ...]
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -62,12 +62,28 @@ const models = process.argv.slice(2).length ? process.argv.slice(2) : ["claude",
 
 type ModelOutput = Record<string, Entity[]>;
 
+// Merge all of a model's files: outputs/<model>.json AND batch files
+// outputs/<model>-1.json, <model>-2.json, ... (so multi-batch runs need no
+// manual stitching — just save each batch reply as its own file).
 function loadModel(name: string): ModelOutput | null {
-  const path = join(here, "outputs", `${name}.json`);
-  if (!existsSync(path)) return null;
-  const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  const dir = join(here, "outputs");
+  if (!existsSync(dir)) return null;
+  const re = new RegExp(`^${name}(-\\d+)?\\.json$`);
+  const files = readdirSync(dir).filter((f) => re.test(f)).sort();
+  if (files.length === 0) return null;
   const out: ModelOutput = {};
-  for (const [repo, ents] of Object.entries(raw)) out[repo] = coerceEntities(ents);
+  for (const file of files) {
+    const raw = JSON.parse(readFileSync(join(dir, file), "utf8")) as Record<string, unknown>;
+    for (const [repo, ents] of Object.entries(raw)) {
+      const merged = [...(out[repo] ?? []), ...coerceEntities(ents)];
+      // de-dupe by name+label across batches
+      const seen = new Set<string>();
+      out[repo] = merged.filter((e) => {
+        const k = `${e.name.toLowerCase()}|${e.label}`;
+        return seen.has(k) ? false : (seen.add(k), true);
+      });
+    }
+  }
   return out;
 }
 
