@@ -44,7 +44,7 @@
   - [Where things live](#where-things-live)
   - [License](#license)
 
-Also see [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md), [CHANGELOG.md](./CHANGELOG.md), and the engine deep-dive in [docs/ai-engine-workflow.md](./docs/ai-engine-workflow.md).
+Also see [CONTRIBUTING.md](./CONTRIBUTING.md), [SECURITY.md](./SECURITY.md), [CHANGELOG.md](./CHANGELOG.md), the engine deep-dive in [docs/ai-engine-workflow.md](./docs/ai-engine-workflow.md), and the [entity-extraction architecture](./docs/entity-extraction.md) (the swappable LLM / GLiNER / hybrid seam behind the v0.3.0 constellation).
 
 ## How it Works
 
@@ -266,6 +266,31 @@ Each repo's AI analysis is cached in a local SQLite database at `.cache/analysis
 - **Wipe:** delete `.cache/analysis.db` to start over.
 
 The cache is gitignored — it's a local-only artefact and never leaves your machine.
+
+## 🎯 Retrieval Evals
+
+As the project grows a retrieval layer ("ask a question, get the right starred repos back"), `bun run evals` measures how good that search is — with a number, so changes can be judged instead of guessed. It is a graded scorecard, not a pass/fail test.
+
+```bash
+bun run evals            # score the baseline retriever, write evals/baseline.json
+bun run evals --check    # reproduce the committed baseline; non-zero on drift (CI gate)
+bun run evals --k 10     # change the cutoff (default 5)
+```
+
+It runs fully offline against committed fixtures — no GitHub token, no AI backend, no network:
+
+- **`evals/corpus.json`** — a frozen snapshot of well-known public repos and their analysis (the haystack search digs through).
+- **`evals/queries.json`** — hand-authored questions, each mapping to one or more ground-truth repo URLs that must exist in the corpus.
+- **`evals/baseline.json`** — the score today's keyword retriever achieves; the floor a smarter retriever must beat.
+
+**Reading the scorecard:**
+
+- **precision@5** — of the 5 repos returned, how many were correct.
+- **recall@5** — of all correct answers, how many landed in the top 5 (matters when a question has several right repos).
+- **MRR** — how high the first correct answer ranked (1.0 = always first).
+- **no-answer rate** — how often search returned nothing.
+
+**Adding a golden query** is a single-PR change with no code: add one entry to `evals/queries.json` (`question` + `expected` repo URLs already present in the corpus), re-run `bun run evals` to refresh `evals/baseline.json`, and commit both. To refresh the corpus itself, run `bun run evals:build-corpus` (this one needs `GITHUB_TOKEN` + an AI backend).
 
 ## 📊 Product Analytics (optional)
 
