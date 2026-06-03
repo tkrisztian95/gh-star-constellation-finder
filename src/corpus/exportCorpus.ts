@@ -24,6 +24,7 @@ export function toCorpusEntry(analyzed: AnalyzedRepo): CorpusEntry {
     category: analysis.category,
     killerFeature: analysis.killerFeature,
     description: analysis.description,
+    entities: analysis.entities ?? [],
     isArchived: repo.isArchived,
   };
 }

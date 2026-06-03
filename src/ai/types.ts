@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { LangfuseParent } from "./tracing.js";
+import type { Entity } from "./entityFilter.js";
 
 export const responseSchema = z.object({
   category: z.string(),
@@ -7,6 +8,8 @@ export const responseSchema = z.object({
   description: z.string().default(""),
 });
 
+// Entity extraction is a separate seam (see ./entityExtractor.ts); analysis
+// returns only the three generative fields.
 export function parseAnalysisResponse(
   content: string,
   fallback = "analysis-failed",
@@ -44,6 +47,9 @@ export interface AnalysisResult {
   category: string;
   killerFeature: string;
   description: string;
+  /** Technical entities extracted in the same analyze() call. Optional so that
+   * archived stubs / failure fallbacks can omit it; readers default to []. */
+  entities?: Entity[];
   dataQuality?: "full" | "sparse" | "truncated";
 }
 

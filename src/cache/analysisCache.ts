@@ -4,11 +4,21 @@ import { promises as fs } from "node:fs";
 import { dirname } from "node:path";
 
 import { logger } from "../logger.js";
+import { coerceEntities, type Entity } from "../ai/entityFilter.js";
 import type { AnalysisResult } from "../types.js";
 
 export const DEFAULT_CACHE_PATH = ".cache/analysis.db";
 
-const SCHEMA_VERSION = 2;
+/** Parse the JSON entities column, tolerating malformed values. */
+function parseEntitiesColumn(raw: string): Entity[] {
+  try {
+    return coerceEntities(JSON.parse(raw));
+  } catch {
+    return [];
+  }
+}
+
+const SCHEMA_VERSION = 3;
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS entries (
@@ -16,6 +26,7 @@ const CREATE_TABLE_SQL = `
     category       TEXT NOT NULL,
     killer_feature TEXT NOT NULL,
     description    TEXT NOT NULL,
+    entities       TEXT NOT NULL DEFAULT '[]',
     data_quality   TEXT,
     updated_at     INTEGER NOT NULL
   ) WITHOUT ROWID;
@@ -25,10 +36,11 @@ interface EntryRow {
   category: string;
   killer_feature: string;
   description: string;
+  entities: string;
   data_quality: "full" | "sparse" | "truncated" | null;
 }
 
-type SaveParams = [string, string, string, string, string | null, number];
+type SaveParams = [string, string, string, string, string, string | null, number];
 
 export interface AnalysisCache {
   get(repoId: string, readme: string): AnalysisResult | null;
@@ -98,10 +110,10 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
   const db = await openWithRecovery(filePath);
 
   const selectStmt: Statement<EntryRow, [string]> = db.query(
-    "SELECT category, killer_feature, description, data_quality FROM entries WHERE key = ?",
+    "SELECT category, killer_feature, description, entities, data_quality FROM entries WHERE key = ?",
   );
   const upsertStmt: Statement<unknown, SaveParams> = db.query(
-    "INSERT OR REPLACE INTO entries (key, category, killer_feature, description, data_quality, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    "INSERT OR REPLACE INTO entries (key, category, killer_feature, description, entities, data_quality, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   const countStmt: Statement<{ n: number }, []> = db.query("SELECT COUNT(*) AS n FROM entries");
 
@@ -118,6 +130,7 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
         category: row.category,
         killerFeature: row.killer_feature,
         description: row.description,
+        entities: parseEntitiesColumn(row.entities),
         dataQuality: row.data_quality ?? undefined,
       };
     },
@@ -127,6 +140,7 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
         result.category,
         result.killerFeature,
         result.description,
+        JSON.stringify(result.entities ?? []),
         result.dataQuality ?? null,
         Date.now(),
       );

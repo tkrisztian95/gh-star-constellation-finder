@@ -1,3 +1,5 @@
+import type { Entity } from "./ai/entityFilter.js";
+
 export interface Repo {
   id: string;
   name: string;
@@ -22,6 +24,9 @@ export interface AnalysisResult {
   category: string;
   killerFeature: string;
   description: string;
+  /** Technical entities extracted in the same analyze() call (optional;
+   * readers default to []). See src/ai/entityFilter.ts. */
+  entities?: Entity[];
   dataQuality?: "full" | "sparse" | "truncated";
 }
 

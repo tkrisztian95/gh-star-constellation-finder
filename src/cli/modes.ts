@@ -19,6 +19,7 @@ import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
 import { writeCorpusFile } from "../corpus/exportCorpus.js";
+import { LlmEntityExtractor } from "../ai/entityExtractor.js";
 import type { CliArgs } from "./args.js";
 import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
 import type { PhaseTimings } from "../types.js";
@@ -103,6 +104,7 @@ export async function runAnalyzeOnly(
     : null;
 
   const analyzer = createProvider(cliArgs.backend, trace);
+  const entityExtractor = new LlmEntityExtractor(analyzer);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   const analysisTimings: AnalysisTiming[] = [];
@@ -149,6 +151,16 @@ export async function runAnalyzeOnly(
               throw err;
             }
             analysis.dataQuality = computeDataQuality(readme);
+            if (analysis.category !== "analysis-failed") {
+              analysis.entities = await entityExtractor.extract({
+                owner: repo.owner,
+                name: repo.name,
+                description: repo.description,
+                language: repo.language,
+                topics: repo.topics,
+                readme,
+              });
+            }
             if (cache && analysis.category !== "analysis-failed") {
               await cache.saveEntry(repo.id, readme, analysis);
             }
