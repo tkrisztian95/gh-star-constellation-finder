@@ -20,7 +20,7 @@ import type { Repo, ConsolidationStrategy, ScopeMode, PhaseTimings } from "../ty
 import type { AppPhase } from "../state/phases.js";
 import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
 import type { AIProvider } from "../ai/index.js";
-import { LlmEntityExtractor } from "../ai/entityExtractor.js";
+import { LlmEntityExtractor, type EntitySource } from "../ai/entityExtractor.js";
 import type { AnalysisCache } from "../cache/analysisCache.js";
 import { logger } from "../logger.js";
 
@@ -54,6 +54,7 @@ export interface RunAnalysisParams {
   phaseTimings: PhaseTimings;
   parent?: LangfuseParent | null;
   cache?: AnalysisCache | null;
+  entitySource?: EntitySource;
 }
 
 export async function runAnalysis({
@@ -69,8 +70,9 @@ export async function runAnalysis({
   phaseTimings,
   parent,
   cache,
+  entitySource,
 }: RunAnalysisParams): Promise<AnalysisResult> {
-  const entityExtractor = new LlmEntityExtractor(analyzer);
+  const entityExtractor = new LlmEntityExtractor(analyzer, entitySource);
   const analyzedRepos: AnalyzedRepo[] = [];
   const analysisTimings: AnalysisTiming[] = [];
   let analyzed = 0;

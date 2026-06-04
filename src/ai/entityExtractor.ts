@@ -41,31 +41,50 @@ RULES:
 - DO NOT emit licenses (MIT, Apache 2.0), badges, shields, CI/coverage services, generic words ("library", "tool", "API", "web"), or URLs.
 - No prose, no markdown, no code fences — only the JSON object.`;
 
-export function buildEntityPrompt(input: EntityExtractionInput): string {
-  const readme = input.readme?.trim() ?? "";
-  const readmeSection = readme.length === 0 ? "README: (absent)" : `README:\n${readme}`;
-  return [
+/**
+ * Where the LLM reads entities from:
+ * - "readme" (default): full README + metadata — richest (the eval showed +68%
+ *   unique entities), at higher token cost.
+ * - "description": description + killerFeature + topics only — lean, fast,
+ *   cheap; also the automatic fallback when no README is available.
+ */
+export type EntitySource = "readme" | "description";
+
+export function buildEntityPrompt(
+  input: EntityExtractionInput,
+  source: EntitySource = "readme",
+): string {
+  const lines = [
     ENTITY_SYSTEM,
     "",
     `Repository: ${input.owner}/${input.name}`,
     `Description: ${input.description || "(none)"}`,
     `Language: ${input.language ?? "(unknown)"}`,
     `Topics: ${input.topics.length > 0 ? input.topics.join(", ") : "(none)"}`,
-    "",
-    readmeSection,
-    "",
-    'Respond ONLY with {"entities": [{"name","label"}]}.',
-  ].join("\n");
+  ];
+  if (source === "readme") {
+    const readme = input.readme?.trim() ?? "";
+    lines.push("", readme.length === 0 ? "README: (absent)" : `README:\n${readme}`);
+  }
+  lines.push("", 'Respond ONLY with {"entities": [{"name","label"}]}.');
+  return lines.join("\n");
 }
 
 /** Default extractor: prompts the configured AIProvider via its `complete()` seam. */
 export class LlmEntityExtractor implements EntityExtractor {
-  constructor(private readonly provider: AIProvider) {}
+  constructor(
+    private readonly provider: AIProvider,
+    private readonly source: EntitySource = "readme",
+  ) {}
 
   async extract(input: EntityExtractionInput, parent?: LangfuseParent | null): Promise<Entity[]> {
     let raw: string;
     try {
-      raw = await this.provider.complete(buildEntityPrompt(input), "entity-extraction", parent);
+      raw = await this.provider.complete(
+        buildEntityPrompt(input, this.source),
+        "entity-extraction",
+        parent,
+      );
     } catch {
       return [];
     }

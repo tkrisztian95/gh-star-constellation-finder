@@ -285,6 +285,7 @@ export async function main() {
       phaseTimings,
       parent: agentObs,
       cache,
+      entitySource: cliArgs.entitySource,
     });
   logger.info("analysis complete", {
     analyzedCount: analyzedRepos.length,
