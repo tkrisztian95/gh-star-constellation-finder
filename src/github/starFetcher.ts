@@ -1,6 +1,7 @@
 import { graphql } from "@octokit/graphql";
 import type { Repo, GitHubList } from "../types.js";
 import { STARRED_REPOSITORIES_QUERY, USER_LISTS_QUERY } from "../graphql/queries.js";
+import { withRetry } from "./retry.js";
 import { logger } from "../logger.js";
 
 interface GraphQLPageInfo {
@@ -89,9 +90,9 @@ export async function fetchStarredRepos(graphqlWithAuth: typeof graphql): Promis
       await checkRateLimit();
     }
 
-    const result: StarredReposResponse = await graphqlWithAuth<StarredReposResponse>(
-      STARRED_REPOSITORIES_QUERY,
-      { cursor },
+    const result: StarredReposResponse = await withRetry(
+      () => graphqlWithAuth<StarredReposResponse>(STARRED_REPOSITORIES_QUERY, { cursor }),
+      { label: "fetchStarredRepos" },
     );
 
     const { nodes, pageInfo }: { nodes: GraphQLRepo[]; pageInfo: GraphQLPageInfo } =
@@ -112,7 +113,9 @@ export async function fetchStarredRepos(graphqlWithAuth: typeof graphql): Promis
 }
 
 export async function fetchUserLists(graphqlWithAuth: typeof graphql): Promise<GitHubList[]> {
-  const result = await graphqlWithAuth<UserListsResponse>(USER_LISTS_QUERY);
+  const result = await withRetry(() => graphqlWithAuth<UserListsResponse>(USER_LISTS_QUERY), {
+    label: "fetchUserLists",
+  });
 
   return result.viewer.lists.nodes.map((list) => ({
     id: list.id,
