@@ -1,7 +1,7 @@
 export const STARRED_REPOSITORIES_QUERY = `
   query StarredRepositories($cursor: String) {
     viewer {
-      starredRepositories(first: 100, after: $cursor) {
+      starredRepositories(first: 50, after: $cursor) {
         pageInfo {
           hasNextPage
           endCursor
