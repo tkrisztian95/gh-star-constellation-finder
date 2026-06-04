@@ -19,6 +19,7 @@ import type { AnalyzedRepo } from "../engine/suggestionEngine.js";
 import { track, shutdown as analyticsShutdown } from "../analytics.js";
 import { buildSessionJson } from "../session/json.js";
 import { writeCorpusFile } from "../corpus/exportCorpus.js";
+import { buildConstellation, toGexf, toJson } from "../constellation/graph.js";
 import { LlmEntityExtractor } from "../ai/entityExtractor.js";
 import type { CliArgs } from "./args.js";
 import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
@@ -194,6 +195,30 @@ export async function runAnalyzeOnly(
     const count = writeCorpusFile(cliArgs.exportCorpusPath, analyzedRepos, analyzer.modelId);
     logger.info("corpus exported", { path: cliArgs.exportCorpusPath, entries: count });
     process.stderr.write(`Wrote ${count} entries to ${cliArgs.exportCorpusPath}\n`);
+    return;
+  }
+
+  // --constellation: build the entity co-occurrence graph from the analyzed
+  // repos and write GEXF + JSON, then return early.
+  if (cliArgs.constellationPath) {
+    const repoEntities = analyzedRepos.map((r) => ({
+      repoId: `${r.repo.owner}/${r.repo.name}`,
+      category: r.analysis.category,
+      entities: r.analysis.entities ?? [],
+    }));
+    const graph = buildConstellation(repoEntities, { minCount: 2 });
+    const dir = cliArgs.constellationPath;
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(`${dir}/constellation.gexf`, toGexf(graph));
+    fs.writeFileSync(`${dir}/constellation.json`, `${JSON.stringify(toJson(graph), null, 2)}\n`);
+    logger.info("constellation written", {
+      dir,
+      nodes: graph.order,
+      edges: graph.size,
+    });
+    process.stderr.write(
+      `Wrote constellation (${graph.order} repos, ${graph.size} edges) to ${dir}/constellation.{gexf,json}\n`,
+    );
     return;
   }
 
