@@ -37,7 +37,8 @@
     "typecheck": "tsc --noEmit",
     "test": "bun run src/__tests__/*.test.ts",
     "evals": "bun run src/evals/index.ts",
-    "evals:build-corpus": "bun run src/evals/buildCorpus.entry.ts"
+    "evals:build-corpus": "bun run src/evals/buildCorpus.entry.ts",
+    "mcp": "bun run src/mcp/server.ts"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
@@ -49,6 +50,7 @@
     "brace-expansion": "^5.0.6"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@octokit/graphql": "^8.2.2",
     "graphology": "^0.26.0",
     "graphology-communities-louvain": "^2.0.2",
