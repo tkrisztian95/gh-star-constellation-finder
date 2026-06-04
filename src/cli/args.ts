@@ -1,4 +1,5 @@
 import type { Backend } from "../ai/index.js";
+import type { EntitySource } from "../ai/entityExtractor.js";
 import pkg from "../../package.json" with { type: "json" };
 
 export interface CliArgs {
@@ -9,6 +10,7 @@ export interface CliArgs {
   outputPath?: string;
   exportCorpusPath?: string;
   constellationPath?: string;
+  entitySource?: EntitySource;
   noAnalytics: boolean;
   noCache: boolean;
 }
@@ -41,6 +43,8 @@ Options:
                         cross-project contract) and exit (skips suggestions)
   --constellation <dir>   Headless: analyse stars, build the entity co-occurrence
                         graph, write <dir>/constellation.{gexf,json} and exit
+  --entity-source <s>   Entity extraction source: readme (default, richest) or
+                        description (lean/fast/cheap)
   --no-cache            Skip the local analysis cache (re-analyse every repo)
   --no-analytics        Disable PostHog product analytics for this run
   -h, --help            Show this help and exit
@@ -118,6 +122,14 @@ export function parseArgs(): CliArgs {
       i++;
     } else if (args[i] === "--constellation" && args[i + 1]) {
       result.constellationPath = args[i + 1];
+      i++;
+    } else if (args[i] === "--entity-source" && args[i + 1]) {
+      const v = args[i + 1];
+      if (v !== "readme" && v !== "description") {
+        process.stderr.write(`Error: --entity-source must be "readme" or "description"\n`);
+        process.exit(1);
+      }
+      result.entitySource = v;
       i++;
     } else if (args[i] === "--no-analytics") {
       result.noAnalytics = true;

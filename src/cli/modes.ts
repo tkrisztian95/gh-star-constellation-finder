@@ -105,7 +105,7 @@ export async function runAnalyzeOnly(
     : null;
 
   const analyzer = createProvider(cliArgs.backend, trace);
-  const entityExtractor = new LlmEntityExtractor(analyzer);
+  const entityExtractor = new LlmEntityExtractor(analyzer, cliArgs.entitySource);
   const existingListNames = lists.map((l) => l.name);
   const analyzedRepos: AnalyzedRepo[] = [];
   const analysisTimings: AnalysisTiming[] = [];

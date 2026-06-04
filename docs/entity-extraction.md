@@ -53,6 +53,9 @@ license/badge/CI/generic/URL noise and de-duplicate.
 
 - **Default is LLM.** It returns canonical, correctly-labeled entities with no
   post-processing — graph-ready out of the box.
+- **Entity source is configurable** (`--entity-source readme|description`, #59).
+  `readme` (default) is richest; `description` is lean/fast/cheap and the
+  automatic fallback when no README is available.
 - **GLiNER is dormant by default.** `gliner` + `onnxruntime-node` are
   `optionalDependencies`; `GlinerExtractor` loads them via dynamic `import()` only
   when actually used. The ~183MB ONNX model is a constructor arg (lazy, gitignored,
