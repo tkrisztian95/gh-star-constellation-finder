@@ -2,6 +2,7 @@ import {
   buildConstellation,
   toJson,
   neighbours,
+  relatedFromJson,
   type RepoEntities,
 } from "../constellation/graph.js";
 import type { Entity } from "../ai/entityFilter.js";
@@ -65,6 +66,15 @@ function runTests(): void {
     assertEqual(nb.length, 1, "a has one neighbour");
     assertEqual(nb[0].repo, "o/b", "neighbour is b");
     assertEqual(neighbours(g, "o/c").length, 0, "c has no neighbours");
+  });
+
+  test("relatedFromJson ranks neighbours from the serialized graph (MCP path)", () => {
+    const j = toJson(buildConstellation(repos, { minCount: 2 }));
+    const r = relatedFromJson(j, "o/a", 5);
+    assertEqual(r.length, 1, "a has one related");
+    assertEqual(r[0].repo, "o/b", "related is b");
+    assert(r[0].shared.includes("Docker"), "shared entities included");
+    assertEqual(relatedFromJson(j, "o/c").length, 0, "c has none");
   });
 
   test("toJson shape", () => {

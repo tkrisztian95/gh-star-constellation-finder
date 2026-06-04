@@ -83,7 +83,25 @@ Extracted entities flow downstream unchanged:
   `--export-corpus` ships entities and the constellation consumer needs no second
   extraction pass.
 
+## The constellation surfaces
+
+Entities feed a repo co-occurrence graph (`src/constellation/graph.ts`):
+
+```bash
+# Build the graph (GEXF for Gephi + JSON) from your stars:
+bun run dev -- --backend ollama --constellation out
+
+# Serve it to MCP clients (Claude Desktop / Cursor / Cline):
+CONSTELLATION_PATH=out/constellation.json bun run mcp
+```
+
+The MCP server (`src/mcp/server.ts`) exposes two stdio tools:
+- `related_stars(repo, k?)` — repos most related to `repo` by shared tech (ranked, with the shared entities)
+- `list_stars()` — all repo ids in the constellation
+
+Standalone — reads the saved `constellation.json`; no GitHub/model/graphology at query time.
+
 ## Related
 
-- Issue #53 (entity extraction), #54 (graph), #59 (readme-vs-description source switch)
+- Issue #53 (entity extraction), #54 (graph), #55 (`--constellation`), #56 (MCP), #59 (readme-vs-description source switch)
 - Prototype: the `ner-structured` repo (the original Python constellation spike)
