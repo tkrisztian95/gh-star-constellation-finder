@@ -8,6 +8,7 @@ export interface CliArgs {
   analyzeOnly: boolean;
   outputPath?: string;
   exportCorpusPath?: string;
+  constellationPath?: string;
   noAnalytics: boolean;
   noCache: boolean;
 }
@@ -38,6 +39,8 @@ Options:
   --output <path>       With --analyze-only: write to a file instead of stdout
   --export-corpus <path>  Headless: analyse stars, write a corpus.json (the
                         cross-project contract) and exit (skips suggestions)
+  --constellation <dir>   Headless: analyse stars, build the entity co-occurrence
+                        graph, write <dir>/constellation.{gexf,json} and exit
   --no-cache            Skip the local analysis cache (re-analyse every repo)
   --no-analytics        Disable PostHog product analytics for this run
   -h, --help            Show this help and exit
@@ -112,6 +115,9 @@ export function parseArgs(): CliArgs {
       i++;
     } else if (args[i] === "--export-corpus" && args[i + 1]) {
       result.exportCorpusPath = args[i + 1];
+      i++;
+    } else if (args[i] === "--constellation" && args[i + 1]) {
+      result.constellationPath = args[i + 1];
       i++;
     } else if (args[i] === "--no-analytics") {
       result.noAnalytics = true;
