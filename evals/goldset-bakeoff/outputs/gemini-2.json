@@ -1,0 +1,243 @@
+{
+"open-guides/og-aws": [
+{"name": "Amazon Web Services", "label": "ORG"},
+{"name": "Shell", "label": "LANGUAGE"}
+],
+"freeCodeCamp/freeCodeCamp": [
+{"name": "TypeScript", "label": "LANGUAGE"},
+{"name": "Node.js", "label": "TOOL"},
+{"name": "React", "label": "FRAMEWORK"},
+{"name": "D3.js", "label": "FRAMEWORK"},
+{"name": "JavaScript", "label": "LANGUAGE"},
+{"name": "Machine learning", "label": "DOMAIN"}
+],
+"keycloak/keycloak": [
+{"name": "Java", "label": "LANGUAGE"},
+{"name": "Identity and Access Management", "label": "DOMAIN"},
+{"name": "OIDC", "label": "CONCEPT"},
+{"name": "SAML", "label": "CONCEPT"}
+],
+"maurobussini/restful-stress": [
+{"name": "Electron", "label": "FRAMEWORK"},
+{"name": "HTTP", "label": "CONCEPT"},
+{"name": "REST", "label": "CONCEPT"},
+{"name": "Windows", "label": "TOOL"},
+{"name": "macOS", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"}
+],
+"sindresorhus/awesome": [
+{"name": "macOS", "label": "TOOL"},
+{"name": "GitHub Actions", "label": "TOOL"}
+],
+"devspace-sh/devspace": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "Helm", "label": "TOOL"},
+{"name": "Kaniko", "label": "TOOL"},
+{"name": "Minikube", "label": "TOOL"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Cloud-native", "label": "CONCEPT"},
+{"name": "Microservices", "label": "CONCEPT"},
+{"name": "Cloud Native Computing Foundation", "label": "ORG"}
+],
+"google/go-containerregistry": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Python", "label": "LANGUAGE"}
+],
+"yaml/yamlscript": [
+{"name": "YAML", "label": "LANGUAGE"},
+{"name": "Clojure", "label": "LANGUAGE"},
+{"name": "Functional programming", "label": "CONCEPT"}
+],
+"Naereen/badges": [
+{"name": "Markdown", "label": "LANGUAGE"},
+{"name": "reStructuredText", "label": "LANGUAGE"},
+{"name": "Python", "label": "LANGUAGE"},
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Rust", "label": "LANGUAGE"},
+{"name": "Nix", "label": "LANGUAGE"},
+{"name": "LaTeX", "label": "LANGUAGE"},
+{"name": "JavaScript", "label": "LANGUAGE"},
+{"name": "Jupyter Notebook", "label": "TOOL"},
+{"name": "Google Colab", "label": "TOOL"},
+{"name": "Binder", "label": "TOOL"}
+],
+"george-haddad/win-cross-dev": [
+{"name": "PowerShell", "label": "LANGUAGE"},
+{"name": "Scoop", "label": "TOOL"},
+{"name": "Windows", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"},
+{"name": ".NET Framework", "label": "FRAMEWORK"},
+{"name": "Git", "label": "TOOL"},
+{"name": "Homebrew", "label": "TOOL"}
+],
+"moncho/dry": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Docker Swarm", "label": "TOOL"},
+{"name": "Docker Engine", "label": "TOOL"}
+],
+"un-ts/changesets-gitlab": [
+{"name": "TypeScript", "label": "LANGUAGE"},
+{"name": "GitLab CI", "label": "TOOL"},
+{"name": "GitHub Actions", "label": "TOOL"},
+{"name": "npm", "label": "TOOL"},
+{"name": "Conventional Commits", "label": "CONCEPT"},
+{"name": "Renovate", "label": "TOOL"},
+{"name": "StandardJS", "label": "TOOL"},
+{"name": "Prettier", "label": "TOOL"}
+],
+"gluster/glusterdocs": [
+{"name": "Gluster", "label": "TOOL"},
+{"name": "MkDocs", "label": "TOOL"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Fedora", "label": "TOOL"},
+{"name": "EPEL", "label": "TOOL"},
+{"name": "Python", "label": "LANGUAGE"},
+{"name": "HTML", "label": "LANGUAGE"}
+],
+"ovity/octotree": [
+{"name": "JavaScript", "label": "LANGUAGE"},
+{"name": "Google Chrome", "label": "TOOL"},
+{"name": "Firefox", "label": "TOOL"},
+{"name": "Opera", "label": "TOOL"},
+{"name": "Safari", "label": "TOOL"},
+{"name": "Microsoft Edge", "label": "TOOL"},
+{"name": "Brave", "label": "TOOL"}
+],
+"mastra-ai/mastra": [
+{"name": "TypeScript", "label": "LANGUAGE"},
+{"name": "React", "label": "FRAMEWORK"},
+{"name": "Next.js", "label": "FRAMEWORK"},
+{"name": "Node.js", "label": "TOOL"},
+{"name": "OpenAI", "label": "ORG"},
+{"name": "Anthropic", "label": "ORG"},
+{"name": "Gemini", "label": "TOOL"},
+{"name": "Large Language Models", "label": "CONCEPT"},
+{"name": "Y Combinator", "label": "ORG"}
+],
+"portainer/portainer": [
+{"name": "Docker", "label": "TOOL"},
+{"name": "Docker Swarm", "label": "TOOL"},
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "ACI", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"},
+{"name": "Windows", "label": "TOOL"},
+{"name": "Moby", "label": "TOOL"}
+],
+"gnab/remark": [
+{"name": "Markdown", "label": "LANGUAGE"},
+{"name": "HTML", "label": "LANGUAGE"},
+{"name": "CSS", "label": "LANGUAGE"},
+{"name": "JavaScript", "label": "LANGUAGE"}
+],
+"jenkinsci/stash-pullrequest-builder-plugin": [
+{"name": "Jenkins", "label": "TOOL"},
+{"name": "Atlassian Stash", "label": "TOOL"},
+{"name": "Git", "label": "TOOL"},
+{"name": "Apache Maven", "label": "TOOL"}
+],
+"seraphimalia/docker-openjdk8-alpine-plus-fonts": [
+{"name": "Docker", "label": "TOOL"},
+{"name": "OpenJDK", "label": "TOOL"},
+{"name": "Alpine Linux", "label": "TOOL"},
+{"name": "Java", "label": "LANGUAGE"}
+],
+"kubernetes/client-go": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Kubernetes", "label": "TOOL"}
+],
+"containrrr/shoutrrr": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Slack", "label": "TOOL"},
+{"name": "Discord", "label": "TOOL"},
+{"name": "Snapcraft", "label": "TOOL"}
+],
+"diffplug/spotless": [
+{"name": "Java", "label": "LANGUAGE"},
+{"name": "Gradle", "label": "TOOL"},
+{"name": "Apache Maven", "label": "TOOL"},
+{"name": "SBT", "label": "TOOL"},
+{"name": "Antlr", "label": "TOOL"},
+{"name": "C", "label": "LANGUAGE"},
+{"name": "C#", "label": "LANGUAGE"},
+{"name": "C++", "label": "LANGUAGE"},
+{"name": "CSS", "label": "LANGUAGE"},
+{"name": "Flow", "label": "TOOL"},
+{"name": "GraphQL", "label": "LANGUAGE"},
+{"name": "Groovy", "label": "LANGUAGE"},
+{"name": "HTML", "label": "LANGUAGE"},
+{"name": "JavaScript", "label": "LANGUAGE"},
+{"name": "JSON", "label": "LANGUAGE"},
+{"name": "Kotlin", "label": "LANGUAGE"},
+{"name": "Less", "label": "LANGUAGE"},
+{"name": "Markdown", "label": "LANGUAGE"},
+{"name": "Objective-C", "label": "LANGUAGE"},
+{"name": "Protocol Buffers", "label": "TOOL"},
+{"name": "Python", "label": "LANGUAGE"},
+{"name": "Scala", "label": "LANGUAGE"},
+{"name": "SCSS", "label": "LANGUAGE"},
+{"name": "Shell", "label": "LANGUAGE"},
+{"name": "SQL", "label": "LANGUAGE"},
+{"name": "TypeScript", "label": "LANGUAGE"},
+{"name": "Vue.js", "label": "FRAMEWORK"},
+{"name": "YAML", "label": "LANGUAGE"},
+{"name": "Visual Studio Code", "label": "TOOL"},
+{"name": "IntelliJ IDEA", "label": "TOOL"},
+{"name": "Prettier", "label": "TOOL"}
+],
+"microsoft/PowerToys": [
+{"name": "C#", "label": "LANGUAGE"},
+{"name": "Windows", "label": "TOOL"},
+{"name": "Microsoft", "label": "ORG"},
+{"name": "Windows 10", "label": "TOOL"},
+{"name": "Windows 11", "label": "TOOL"}
+],
+"podman-container-tools/podman": [
+{"name": "OCI", "label": "CONCEPT"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"},
+{"name": "macOS", "label": "TOOL"},
+{"name": "Windows", "label": "TOOL"},
+{"name": "Kubernetes", "label": "TOOL"}
+],
+"wayou/vscode-todo-highlight": [
+{"name": "Visual Studio Code", "label": "TOOL"},
+{"name": "Windows", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"}
+],
+"alexcasalboni/aws-lambda-power-tuning": [
+{"name": "AWS Lambda", "label": "TOOL"},
+{"name": "AWS Step Functions", "label": "TOOL"},
+{"name": "Amazon Web Services", "label": "ORG"},
+{"name": "Serverless", "label": "CONCEPT"}
+],
+"OAI/OpenAPI-Specification": [
+{"name": "OpenAPI Specification", "label": "CONCEPT"},
+{"name": "OpenAPI Initiative", "label": "ORG"},
+{"name": "Linux Foundation", "label": "ORG"},
+{"name": "YAML", "label": "LANGUAGE"},
+{"name": "JSON", "label": "LANGUAGE"},
+{"name": "HTTP", "label": "CONCEPT"}
+],
+"json-api-dotnet/JsonApiDotNetCore": [
+{"name": "JSON:API", "label": "CONCEPT"},
+{"name": "REST", "label": "CONCEPT"},
+{"name": "ASP.NET Core", "label": "FRAMEWORK"},
+{"name": "Entity Framework Core", "label": "FRAMEWORK"},
+{"name": ".NET", "label": "FRAMEWORK"},
+{"name": "OpenAPI", "label": "CONCEPT"}
+],
+"punkpeye/awesome-mcp-servers": [
+{"name": "Model Context Protocol", "label": "CONCEPT"},
+{"name": "Claude", "label": "TOOL"},
+{"name": "SQLite", "label": "TOOL"}
+],
+"vega/vega": [
+{"name": "JSON", "label": "LANGUAGE"},
+{"name": "HTML5 Canvas", "label": "TOOL"},
+{"name": "SVG", "label": "TOOL"},
+{"name": "D3.js", "label": "FRAMEWORK"}
+]
+}
