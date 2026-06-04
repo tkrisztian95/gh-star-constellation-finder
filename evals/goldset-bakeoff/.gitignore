@@ -1,4 +1,1 @@
-# Generated — you create model outputs locally; goldset is distilled from them
-outputs/*.json
-!outputs/SAMPLE-*.json
-goldset.json
+# (goldset.json and outputs/*.json ARE committed — they're the curated ground truth + provenance)

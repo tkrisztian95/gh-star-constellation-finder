@@ -1,0 +1,267 @@
+{
+    "ibmmaximorestjsonapis/maximorestclient": [
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "IBM Maximo", "label": "TOOL"},
+      {"name": "commons-codec", "label": "FRAMEWORK"},
+      {"name": "Android", "label": "TOOL"},
+      {"name": "OSLC", "label": "CONCEPT"},
+      {"name": "Linked Data", "label": "CONCEPT"},
+      {"name": "REST", "label": "CONCEPT"},
+      {"name": "IBM", "label": "ORG"}
+    ],
+    "aws-samples/aws-service-catalog-terraform-reference-architecture": [
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "Terraform", "label": "TOOL"},
+      {"name": "AWS CloudFormation", "label": "TOOL"},
+      {"name": "AWS Lambda", "label": "TOOL"},
+      {"name": "AWS Service Catalog", "label": "TOOL"},
+      {"name": "Amazon Web Services", "label": "ORG"},
+      {"name": "Infrastructure as Code", "label": "CONCEPT"},
+      {"name": "DevOps", "label": "DOMAIN"}
+    ],
+    "yahoo/elide": [
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "GraphQL", "label": "CONCEPT"},
+      {"name": "JSON:API", "label": "CONCEPT"},
+      {"name": "JPA", "label": "FRAMEWORK"},
+      {"name": "Hibernate", "label": "FRAMEWORK"},
+      {"name": "ORM", "label": "CONCEPT"},
+      {"name": "CRUD", "label": "CONCEPT"},
+      {"name": "Yahoo", "label": "ORG"}
+    ],
+    "mui/mui-x": [
+      {"name": "React", "label": "FRAMEWORK"},
+      {"name": "Material UI", "label": "FRAMEWORK"},
+      {"name": "MUI", "label": "ORG"}
+    ],
+    "rook/rook": [
+      {"name": "Go", "label": "LANGUAGE"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "Ceph", "label": "TOOL"},
+      {"name": "Docker", "label": "TOOL"},
+      {"name": "etcd", "label": "TOOL"},
+      {"name": "CNCF", "label": "ORG"},
+      {"name": "Cloud Native", "label": "CONCEPT"},
+      {"name": "Storage Orchestration", "label": "CONCEPT"}
+    ],
+    "jamstack/jamstack.org": [
+      {"name": "Jamstack", "label": "CONCEPT"},
+      {"name": "Serverless", "label": "CONCEPT"},
+      {"name": "Static Site Generation", "label": "CONCEPT"}
+    ],
+    "testcontainers/testcontainers-java": [
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "JUnit", "label": "FRAMEWORK"},
+      {"name": "Docker", "label": "TOOL"},
+      {"name": "Docker Compose", "label": "TOOL"},
+      {"name": "Selenium", "label": "TOOL"},
+      {"name": "JVM", "label": "TOOL"},
+      {"name": "HashiCorp Vault", "label": "TOOL"},
+      {"name": "Microsoft SQL Server", "label": "TOOL"},
+      {"name": "Integration Testing", "label": "DOMAIN"}
+    ],
+    "grafana/loki": [
+      {"name": "Go", "label": "LANGUAGE"},
+      {"name": "Prometheus", "label": "TOOL"},
+      {"name": "Grafana", "label": "TOOL"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "Log Aggregation", "label": "CONCEPT"},
+      {"name": "Cloud Native", "label": "CONCEPT"},
+      {"name": "Observability", "label": "DOMAIN"}
+    ],
+    "passbolt/passbolt_api": [
+      {"name": "PHP", "label": "LANGUAGE"},
+      {"name": "CakePHP", "label": "FRAMEWORK"},
+      {"name": "End-to-End Encryption", "label": "CONCEPT"},
+      {"name": "PHPStan", "label": "TOOL"},
+      {"name": "Psalm", "label": "TOOL"},
+      {"name": "Passbolt", "label": "ORG"},
+      {"name": "Password Management", "label": "DOMAIN"}
+    ],
+    "abstractinfrastructure/k8s-intro-tutorials": [
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "kind", "label": "TOOL"},
+      {"name": "Docker", "label": "TOOL"},
+      {"name": "kubectl", "label": "TOOL"},
+      {"name": "minikube", "label": "TOOL"}
+    ],
+    "podman-container-tools/skopeo": [
+      {"name": "Skopeo", "label": "TOOL"},
+      {"name": "OCI", "label": "CONCEPT"},
+      {"name": "Docker", "label": "TOOL"},
+      {"name": "Containers", "label": "CONCEPT"},
+      {"name": "Podman", "label": "ORG"}
+    ],
+    "googleworkspace/google-docs-hast": [
+      {"name": "TypeScript", "label": "LANGUAGE"},
+      {"name": "Google Docs", "label": "TOOL"},
+      {"name": "hast", "label": "FRAMEWORK"},
+      {"name": "rehype", "label": "FRAMEWORK"},
+      {"name": "unist", "label": "FRAMEWORK"},
+      {"name": "unified", "label": "FRAMEWORK"},
+      {"name": "Markdown", "label": "CONCEPT"},
+      {"name": "Google Workspace", "label": "ORG"},
+      {"name": "Google", "label": "ORG"}
+    ],
+    "mswjs/msw": [
+      {"name": "TypeScript", "label": "LANGUAGE"},
+      {"name": "JavaScript", "label": "LANGUAGE"},
+      {"name": "Service Worker", "label": "CONCEPT"},
+      {"name": "Express", "label": "FRAMEWORK"},
+      {"name": "Mock Service Worker", "label": "FRAMEWORK"},
+      {"name": "API Mocking", "label": "DOMAIN"}
+    ],
+    "kevinswiber/siren": [
+      {"name": "Siren", "label": "CONCEPT"},
+      {"name": "Hypermedia", "label": "CONCEPT"},
+      {"name": "JSON", "label": "CONCEPT"},
+      {"name": "Kevin Swiber", "label": "PERSON"}
+    ],
+    "stoplightio/spectral": [
+      {"name": "TypeScript", "label": "LANGUAGE"},
+      {"name": "OpenAPI", "label": "CONCEPT"},
+      {"name": "AsyncAPI", "label": "CONCEPT"},
+      {"name": "Arazzo", "label": "CONCEPT"},
+      {"name": "JSON Schema", "label": "CONCEPT"},
+      {"name": "JSONPath", "label": "CONCEPT"},
+      {"name": "YAML", "label": "CONCEPT"},
+      {"name": "Swagger", "label": "TOOL"},
+      {"name": "Linting", "label": "CONCEPT"},
+      {"name": "Stoplight", "label": "ORG"}
+    ],
+    "dependency-check/DependencyCheck": [
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "Maven", "label": "TOOL"},
+      {"name": "Gradle", "label": "TOOL"},
+      {"name": "Jenkins", "label": "TOOL"},
+      {"name": "Ant", "label": "TOOL"},
+      {"name": "Software Composition Analysis", "label": "CONCEPT"},
+      {"name": "CPE", "label": "CONCEPT"},
+      {"name": "CVE", "label": "CONCEPT"},
+      {"name": "NVD", "label": "TOOL"},
+      {"name": "OWASP", "label": "ORG"},
+      {"name": "Vulnerability Detection", "label": "DOMAIN"}
+    ],
+    "d-x90/asp-dotnet-core-api": [
+      {"name": "ASP.NET Core", "label": "FRAMEWORK"},
+      {"name": ".NET", "label": "TOOL"},
+      {"name": "Entity Framework", "label": "FRAMEWORK"},
+      {"name": "PostgreSQL", "label": "TOOL"},
+      {"name": "Docker Compose", "label": "TOOL"},
+      {"name": "JWT", "label": "CONCEPT"},
+      {"name": "REST", "label": "CONCEPT"}
+    ],
+    "PacktPublishing/Keycloak-Identity-and-Access-Management-for-Modern-Applications": [
+      {"name": "Keycloak", "label": "TOOL"},
+      {"name": "OpenID Connect", "label": "CONCEPT"},
+      {"name": "OAuth 2.0", "label": "CONCEPT"},
+      {"name": "Packt", "label": "ORG"},
+      {"name": "Identity and Access Management", "label": "DOMAIN"}
+    ],
+    "pytest-dev/pytest-testinfra": [
+      {"name": "Python", "label": "LANGUAGE"},
+      {"name": "Pytest", "label": "FRAMEWORK"},
+      {"name": "Salt", "label": "TOOL"},
+      {"name": "Ansible", "label": "TOOL"},
+      {"name": "Puppet", "label": "TOOL"},
+      {"name": "Chef", "label": "TOOL"},
+      {"name": "Serverspec", "label": "TOOL"},
+      {"name": "Docker", "label": "TOOL"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "Nagios", "label": "TOOL"},
+      {"name": "Infrastructure as Code", "label": "CONCEPT"},
+      {"name": "TDD", "label": "CONCEPT"},
+      {"name": "Infrastructure Testing", "label": "DOMAIN"}
+    ],
+    "google/gvisor": [
+      {"name": "Go", "label": "LANGUAGE"},
+      {"name": "Linux", "label": "TOOL"},
+      {"name": "OCI", "label": "CONCEPT"},
+      {"name": "runsc", "label": "TOOL"},
+      {"name": "Docker", "label": "TOOL"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "AppArmor", "label": "TOOL"},
+      {"name": "Sandboxing", "label": "CONCEPT"},
+      {"name": "Containers", "label": "CONCEPT"},
+      {"name": "Google", "label": "ORG"}
+    ],
+    "orbitbot/chrome-extensions-examples": [
+      {"name": "JavaScript", "label": "LANGUAGE"},
+      {"name": "Chrome", "label": "TOOL"},
+      {"name": "WebExtensions", "label": "CONCEPT"},
+      {"name": "Browser Extensions", "label": "CONCEPT"},
+      {"name": "Google", "label": "ORG"}
+    ],
+    "kudobuilder/kudo": [
+      {"name": "Go", "label": "LANGUAGE"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "Kubernetes Operator", "label": "CONCEPT"},
+      {"name": "CRD", "label": "CONCEPT"},
+      {"name": "Kafka", "label": "TOOL"},
+      {"name": "MySQL", "label": "TOOL"},
+      {"name": "ZooKeeper", "label": "TOOL"},
+      {"name": "CNCF", "label": "ORG"}
+    ],
+    "anliksim/maven-template-bom": [
+      {"name": "Maven", "label": "TOOL"},
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "Bill of Materials", "label": "CONCEPT"}
+    ],
+    "jenkinsci/warnings-ng-plugin": [
+      {"name": "Java", "label": "LANGUAGE"},
+      {"name": "C", "label": "LANGUAGE"},
+      {"name": "C#", "label": "LANGUAGE"},
+      {"name": "Jenkins", "label": "TOOL"},
+      {"name": "CheckStyle", "label": "TOOL"},
+      {"name": "SpotBugs", "label": "TOOL"},
+      {"name": "FindBugs", "label": "TOOL"},
+      {"name": "PMD", "label": "TOOL"},
+      {"name": "StyleCop", "label": "TOOL"},
+      {"name": "Error Prone", "label": "TOOL"},
+      {"name": "CPD", "label": "TOOL"},
+      {"name": "Simian", "label": "TOOL"},
+      {"name": "GitLab", "label": "TOOL"},
+      {"name": "Static Analysis", "label": "CONCEPT"}
+    ],
+    "fossology/fossology": [
+      {"name": "PHP", "label": "LANGUAGE"},
+      {"name": "SPDX", "label": "CONCEPT"},
+      {"name": "PostgreSQL", "label": "TOOL"},
+      {"name": "Apache HTTP Server", "label": "TOOL"},
+      {"name": "FOSSology", "label": "ORG"},
+      {"name": "License Compliance", "label": "DOMAIN"}
+    ],
+    "kudobuilder/kuttl": [
+      {"name": "Go", "label": "LANGUAGE"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "Kubernetes Operators", "label": "CONCEPT"},
+      {"name": "Operator SDK", "label": "TOOL"},
+      {"name": "KUDO", "label": "ORG"},
+      {"name": "Testing", "label": "DOMAIN"}
+    ],
+    "ohmyzsh/ohmyzsh": [
+      {"name": "Zsh", "label": "TOOL"},
+      {"name": "Oh My Zsh", "label": "FRAMEWORK"},
+      {"name": "Terminal", "label": "CONCEPT"}
+    ],
+    "gardener/gardener": [
+      {"name": "Go", "label": "LANGUAGE"},
+      {"name": "Kubernetes", "label": "TOOL"},
+      {"name": "Cluster API", "label": "FRAMEWORK"},
+      {"name": "Hosted Control Planes", "label": "CONCEPT"},
+      {"name": "Gardener", "label": "ORG"}
+    ],
+    "badges/shields": [
+      {"name": "JavaScript", "label": "LANGUAGE"},
+      {"name": "SVG", "label": "CONCEPT"},
+      {"name": "Shields.io", "label": "TOOL"},
+      {"name": "GitHub", "label": "TOOL"}
+    ],
+    "ajv-validator/ajv": [
+      {"name": "JavaScript", "label": "LANGUAGE"},
+      {"name": "Node.js", "label": "TOOL"},
+      {"name": "JSON Schema", "label": "CONCEPT"},
+      {"name": "JSON Type Definition", "label": "CONCEPT"},
+      {"name": "Ajv", "label": "FRAMEWORK"}
+    ]
+  }

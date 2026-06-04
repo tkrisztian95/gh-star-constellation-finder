@@ -73,7 +73,13 @@ function loadModel(name: string): ModelOutput | null {
   if (files.length === 0) return null;
   const out: ModelOutput = {};
   for (const file of files) {
-    const raw = JSON.parse(readFileSync(join(dir, file), "utf8")) as Record<string, unknown>;
+    let raw: Record<string, unknown>;
+    try {
+      raw = JSON.parse(readFileSync(join(dir, file), "utf8")) as Record<string, unknown>;
+    } catch (e) {
+      console.error(`  ⚠️  skipping ${file}: invalid JSON (${e instanceof Error ? e.message : e})`);
+      continue;
+    }
     for (const [repo, ents] of Object.entries(raw)) {
       const merged = [...(out[repo] ?? []), ...coerceEntities(ents)];
       // de-dupe by name+label across batches

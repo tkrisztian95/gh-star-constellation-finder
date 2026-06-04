@@ -1,0 +1,3505 @@
+{
+  "models": [
+    "claude",
+    "chatgpt",
+    "gemini"
+  ],
+  "majority": 2,
+  "entities_per_repo": {
+    "AykutSarac/jsoncrack-vscode": [
+      {
+        "name": "JSON Crack",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "React",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Visual Studio Code",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      }
+    ],
+    "DanWahlin/DockerAndKubernetesCourseCode": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "C#",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Pluralsight",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "EbookFoundation/free-programming-books": [
+      {
+        "name": "Education",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "GoogleContainerTools/kaniko": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Google",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Dockerfile",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "Naereen/badges": [
+      {
+        "name": "Markdown",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "reStructuredText",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Rust",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Nix",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "LaTeX",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Jupyter Notebook",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Google Colab",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Binder",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "OAI/OpenAPI-Specification": [
+      {
+        "name": "YAML",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JSON",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "OpenAPI Initiative",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Linux Foundation",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "REST",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "OpenAPI Specification",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "PacktPublishing/Keycloak-Identity-and-Access-Management-for-Modern-Applications": [
+      {
+        "name": "Keycloak",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OpenID Connect",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "OAuth 2.0",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Packt",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Identity and Access Management",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "abstractinfrastructure/k8s-intro-tutorials": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "kind",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "minikube",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "ahmetb/kubectx": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "ajv-validator/ajv": [
+      {
+        "name": "Node.js",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JSON Schema",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JSON Type Definition",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 2
+      }
+    ],
+    "alexcasalboni/aws-lambda-power-tuning": [
+      {
+        "name": "AWS Lambda",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "AWS Step Functions",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Serverless",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Amazon Web Services",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "anliksim/maven-template-bom": [
+      {
+        "name": "Bill of Materials",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "artifacthub/hub": [
+      {
+        "name": "Cloud Native Computing Foundation",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Helm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Cloud Native",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "Backstage",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "CoreDNS",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Falco",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Knative",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "KEDA",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "aws-samples/aws-service-catalog-terraform-reference-architecture": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Terraform",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "AWS CloudFormation",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "AWS Lambda",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "AWS Service Catalog",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Amazon Web Services",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Infrastructure as Code",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "badges/shields": [
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "SVG",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Shields.io",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "containrrr/shoutrrr": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Slack",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Discord",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Notifications",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "containrrr/watchtower": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Hub",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Continuous Delivery",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "DevOps",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "crnk-project/crnk-framework": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JSON API",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JPA",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Spring",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Dropwizard",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Zipkin",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OpenTracing",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "CDI",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "Bean Validation",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "Servlet API",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "d-x90/asp-dotnet-core-api": [
+      {
+        "name": "ASP.NET Core",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Entity Framework",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Compose",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JWT",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "REST",
+        "label": "CONCEPT",
+        "votes": 3
+      }
+    ],
+    "dasniko/testcontainers-keycloak": [
+      {
+        "name": "Testcontainers",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Keycloak",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JUnit 5",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Spring Boot",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Quarkus",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "OAuth2",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "OIDC",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Gradle",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "datreeio/datree": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Admission Webhook",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Static Code Analysis",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Datree",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "dbeaver/dbeaver": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "SQL",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JDBC",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OpenAI",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "GitHub Copilot",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "MySQL",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "SQLite",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Oracle",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "ODBC",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Amazon Redshift",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Snowflake",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Databricks",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "DBeaver",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "dbsystel/trivy-vulnerability-explorer": [
+      {
+        "name": "Trivy",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Vue",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "JSON",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "dependency-check/DependencyCheck": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Gradle",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Jenkins",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Software Composition Analysis",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "CVE",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Common Platform Enumeration",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "derailed/k9s": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "K9s",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Terminal User Interface",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "devspace-sh/devspace": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Helm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kaniko",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Minikube",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Microservices",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Cloud Native Computing Foundation",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Cloud-native",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Loft Labs",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "diffplug/spotless": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Gradle",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "sbt",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kotlin",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Scala",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Groovy",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Prettier",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "SQL",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "CSS",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "Visual Studio Code",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "IntelliJ IDEA",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "dockersamples/example-voting-app": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Compose",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Swarm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Node.js",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": ".NET",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Redis",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "fabriciorby/maven-surefire-junit5-tree-reporter": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JUnit 5",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "filebrowser/filebrowser": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Material Design",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Vue",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "fossology/fossology": [
+      {
+        "name": "PHP",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "SPDX",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Apache HTTP Server",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "License Compliance",
+        "label": "DOMAIN",
+        "votes": 3
+      }
+    ],
+    "freeCodeCamp/freeCodeCamp": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Node.js",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "React",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Machine learning",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "D3",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "gardener/gardener": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Cluster API",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Hosted Control Planes",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "george-haddad/win-cross-dev": [
+      {
+        "name": "PowerShell",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Scoop",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": ".NET Framework",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Git",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Homebrew",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Windows Subsystem for Linux",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "gluster/glusterdocs": [
+      {
+        "name": "MkDocs",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Gluster",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "gnab/remark": [
+      {
+        "name": "Markdown",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "HTML",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "CSS",
+        "label": "LANGUAGE",
+        "votes": 3
+      }
+    ],
+    "google/go-containerregistry": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Container registry",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "google/gvisor": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Linux",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "runsc",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "AppArmor",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Sandboxing",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Open Container Initiative",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "googleworkspace/google-docs-hast": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Google Docs",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "HAST",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "unified",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Markdown",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "rehype",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "unist",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "Google Workspace",
+        "label": "ORG",
+        "votes": 2
+      },
+      {
+        "name": "HTML",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "grafana/loki": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Prometheus",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Grafana",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Log Aggregation",
+        "label": "DOMAIN",
+        "votes": 3
+      }
+    ],
+    "ibmmaximorestjsonapis/maximorestclient": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "IBM Maximo",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Android",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "REST",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "commons-codec",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "OSLC",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Linked Data",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "JSON",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "jamstack/jamstack.org": [
+      {
+        "name": "Jamstack",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Serverless",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Static Site Generation",
+        "label": "CONCEPT",
+        "votes": 3
+      }
+    ],
+    "jenkinsci/jenkinsfile-runner": [
+      {
+        "name": "Jenkins",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Jenkins Pipeline",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "jenkinsci/stash-pullrequest-builder-plugin": [
+      {
+        "name": "Jenkins",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Atlassian Stash",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Git",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "jenkinsci/warnings-ng-plugin": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Jenkins",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Checkstyle",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "SpotBugs",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "PMD",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "FindBugs",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "StyleCop",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "GitLab",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Static Analysis",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "johnph/simple-transaction": [
+      {
+        "name": "C#",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Entity Framework",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Microservices",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": ".NET Core",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "ASP.NET Core",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "SQL Server",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "jslicense/spdx-correct.js": [
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "SPDX",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Vinicius Lourenço",
+        "label": "PERSON",
+        "votes": 2
+      }
+    ],
+    "json-api-dotnet/JsonApiDotNetCore": [
+      {
+        "name": "ASP.NET Core",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Entity Framework Core",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "JSON:API",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "OpenAPI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": ".NET",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "REST",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "json-path/JsonPath": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JsonPath",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Jackson",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "XPath",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Maven",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "junegunn/fzf": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Bash",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Zsh",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Fish",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Vim",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Neovim",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "tmux",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "jwasham/coding-interview-university": [
+      {
+        "name": "Data Structures",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Algorithms",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Amazon",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Google",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Facebook",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Microsoft",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Computer Science",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "Software Engineering",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "k3s-io/k3s": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "containerd",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Flannel",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "CoreDNS",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Traefik",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "SQLite",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "etcd",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "MariaDB",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "MySQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "kelseyhightower/kubernetes-the-hard-way": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "containerd",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "CNI",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "kevinswiber/siren": [
+      {
+        "name": "Hypermedia",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JSON",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Kevin Swiber",
+        "label": "PERSON",
+        "votes": 3
+      },
+      {
+        "name": "Siren",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "keycloak/keycloak": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "SAML",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Identity and Access Management",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "OpenID Connect",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "keycloak/keycloak-operator": [
+      {
+        "name": "Keycloak",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "WildFly",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Quarkus",
+        "label": "FRAMEWORK",
+        "votes": 3
+      }
+    ],
+    "keycloakify/keycloakify": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Keycloak",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "FreeMarker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Storybook",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "kubernetes-sigs/krew": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Krew",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Homebrew",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "apt",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "dnf",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "kubernetes/client-go": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "kubernetes/kubernetes": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Cloud Native Computing Foundation",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Borg",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Google",
+        "label": "ORG",
+        "votes": 3
+      }
+    ],
+    "kudobuilder/kudo": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes Operator",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "MySQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kafka",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "ZooKeeper",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "kudobuilder/kuttl": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Operator SDK",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "KUDO",
+        "label": "ORG",
+        "votes": 2
+      },
+      {
+        "name": "Testing",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "Kubernetes Operator",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "linkerd/linkerd2": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Rust",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "gRPC",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Service Mesh",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Observability",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "Linkerd",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Cloud Native Computing Foundation",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "longhorn/longhorn": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Cloud Native Computing Foundation",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Helm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "mastra-ai/mastra": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "React",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Next.js",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Node.js",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OpenAI",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Anthropic",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Gemini",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Large Language Models",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "matthiasn/talk-transcripts": [
+      {
+        "name": "Clojure",
+        "label": "LANGUAGE",
+        "votes": 3
+      }
+    ],
+    "maurobussini/restful-stress": [
+      {
+        "name": "Electron",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "REST",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "HTTP",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "mcguinness/saml-idp": [
+      {
+        "name": "Node.js",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OpenSSL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "SAML",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Identity Provider",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "microsoft/PowerToys": [
+      {
+        "name": "C#",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Windows",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Microsoft",
+        "label": "ORG",
+        "votes": 3
+      }
+    ],
+    "microsoft/vscode-dev-containers": [
+      {
+        "name": "Visual Studio Code",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "GitHub Codespaces",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Microsoft",
+        "label": "ORG",
+        "votes": 2
+      },
+      {
+        "name": "Dev Container Specification",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "moby/moby": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Containerization",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Containers",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "moncho/dry": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Swarm",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "mswjs/msw": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Express",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "API Mocking",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "Service Worker",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Mock Service Worker",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "Kent C. Dodds",
+        "label": "PERSON",
+        "votes": 2
+      }
+    ],
+    "mui/mui-x": [
+      {
+        "name": "React",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Material UI",
+        "label": "FRAMEWORK",
+        "votes": 3
+      }
+    ],
+    "networknt/json-schema-validator": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JSON Schema",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Jackson",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "OpenAPI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "light-4j",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "YAML",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "nginx/docker-nginx-unprivileged": [
+      {
+        "name": "NGINX",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Alpine Linux",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Debian",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Amazon ECR",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "ohmybash/oh-my-bash": [
+      {
+        "name": "Bash",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Git",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "macOS",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Linux",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "curl",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "wget",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "ohmyzsh/ohmyzsh": [
+      {
+        "name": "Zsh",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Oh My Zsh",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "onfido/k8s-cleanup": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "etcd",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "open-guides/og-aws": [
+      {
+        "name": "Amazon Web Services",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Shell",
+        "label": "LANGUAGE",
+        "votes": 3
+      }
+    ],
+    "open-policy-agent/conftest": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Rego",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Open Policy Agent",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Terraform",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Tekton",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "opencontainers/runc": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Linux",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Open Container Initiative",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "libseccomp",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "runc",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "operator-framework/operator-sdk": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "controller-runtime",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubebuilder",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Operator Framework",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Operators",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "kube-rbac-proxy",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "orbitbot/chrome-extensions-examples": [
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "WebExtensions",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Google",
+        "label": "ORG",
+        "votes": 2
+      },
+      {
+        "name": "Google Chrome",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "ovity/octotree": [
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Firefox",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Safari",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "GitHub",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Chrome",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Code review",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "Opera",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Microsoft Edge",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Brave",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "oxsecurity/megalinter": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Groovy",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kotlin",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Terraform",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "GitHub Actions",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Jenkins",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Azure Pipelines",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "GitLab CI",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Markdown",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "Trivy",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Infrastructure as Code",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "passbolt/passbolt_api": [
+      {
+        "name": "PHP",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "CakePHP",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "End-to-End Encryption",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Password Management",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "JSON API",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "passbolt/passbolt_docker": [
+      {
+        "name": "Ruby",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "MariaDB",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "MySQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Compose",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Passbolt",
+        "label": "ORG",
+        "votes": 2
+      },
+      {
+        "name": "Password Management",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "paulbouwer/hello-kubernetes": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Helm",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "podman-container-tools/podman": [
+      {
+        "name": "OCI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Linux",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "libpod",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "podman-container-tools/skopeo": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Skopeo",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "OCI",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "portainer/portainer": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Swarm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Azure Container Instances",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "portainer/portainer-compose": [
+      {
+        "name": "Portainer",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Compose",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker Swarm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "NGINX",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Traefik",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "portainer/templates": [
+      {
+        "name": "Portainer",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Makefile",
+        "label": "LANGUAGE",
+        "votes": 2
+      }
+    ],
+    "ptdropper/CVE-Scanner-for-your-SW-BOM": [
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "NIST",
+        "label": "ORG",
+        "votes": 3
+      },
+      {
+        "name": "Software Composition Analysis",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "CVE",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Software Bill of Materials",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "public-apis/public-apis": [
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "APILayer",
+        "label": "ORG",
+        "votes": 3
+      }
+    ],
+    "punkpeye/awesome-mcp-servers": [
+      {
+        "name": "Model Context Protocol",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "SQLite",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Artificial intelligence",
+        "label": "DOMAIN",
+        "votes": 2
+      }
+    ],
+    "pytest-dev/pytest-testinfra": [
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Pytest",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Ansible",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Puppet",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Chef",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Infrastructure Testing",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "Salt",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Serverspec",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Nagios",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "quarkusio/quarkus": [
+      {
+        "name": "Quarkus",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "RESTEasy",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "JAX-RS",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Hibernate ORM",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "JPA",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Netty",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Eclipse Vert.x",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Eclipse MicroProfile",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Cloud Native",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Reactive Programming",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "raviqqe/muffet": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "GitHub Actions",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JSON",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "replicatedhq/troubleshoot": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Krew",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "ripienaar/free-for-dev": [
+      {
+        "name": "Single Sign-On",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "DevOps",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "System Administration",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "TLS",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "rook/rook": [
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Ceph",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "etcd",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 2
+      },
+      {
+        "name": "Cloud Native Computing Foundation",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "ryanmcdermott/clean-code-javascript": [
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "SOLID",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Robert C. Martin",
+        "label": "PERSON",
+        "votes": 3
+      },
+      {
+        "name": "Clean Code",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "seraphimalia/docker-openjdk8-alpine-plus-fonts": [
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OpenJDK",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Alpine Linux",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "sindresorhus/awesome": [
+      {
+        "name": "macOS",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "specmatic/specmatic": [
+      {
+        "name": "Kotlin",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "OpenAPI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "AsyncAPI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "GraphQL",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "gRPC",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Contract Driven Development",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Redis",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JDBC",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "WSDL",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Contract Testing",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Microservices",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "stagewise-io/stagewise": [
+      {
+        "name": "Agentic IDE",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "stoplightio/spectral": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "OpenAPI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "AsyncAPI",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Arazzo",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JSONPath",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "YAML",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JSON Schema",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Swagger",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Stoplight",
+        "label": "ORG",
+        "votes": 2
+      },
+      {
+        "name": "JSON",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "strapi/strapi": [
+      {
+        "name": "JavaScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "GraphQL",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "REST",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "Headless CMS",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "MySQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Node.js",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "JAMstack",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Content Management",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "Strapi",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "testcontainers/testcontainers-java": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "JUnit",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Selenium",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "HashiCorp Vault",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Integration Testing",
+        "label": "DOMAIN",
+        "votes": 3
+      },
+      {
+        "name": "Docker Compose",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "JVM",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Microsoft SQL Server",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Richard North",
+        "label": "PERSON",
+        "votes": 2
+      }
+    ],
+    "toedter/spring-hateoas-jsonapi": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Spring HATEOAS",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "JSON:API",
+        "label": "CONCEPT",
+        "votes": 3
+      }
+    ],
+    "un-ts/changesets-gitlab": [
+      {
+        "name": "TypeScript",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "GitLab CI",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "npm",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "GitHub Actions",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Changesets",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Conventional Commits",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "usrbinsam/jwt-key-server": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "PostgreSQL",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Python",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Flask",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "SQLAlchemy",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Gin",
+        "label": "FRAMEWORK",
+        "votes": 2
+      },
+      {
+        "name": "Vue.js",
+        "label": "FRAMEWORK",
+        "votes": 2
+      }
+    ],
+    "vega/vega": [
+      {
+        "name": "SVG",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "JSON",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Data visualization",
+        "label": "DOMAIN",
+        "votes": 2
+      },
+      {
+        "name": "HTML5 Canvas",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "wagoodman/dive": [
+      {
+        "name": "Go",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Docker",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "OCI",
+        "label": "CONCEPT",
+        "votes": 2
+      }
+    ],
+    "wayou/vscode-todo-highlight": [
+      {
+        "name": "Visual Studio Code",
+        "label": "TOOL",
+        "votes": 3
+      }
+    ],
+    "weibeld/kubectl-ns": [
+      {
+        "name": "kubectl",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "fzf",
+        "label": "TOOL",
+        "votes": 3
+      },
+      {
+        "name": "Kubernetes",
+        "label": "TOOL",
+        "votes": 2
+      },
+      {
+        "name": "Homebrew",
+        "label": "TOOL",
+        "votes": 2
+      }
+    ],
+    "yahoo/elide": [
+      {
+        "name": "Java",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "GraphQL",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JPA",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "Hibernate",
+        "label": "FRAMEWORK",
+        "votes": 3
+      },
+      {
+        "name": "CRUD",
+        "label": "CONCEPT",
+        "votes": 3
+      },
+      {
+        "name": "JSON:API",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "ORM",
+        "label": "CONCEPT",
+        "votes": 2
+      },
+      {
+        "name": "Yahoo",
+        "label": "ORG",
+        "votes": 2
+      }
+    ],
+    "yaml/yamlscript": [
+      {
+        "name": "YAML",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Clojure",
+        "label": "LANGUAGE",
+        "votes": 3
+      },
+      {
+        "name": "Functional programming",
+        "label": "CONCEPT",
+        "votes": 3
+      }
+    ]
+  }
+}

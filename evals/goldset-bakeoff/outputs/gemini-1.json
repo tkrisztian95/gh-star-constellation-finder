@@ -1,0 +1,218 @@
+{
+"microsoft/vscode-dev-containers": [
+{"name": "Visual Studio Code", "label": "TOOL"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "GitHub Codespaces", "label": "TOOL"},
+{"name": "GitHub", "label": "ORG"},
+{"name": "Microsoft", "label": "ORG"},
+{"name": "Dev Container Specification", "label": "CONCEPT"}
+],
+"portainer/portainer-compose": [
+{"name": "Portainer", "label": "TOOL"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Docker Compose", "label": "TOOL"},
+{"name": "Docker Swarm", "label": "TOOL"},
+{"name": "NGINX", "label": "TOOL"},
+{"name": "Traefik", "label": "TOOL"}
+],
+"containrrr/watchtower": [
+{"name": "Docker", "label": "TOOL"},
+{"name": "Docker Hub", "label": "TOOL"},
+{"name": "Continuous Delivery", "label": "CONCEPT"},
+{"name": "DevOps", "label": "DOMAIN"}
+],
+"onfido/k8s-cleanup": [
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "etcd", "label": "TOOL"},
+{"name": "kubectl", "label": "TOOL"}
+],
+"datreeio/datree": [
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "Datree", "label": "TOOL"},
+{"name": "Static Code Analysis", "label": "CONCEPT"},
+{"name": "DevOps", "label": "DOMAIN"}
+],
+"keycloak/keycloak-operator": [
+{"name": "Keycloak", "label": "TOOL"},
+{"name": "WildFly", "label": "TOOL"},
+{"name": "Quarkus", "label": "FRAMEWORK"}
+],
+"GoogleContainerTools/kaniko": [
+{"name": "Kaniko", "label": "TOOL"},
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Google", "label": "ORG"}
+],
+"kubernetes/kubernetes": [
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Cloud Native Computing Foundation", "label": "ORG"},
+{"name": "Google", "label": "ORG"},
+{"name": "Borg", "label": "TOOL"}
+],
+"AykutSarac/jsoncrack-vscode": [
+{"name": "JSON Crack", "label": "TOOL"},
+{"name": "React", "label": "FRAMEWORK"},
+{"name": "Visual Studio Code", "label": "TOOL"},
+{"name": "TypeScript", "label": "LANGUAGE"}
+],
+"DanWahlin/DockerAndKubernetesCourseCode": [
+{"name": "C#", "label": "LANGUAGE"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "Pluralsight", "label": "ORG"}
+],
+"ohmybash/oh-my-bash": [
+{"name": "Bash", "label": "LANGUAGE"},
+{"name": "macOS", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"},
+{"name": "curl", "label": "TOOL"},
+{"name": "wget", "label": "TOOL"},
+{"name": "git", "label": "TOOL"}
+],
+"public-apis/public-apis": [
+{"name": "Python", "label": "LANGUAGE"},
+{"name": "APILayer", "label": "ORG"},
+{"name": "Discord", "label": "TOOL"},
+{"name": "IPstack", "label": "TOOL"},
+{"name": "Postman", "label": "TOOL"}
+],
+"quarkusio/quarkus": [
+{"name": "Quarkus", "label": "FRAMEWORK"},
+{"name": "Java", "label": "LANGUAGE"},
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "RESTEasy", "label": "FRAMEWORK"},
+{"name": "JAX-RS", "label": "CONCEPT"},
+{"name": "Hibernate ORM", "label": "FRAMEWORK"},
+{"name": "JPA", "label": "CONCEPT"},
+{"name": "Netty", "label": "FRAMEWORK"},
+{"name": "Eclipse Vert.x", "label": "FRAMEWORK"},
+{"name": "Eclipse MicroProfile", "label": "FRAMEWORK"},
+{"name": "JVM", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"}
+],
+"filebrowser/filebrowser": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Vue.js", "label": "FRAMEWORK"},
+{"name": "Material Design", "label": "CONCEPT"}
+],
+"k3s-io/k3s": [
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "SQLite", "label": "TOOL"},
+{"name": "etcd", "label": "TOOL"},
+{"name": "MariaDB", "label": "TOOL"},
+{"name": "MySQL", "label": "TOOL"},
+{"name": "PostgreSQL", "label": "TOOL"},
+{"name": "containerd", "label": "TOOL"},
+{"name": "Flannel", "label": "TOOL"},
+{"name": "CoreDNS", "label": "TOOL"},
+{"name": "Traefik", "label": "TOOL"}
+],
+"ptdropper/CVE-Scanner-for-your-SW-BOM": [
+{"name": "Python", "label": "LANGUAGE"},
+{"name": "NIST", "label": "ORG"},
+{"name": "Software Composition Analysis", "label": "CONCEPT"},
+{"name": "SBOM", "label": "CONCEPT"}
+],
+"longhorn/longhorn": [
+{"name": "Longhorn", "label": "TOOL"},
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "Helm", "label": "TOOL"},
+{"name": "Cloud Native Computing Foundation", "label": "ORG"}
+],
+"jenkinsci/jenkinsfile-runner": [
+{"name": "Java", "label": "LANGUAGE"},
+{"name": "Jenkins", "label": "TOOL"},
+{"name": "FaaS", "label": "CONCEPT"},
+{"name": "Docker", "label": "TOOL"}
+],
+"opencontainers/runc": [
+{"name": "runc", "label": "TOOL"},
+{"name": "Linux", "label": "TOOL"},
+{"name": "Open Container Initiative", "label": "ORG"},
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Ubuntu", "label": "TOOL"},
+{"name": "Debian", "label": "TOOL"},
+{"name": "git", "label": "TOOL"}
+],
+"dbeaver/dbeaver": [
+{"name": "DBeaver", "label": "TOOL"},
+{"name": "SQL", "label": "LANGUAGE"},
+{"name": "MySQL", "label": "TOOL"},
+{"name": "PostgreSQL", "label": "TOOL"},
+{"name": "SQLite", "label": "TOOL"},
+{"name": "Java", "label": "LANGUAGE"},
+{"name": "Oracle", "label": "TOOL"},
+{"name": "Microsoft SQL Server", "label": "TOOL"},
+{"name": "Amazon Redshift", "label": "TOOL"},
+{"name": "JDBC", "label": "TOOL"},
+{"name": "Databricks", "label": "TOOL"},
+{"name": "Snowflake", "label": "TOOL"},
+{"name": "OpenAI", "label": "ORG"},
+{"name": "GitHub Copilot", "label": "TOOL"}
+],
+"artifacthub/hub": [
+{"name": "TypeScript", "label": "LANGUAGE"},
+{"name": "Argo", "label": "TOOL"},
+{"name": "Backstage", "label": "FRAMEWORK"},
+{"name": "CoreDNS", "label": "TOOL"},
+{"name": "Falco", "label": "TOOL"},
+{"name": "Helm", "label": "TOOL"},
+{"name": "KEDA", "label": "TOOL"},
+{"name": "Knative", "label": "TOOL"},
+{"name": "Cloud Native Computing Foundation", "label": "ORG"}
+],
+"junegunn/fzf": [
+{"name": "fzf", "label": "TOOL"},
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Bash", "label": "LANGUAGE"},
+{"name": "Zsh", "label": "LANGUAGE"},
+{"name": "Fish", "label": "LANGUAGE"},
+{"name": "Vim", "label": "TOOL"},
+{"name": "Neovim", "label": "TOOL"},
+{"name": "Tmux", "label": "TOOL"}
+],
+"stagewise-io/stagewise": [
+{"name": "Stagewise", "label": "TOOL"}
+],
+"kelseyhightower/kubernetes-the-hard-way": [
+{"name": "Kubernetes", "label": "TOOL"},
+{"name": "containerd", "label": "TOOL"},
+{"name": "CNI", "label": "CONCEPT"}
+],
+"nginx/docker-nginx-unprivileged": [
+{"name": "NGINX", "label": "TOOL"},
+{"name": "Docker", "label": "TOOL"},
+{"name": "Alpine Linux", "label": "TOOL"},
+{"name": "Debian", "label": "TOOL"},
+{"name": "Amazon ECR", "label": "TOOL"},
+{"name": "Docker Hub", "label": "TOOL"}
+],
+"json-path/JsonPath": [
+{"name": "Java", "label": "LANGUAGE"},
+{"name": "JsonPath", "label": "CONCEPT"},
+{"name": "XPath", "label": "CONCEPT"},
+{"name": "Maven", "label": "TOOL"},
+{"name": "Jackson", "label": "FRAMEWORK"}
+],
+"usrbinsam/jwt-key-server": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "PostgreSQL", "label": "TOOL"},
+{"name": "Gin", "label": "FRAMEWORK"},
+{"name": "Python", "label": "LANGUAGE"},
+{"name": "SQLAlchemy", "label": "FRAMEWORK"},
+{"name": "Flask", "label": "FRAMEWORK"}
+],
+"wagoodman/dive": [
+{"name": "Go", "label": "LANGUAGE"},
+{"name": "Docker", "label": "TOOL"}
+],
+"fabriciorby/maven-surefire-junit5-tree-reporter": [
+{"name": "Maven", "label": "TOOL"},
+{"name": "JUnit", "label": "FRAMEWORK"},
+{"name": "Java", "label": "LANGUAGE"}
+],
+"matthiasn/talk-transcripts": [
+{"name": "Clojure", "label": "LANGUAGE"}
+]
+}
