@@ -50,6 +50,9 @@
   },
   "dependencies": {
     "@octokit/graphql": "^8.2.2",
+    "graphology": "^0.26.0",
+    "graphology-communities-louvain": "^2.0.2",
+    "graphology-gexf": "^0.13.2",
     "ink": "^5.2.1",
     "ink-text-input": "^6.0.0",
     "langfuse": "^3.38.20",
