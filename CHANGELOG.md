@@ -10,6 +10,20 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 _Nothing yet. Next up: the retrieval pivot (embeddings, `--ask`, MCP retrieval) — now the [v0.3.0 milestone](./docs/milestone-v0.2.0.md)._
 
+## [0.2.1] — 2026-06-05
+
+Constellation visualization polish.
+
+### Added
+
+- **`--serve` cluster-pull gravity** + slider — disconnected constellations are pulled toward the centre instead of drifting apart; tighter, full-frame layout.
+- **`examples/constellation.json`** — a real 273-repo graph servable for a demo with no build: `bun run dev -- --serve examples/constellation.json`.
+- README constellation screenshot.
+
+### Fixed
+
+- `parseAnalysisResponse` no longer leaks malformed model output into `category` (JSON-looking or over-60-char content falls back to `analysis-failed`), which had surfaced as a garbage label in the graph legend.
+
 ## [0.2.0] — 2026-06-05
 
 The **entity constellation** release. Repos are analysed into technical entities, linked into a graph, and made explorable (web / Gephi / MCP). Shipped ahead of the originally-planned retrieval pivot, which moves to v0.3.0.
@@ -132,7 +146,8 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
 - The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.1...v0.1.2
