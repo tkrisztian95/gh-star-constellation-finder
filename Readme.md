@@ -195,6 +195,10 @@ Beyond categorising, the tool extracts **technical entities** per repo and links
 repos that share them into a graph — your stars as a constellation. See
 [docs/entity-extraction.md](./docs/entity-extraction.md) for the architecture.
 
+![Star constellation — starred repos linked by shared technical entities, coloured by community, with a min-edge-weight slider and per-repo related list](docs/screenshots/constellation.png)
+
+*`--serve` web view: repos linked by shared tech, coloured by community. Sliders tune edge-weight threshold and how tightly clusters pull together; hover a repo for its related stars.*
+
 ```bash
 # 1. Build the graph from your stars (entities are extracted during analysis).
 #    --limit keeps it quick; drop it for all your stars. --entity-source readme|description.
