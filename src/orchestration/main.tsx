@@ -17,6 +17,7 @@ import { initAnalytics, track, shutdown as analyticsShutdown } from "../analytic
 import { logger } from "../logger.js";
 
 import { parseArgs } from "../cli/args.js";
+import { serveConstellation } from "../constellation/viz.js";
 import { runAnalyzeOnly } from "../cli/modes.js";
 import { setupTui } from "./tui.js";
 import { runAnalysis, handleInterrupt } from "./analysis.js";
@@ -26,6 +27,12 @@ import { loadCache, type AnalysisCache } from "../cache/analysisCache.js";
 
 export async function main() {
   const cliArgs = parseArgs();
+
+  // --serve is offline + read-only: render a built constellation, no auth/analytics.
+  if (cliArgs.serve) {
+    serveConstellation(cliArgs.graphPath ?? "out/constellation.json", cliArgs.port ?? 4477);
+    return; // Bun.serve keeps the process alive
+  }
 
   // Analytics init
   const config = readConfig();

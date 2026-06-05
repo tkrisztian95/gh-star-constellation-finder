@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>⭐ Star Constellation</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0e14; color: #c9d1d9;
+    font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  #graph { position: fixed; inset: 0; }
+  #panel { position: fixed; top: 12px; left: 12px; z-index: 10; max-width: 340px;
+    background: rgba(13,17,23,.85); border: 1px solid #30363d; border-radius: 8px;
+    padding: 12px 14px; backdrop-filter: blur(4px); }
+  #panel h1 { font-size: 14px; margin: 0 0 6px; }
+  .muted { color: #8b949e; }
+  #controls { margin: 8px 0; border-top: 1px solid #30363d; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  #controls input[type=range] { flex: 1; accent-color: #58a6ff; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .info { position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%; border: 1px solid #8b949e; color: #8b949e;
+    font-size: 10px; cursor: help; flex: none; }
+  .info:hover { border-color: #58a6ff; color: #58a6ff; }
+  .info .tip { visibility: hidden; opacity: 0; transition: opacity .15s; position: absolute;
+    left: 20px; top: -4px; z-index: 20; width: 240px; background: #161b22; border: 1px solid #30363d;
+    border-radius: 6px; padding: 8px 10px; font-size: 12px; line-height: 1.45; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+  .info:hover .tip { visibility: visible; opacity: 1; }
+  .info .tip b { color: #58a6ff; }
+  #legend { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; max-height: 26vh; overflow: auto; }
+  #legend span { display: inline-flex; align-items: center; gap: 4px; }
+  #legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  #info { margin-top: 8px; border-top: 1px solid #30363d; padding-top: 8px; min-height: 2em; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h1>⭐ Star Constellation</h1>
+  <div class="muted" id="subtitle">loading…</div>
+  <div id="controls">
+    <label>
+      <span class="row" style="gap:5px">min edge weight
+        <span class="info">i<span class="tip">Each link weighs how strongly two repos share tech (rarer shared entities count more).<br><br><b>Higher →</b> only the strongest links: fewer, tighter constellations.<br><b>Lower →</b> weaker/generic links appear: denser but noisier.</span></span>
+        <span id="wtVal"></span>
+      </span>
+      <input id="wt" type="range" min="0" max="10" step="0.1" value="0" />
+    </label>
+    <label class="row" style="justify-content:flex-start"><input id="hideIso" type="checkbox" checked /> hide isolated repos</label>
+    <div id="counts" class="muted"></div>
+  </div>
+  <div id="legend"></div>
+  <div id="info" class="muted">hover a node or link…</div>
+</div>
+<div id="graph"></div>
+<script src="https://unpkg.com/force-graph@1.43.4/dist/force-graph.min.js"></script>
+<script>
+const PALETTE = ["#58a6ff","#3fb950","#f778ba","#d29922","#a371f7","#ff7b72","#56d4dd","#e3b341","#7ee787","#ffa657","#79c0ff","#db61a2"];
+const idOf = (x) => (x && x.id) || x;
+
+fetch("./constellation.json").then(r => r.json()).then((DATA) => {
+  document.getElementById("subtitle").textContent = `${DATA.nodes.length} repos · linked by shared tech entities`;
+  const NODES = DATA.nodes;
+  const RAW = DATA.edges.map(e => ({ s: e.source, t: e.target, weight: e.weight || 0, shared: e.shared || "" }));
+  const maxW = Math.max(1, ...RAW.map(l => l.weight));
+
+  const comms = [...new Set(NODES.map(n => n.community ?? 0))].sort((a,b)=>a-b);
+  const colorOf = (n) => PALETTE[comms.indexOf(n.community ?? 0) % PALETTE.length];
+  const commLabel = {};
+  comms.forEach(c => {
+    const cats = NODES.filter(n => (n.community??0)===c).map(n => n.category||"—");
+    commLabel[c] = cats.sort((a,b)=>cats.filter(x=>x===b).length-cats.filter(x=>x===a).length)[0] || ("cluster "+c);
+  });
+  const legend = document.getElementById("legend");
+  comms.forEach(c => { const s=document.createElement("span"); s.innerHTML = `<i style="background:${PALETTE[comms.indexOf(c)%PALETTE.length]}"></i>${commLabel[c]}`; legend.appendChild(s); });
+
+  const wt = document.getElementById("wt"); wt.max = String(Math.ceil(maxW));
+  const wtVal = document.getElementById("wtVal"), hideIso = document.getElementById("hideIso"), counts = document.getElementById("counts"), info = document.getElementById("info");
+
+  const G = ForceGraph()(document.getElementById("graph"))
+    .backgroundColor("#0b0e14").nodeId("id")
+    .nodeLabel(n => `${n.id}  ·  ${n.category||""}`)
+    .nodeVal(n => 1 + (n.deg||0)).nodeColor(colorOf)
+    .linkColor(() => "rgba(139,148,158,.35)")
+    .linkWidth(l => 0.5 + 3 * (l.weight||1) / maxW)
+    .linkLabel(l => `${idOf(l.source)} ↔ ${idOf(l.target)}<br>shared: ${l.shared||""} (w=${(l.weight||0).toFixed(2)})`)
+    .nodeCanvasObjectMode(() => "after")
+    .nodeCanvasObject((n, ctx, scale) => { if (scale < 1.4) return; ctx.font = `${10/scale}px monospace`; ctx.fillStyle="#c9d1d9"; ctx.textAlign="center"; ctx.fillText(n.id, n.x, n.y + 14/scale); })
+    .onNodeHover(n => {
+      if (!n) { info.className="muted"; info.textContent="hover a node or link…"; return; }
+      const nbrs = G.graphData().links.filter(l => idOf(l.source)===n.id || idOf(l.target)===n.id)
+        .sort((a,b)=>(b.weight||0)-(a.weight||0)).map(l => `${idOf(l.source)===n.id?idOf(l.target):idOf(l.source)} (${(l.weight||0).toFixed(1)})`);
+      info.className=""; info.innerHTML = `<b>${n.id}</b><br><span class="muted">${n.category||""}</span><br>related: ${nbrs.slice(0,6).join(", ")||"—"}`;
+    })
+    .onNodeClick(n => { G.centerAt(n.x, n.y, 600); G.zoom(3, 600); });
+  G.d3Force("charge").strength(-120);
+
+  function apply() {
+    const w = +wt.value; wtVal.textContent = w.toFixed(1);
+    const links = RAW.filter(l => l.weight >= w).map(l => ({ source: l.s, target: l.t, weight: l.weight, shared: l.shared }));
+    const deg = {}; links.forEach(l => { deg[l.source]=(deg[l.source]||0)+1; deg[l.target]=(deg[l.target]||0)+1; });
+    NODES.forEach(n => n.deg = deg[n.id] || 0);
+    const conn = new Set(); links.forEach(l => { conn.add(l.source); conn.add(l.target); });
+    const nodes = hideIso.checked ? NODES.filter(n => conn.has(n.id)) : NODES;
+    counts.textContent = `${nodes.length} repos · ${links.length} links shown`;
+    G.graphData({ nodes, links });
+  }
+  wt.addEventListener("input", apply); hideIso.addEventListener("change", apply); apply();
+});
+</script>
+</body>
+</html>

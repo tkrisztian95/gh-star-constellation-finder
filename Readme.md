@@ -29,6 +29,7 @@
   - [Consolidation Strategies](#consolidation-strategies)
 - [🛠 CLI Flags](#-cli-flags)
   - [`--analyze-only` mode](#--analyze-only-mode)
+- [🌌 Constellation (entity graph)](#-constellation-entity-graph)
 - [⚙️ Configuration](#%EF%B8%8F-configuration)
 - [📓 Logging](#-logging)
 - [🔍 Prompt Tracing (optional)](#-prompt-tracing-optional)
@@ -185,6 +186,50 @@ Output shape:
   },
   "suggestions": [ ... ],
   "errors": [ ... ]
+}
+```
+
+## 🌌 Constellation (entity graph)
+
+Beyond categorising, the tool extracts **technical entities** per repo and links
+repos that share them into a graph — your stars as a constellation. See
+[docs/entity-extraction.md](./docs/entity-extraction.md) for the architecture.
+
+```bash
+# 1. Build the graph from your stars (entities are extracted during analysis).
+#    --limit keeps it quick; drop it for all your stars. --entity-source readme|description.
+GITHUB_TOKEN=ghp_xxx OLLAMA_MODEL=llama3 bun run dev -- \
+  --backend ollama --limit 40 --constellation out
+#    → out/constellation.gexf (Gephi) + out/constellation.json
+
+# 2. Explore it in the browser (offline; no token/model needed):
+bun run dev -- --serve out/constellation.json     # http://localhost:4477
+#    interactive force graph, community-coloured, with a min-edge-weight slider.
+
+# 3. Or query it from an AI agent over MCP:
+CONSTELLATION_PATH=out/constellation.json bun run mcp
+#    tools: related_stars(repo, k), list_stars()
+```
+
+Inspect the raw graph:
+
+```bash
+jq '{nodes:(.nodes|length), edges:(.edges|length)}' out/constellation.json
+jq '.edges | sort_by(-.weight)[0:5]' out/constellation.json   # strongest links + shared entities
+```
+
+MCP client config (Claude Desktop / Cursor / Cline):
+
+```json
+{
+  "mcpServers": {
+    "star-constellation": {
+      "command": "bun",
+      "args": ["run", "mcp"],
+      "cwd": "/path/to/gh-star-constellation-finder",
+      "env": { "CONSTELLATION_PATH": "out/constellation.json" }
+    }
+  }
 }
 ```
 
