@@ -8,7 +8,13 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 ## [Unreleased]
 
-Incremental work toward [v0.2.0](./docs/milestone-v0.2.0.md) (knowledge-harness pivot) and [v0.3.0](./docs/milestone-v0.3.0.md) (the entity "constellation").
+_Nothing yet. Next up: the retrieval pivot (embeddings, `--ask`, MCP retrieval) — now the [v0.3.0 milestone](./docs/milestone-v0.2.0.md)._
+
+## [0.2.0] — 2026-06-05
+
+The **entity constellation** release. Repos are analysed into technical entities, linked into a graph, and made explorable (web / Gephi / MCP). Shipped ahead of the originally-planned retrieval pivot, which moves to v0.3.0.
+
+> Note: this delivers what the docs called the "v0.3.0 constellation" milestone; the "v0.2.0 retrieval" plan is renumbered to v0.3.0.
 
 ### Added
 
@@ -126,7 +132,8 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
 - The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.0...v0.1.1

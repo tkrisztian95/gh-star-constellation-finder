@@ -1,3 +1,5 @@
+> **Shipped in v0.2.0** (2026-06-05). This constellation milestone is delivered; see CHANGELOG `[0.2.0]`.
+
 # Milestone: v0.3.0 — Constellation: an entity graph over your stars
 
 > **Status:** target. Nothing in this milestone has shipped yet. It depends on [v0.2.0](./milestone-v0.2.0.md) landing first. See [CHANGELOG.md](../CHANGELOG.md) for what's actually released.

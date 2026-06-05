@@ -1,3 +1,5 @@
+> **Renumbered → v0.3.0.** The constellation shipped first (released as v0.2.0); this retrieval pivot is now the v0.3.0 milestone. Heading kept for link stability.
+
 # Milestone: v0.2.0 — Pivot from organiser to knowledge harness
 
 > **Status:** target. Nothing in this milestone has shipped yet. See [CHANGELOG.md](../CHANGELOG.md) for what's actually released.
