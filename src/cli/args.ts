@@ -11,6 +11,9 @@ export interface CliArgs {
   exportCorpusPath?: string;
   constellationPath?: string;
   entitySource?: EntitySource;
+  serve?: boolean;
+  graphPath?: string;
+  port?: number;
   noAnalytics: boolean;
   noCache: boolean;
 }
@@ -45,6 +48,9 @@ Options:
                         graph, write <dir>/constellation.{gexf,json} and exit
   --entity-source <s>   Entity extraction source: readme (default, richest) or
                         description (lean/fast/cheap)
+  --serve [path]        Serve the constellation as an interactive web graph
+                        (default out/constellation.json); offline, no auth
+  --port <n>            Port for --serve (default 4477)
   --no-cache            Skip the local analysis cache (re-analyse every repo)
   --no-analytics        Disable PostHog product analytics for this run
   -h, --help            Show this help and exit
@@ -122,6 +128,15 @@ export function parseArgs(): CliArgs {
       i++;
     } else if (args[i] === "--constellation" && args[i + 1]) {
       result.constellationPath = args[i + 1];
+      i++;
+    } else if (args[i] === "--serve") {
+      result.serve = true;
+      if (args[i + 1] && !args[i + 1].startsWith("--")) {
+        result.graphPath = args[i + 1];
+        i++;
+      }
+    } else if (args[i] === "--port" && args[i + 1]) {
+      result.port = parseInt(args[i + 1], 10);
       i++;
     } else if (args[i] === "--entity-source" && args[i + 1]) {
       const v = args[i + 1];
