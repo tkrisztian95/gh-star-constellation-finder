@@ -61,6 +61,19 @@ function runTests() {
     assertEqual(result.description, "", "description empty on malformed input");
   });
 
+  test("JSON-blob / overlong content does not leak into category", () => {
+    const blob = parseAnalysisResponse('{"foo": "bar", "data": [1,2,3]}');
+    assertEqual(blob.category, "analysis-failed", "JSON blob → fallback, not raw content");
+    const longText = parseAnalysisResponse("x".repeat(200));
+    assertEqual(longText.category, "analysis-failed", "overlong content → fallback");
+    // a normal short label is still kept
+    assertEqual(
+      parseAnalysisResponse("Vector Databases").category,
+      "Vector Databases",
+      "short label kept",
+    );
+  });
+
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);
 }

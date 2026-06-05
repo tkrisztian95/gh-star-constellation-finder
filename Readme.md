@@ -208,7 +208,10 @@ GITHUB_TOKEN=ghp_xxx OLLAMA_MODEL=llama3 bun run dev -- \
 
 # 2. Explore it in the browser (offline; no token/model needed):
 bun run dev -- --serve out/constellation.json     # http://localhost:4477
-#    interactive force graph, community-coloured, with a min-edge-weight slider.
+#    interactive force graph, community-coloured, with min-edge-weight + cluster-pull sliders.
+
+#    No build yet? A real 273-repo example ships in the repo — serve it directly:
+bun run dev -- --serve examples/constellation.json
 
 # 3. Or query it from an AI agent over MCP:
 CONSTELLATION_PATH=out/constellation.json bun run mcp

@@ -8,6 +8,15 @@ export const responseSchema = z.object({
   description: z.string().default(""),
 });
 
+// A category must be a short human label — never a JSON blob or a paragraph.
+// Guards the last-ditch fallback from dumping raw model output into `category`
+// (which then surfaces as garbage in the constellation legend).
+function sanitizeCategory(s: string, fallback: string): string {
+  const c = s.trim();
+  if (!c || c.startsWith("{") || c.startsWith("[") || c.length > 60) return fallback;
+  return c;
+}
+
 // Entity extraction is a separate seam (see ./entityExtractor.ts); analysis
 // returns only the three generative fields.
 export function parseAnalysisResponse(
@@ -28,7 +37,7 @@ export function parseAnalysisResponse(
     } catch {
       // not valid JSON at all
     }
-    return { category: content.trim() || fallback, killerFeature: "", description: "" };
+    return { category: sanitizeCategory(content, fallback), killerFeature: "", description: "" };
   }
 }
 
