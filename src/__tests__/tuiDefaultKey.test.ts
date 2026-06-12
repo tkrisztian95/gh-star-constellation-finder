@@ -1,4 +1,4 @@
-import { resolveScopeChoice } from "../components/ScopeScreen.js";
+import { resolveScopeChoice, formatScopeCount } from "../components/ScopeScreen.js";
 import { resolveStrategyChoice } from "../components/StrategyScreen.js";
 import { resolveConfirmChoice } from "../components/ConfirmScreen.js";
 import { resolveSummaryConfirmChoice } from "../components/SummaryScreen.js";
@@ -48,6 +48,18 @@ function runTests() {
 
   test("unrecognised key → null", () => {
     assertEqual(resolveScopeChoice("q", false), null, "unknown key");
+  });
+
+  // --- ScopeScreen: formatScopeCount ---
+
+  console.log("\n  formatScopeCount");
+
+  test("total count rendered in parentheses", () => {
+    assertEqual(formatScopeCount(42), "(42)", "total count");
+  });
+
+  test("unlisted count of zero is still shown", () => {
+    assertEqual(formatScopeCount(0), "(0)", "zero unlisted");
   });
 
   // --- StrategyScreen: resolveStrategyChoice ---

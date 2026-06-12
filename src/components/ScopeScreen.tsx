@@ -10,11 +10,18 @@ export function resolveScopeChoice(input: string, isEnter: boolean): ScopeMode |
   return null;
 }
 
-interface ScopeScreenProps {
-  onSelect: (mode: ScopeMode) => void;
+/** Pure count formatter — exported for testing */
+export function formatScopeCount(count: number): string {
+  return `(${count})`;
 }
 
-export function ScopeScreen({ onSelect }: ScopeScreenProps) {
+interface ScopeScreenProps {
+  onSelect: (mode: ScopeMode) => void;
+  totalCount: number;
+  unlistedCount: number;
+}
+
+export function ScopeScreen({ onSelect, totalCount, unlistedCount }: ScopeScreenProps) {
   useInput((input, key) => {
     const choice = resolveScopeChoice(input, key.return);
     if (choice) onSelect(choice);
@@ -26,12 +33,16 @@ export function ScopeScreen({ onSelect }: ScopeScreenProps) {
       <Box marginTop={1} flexDirection="column">
         <Text>
           {"  "}
-          <Text color="cyan">1)</Text> All starred repos{"  "}
+          <Text color="cyan">1)</Text> All starred repos{" "}
+          <Text color="gray">{formatScopeCount(totalCount)}</Text>
+          {"  "}
           <Text color="gray">— analyze everything (default)</Text>
         </Text>
         <Text>
           {"  "}
-          <Text color="cyan">2)</Text> Unlisted repos only{"  "}
+          <Text color="cyan">2)</Text> Unlisted repos only{" "}
+          <Text color="gray">{formatScopeCount(unlistedCount)}</Text>
+          {"  "}
           <Text color="gray">— skip repos already in a list</Text>
         </Text>
       </Box>
