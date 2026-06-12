@@ -51,6 +51,8 @@ function makeRecordingProvider(opts: { throwOnAnalyze?: boolean } = {}): Recordi
   const calls: string[] = [];
   return {
     modelId: "fake-model",
+    embedderId: "fake:embed",
+    embed: async () => [],
     calls,
     async analyze(input) {
       calls.push(`${input.owner}/${input.name}`);

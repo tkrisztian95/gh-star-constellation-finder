@@ -69,10 +69,17 @@ export interface ConsolidationResult {
 
 export interface AIProvider {
   modelId: string;
+  /** Stable identity of the embedding model + dimensionality producing this
+   * provider's vectors (e.g. `openai:text-embedding-3-small`). Changes whenever
+   * the model or vector dimension changes so caches can detect stale vectors. */
+  embedderId: string;
   analyze(
     input: RepoInput,
     signal?: AbortSignal,
     parent?: LangfuseParent | null,
   ): Promise<AnalysisResult>;
   complete(prompt: string, generationName: string, parent?: LangfuseParent | null): Promise<string>;
+  /** Embed a batch of texts, returning one vector per input in input order.
+   * Empty input returns `[]` with no network call. An aborted `signal` rejects. */
+  embed(texts: string[], signal?: AbortSignal, parent?: LangfuseParent | null): Promise<number[][]>;
 }

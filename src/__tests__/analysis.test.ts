@@ -34,6 +34,8 @@ interface FakeProviderOpts {
 function makeFakeProvider(opts: FakeProviderOpts = {}): AIProvider {
   return {
     modelId: "fake-model",
+    embedderId: "fake:embed",
+    embed: async () => [],
     async analyze(input) {
       if (opts.throwOn?.has(`${input.owner}/${input.name}`)) {
         throw new Error("simulated failure");

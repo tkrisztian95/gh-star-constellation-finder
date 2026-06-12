@@ -1,9 +1,9 @@
 ## 1. Provider embed seam
 
-- [ ] 1.1 Add `embed(texts: string[], signal?: AbortSignal, parent?: LangfuseParent | null): Promise<number[][]>` and `embedderId: string` to the `AIProvider` interface in `src/ai/types.ts`
-- [ ] 1.2 Implement `embed()` + `embedderId` (`openai:text-embedding-3-small`, 1536-dim) on the OpenAI provider via the existing client; batch call, vectors in input order; empty input returns `[]` with no network call; abort rejects
-- [ ] 1.3 Implement `embed()` + `embedderId` (`ollama:nomic-embed-text`, 768-dim) on the Ollama provider over its existing host; loop per-text internally, same batch signature
-- [ ] 1.4 Unit tests at the provider seam: mock the client, assert order preservation, empty-input short-circuit, abort rejection, and distinct `embedderId` per backend
+- [x] 1.1 Add `embed(texts: string[], signal?: AbortSignal, parent?: LangfuseParent | null): Promise<number[][]>` and `embedderId: string` to the `AIProvider` interface in `src/ai/types.ts`
+- [x] 1.2 Implement `embed()` + `embedderId` (`openai:text-embedding-3-small`, 1536-dim) on the OpenAI provider via the existing client; batch call, vectors in input order; empty input returns `[]` with no network call; abort rejects
+- [x] 1.3 Implement `embed()` + `embedderId` (`ollama:nomic-embed-text`, 768-dim) on the Ollama provider over its existing host; loop per-text internally, same batch signature
+- [x] 1.4 Unit tests at the provider seam: mock the client, assert order preservation, empty-input short-circuit, abort rejection, and distinct `embedderId` per backend
 
 ## 2. Embeddings cache table
 
