@@ -481,6 +481,68 @@ function runTests() {
     }),
   );
 
+  // --- JSON-repair retry on consolidation parse failure (#39) ---
+
+  tests.push(
+    test("consolidateCategories: malformed pass-2 JSON is repaired and used (no identity fallback)", async () => {
+      const names = ["CLI Tools", "CLI Utilities"];
+      const handler: ChunkedHandler = ({ generationName }) => {
+        if (generationName === "consolidate-categories") return "{ this is not json";
+        if (generationName === "consolidate-categories-repair") {
+          return JSON.stringify({ "CLI Tools": "CLI Tools", "CLI Utilities": "CLI Tools" });
+        }
+        return "{}"; // pass-1 identity
+      };
+      const provider = makeHandlerProvider(handler);
+      const result = await consolidateCategories(names, provider, [], 32);
+      assertEqual(
+        result.remapping.get("CLI Utilities"),
+        "CLI Tools",
+        "repaired remapping merges the two names",
+      );
+      const repairCalls = provider.generationNames.filter(
+        (n) => n === "consolidate-categories-repair",
+      );
+      assertEqual(repairCalls.length, 1, "exactly one repair call issued");
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories: repair that also fails falls back to identity (one repair attempt)", async () => {
+      const names = ["CLI Tools", "Vector Databases"];
+      const handler: ChunkedHandler = ({ generationName }) => {
+        if (generationName === "consolidate-categories") return "{ broken";
+        if (generationName === "consolidate-categories-repair") return "still broken {";
+        return "{}"; // pass-1 identity
+      };
+      const provider = makeHandlerProvider(handler);
+      const result = await consolidateCategories(names, provider, [], 32);
+      for (const name of names) {
+        assertEqual(result.remapping.get(name), name, `${name} identity-preserved`);
+      }
+      const repairCalls = provider.generationNames.filter(
+        (n) => n === "consolidate-categories-repair",
+      );
+      assertEqual(repairCalls.length, 1, "only a single repair attempt is made");
+      assert(
+        result.mergeWarnings.some((w) => w.includes("consolidation failed")),
+        "identity fallback records a warning",
+      );
+    }),
+  );
+
+  tests.push(
+    test("consolidateCategories: happy path issues no repair call", async () => {
+      const names = Array.from({ length: 10 }, (_, i) => `Cat ${i}`);
+      const provider = makeHandlerProvider(() => "{}");
+      await consolidateCategories(names, provider, [], 32);
+      assert(
+        !provider.generationNames.some((n) => n.endsWith("-repair")),
+        "no repair call on valid JSON",
+      );
+    }),
+  );
+
   return Promise.all(tests).then(() => {
     console.log(`\n${passed} passed, ${failed} failed`);
     if (failed > 0) process.exit(1);

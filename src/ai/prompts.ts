@@ -317,6 +317,16 @@ NOW PROCESS THIS INPUT
 Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
 }
 
+/**
+ * Repair prompt for a truncated or malformed JSON response. Kept minimal so it
+ * survives a tight `num_predict` and fires only on the parse-failure path.
+ */
+export function buildJsonRepairPrompt(malformed: string): string {
+  return `The following JSON output was truncated or malformed. Return ONLY the corrected JSON object — no prose, no markdown, no code fences.
+
+${malformed}`;
+}
+
 /** A repo retrieved for an --ask question, as fed into the answer prompt. */
 export interface AskContextRepo {
   url: string;

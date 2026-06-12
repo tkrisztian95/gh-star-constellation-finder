@@ -1,6 +1,7 @@
 import {
   buildConsolidationPrompt,
   buildConsolidationReducerPrompt,
+  buildJsonRepairPrompt,
   buildLanguageQualifierPrompt,
   buildReroutingPrompt,
 } from "../ai/prompts.js";
@@ -33,6 +34,44 @@ function logParseFailure(phase: string, content: string, err: unknown): void {
   });
 }
 
+/**
+ * Parse a consolidation remapping, attempting exactly one JSON-repair retry
+ * before giving up. On the happy path this is a plain `parseRemapping` and
+ * issues no extra provider call. On a parse failure it logs the failure, asks
+ * the provider once to return only the corrected JSON, and re-parses. If the
+ * repair also fails (or the repair call throws), the ORIGINAL parse error is
+ * rethrown so every call site keeps its existing identity-fallback contract.
+ */
+async function parseRemappingWithRepair(
+  provider: AIProvider,
+  content: string,
+  names: string[],
+  generationName: string,
+  span: LangfuseParent | null,
+): Promise<Map<string, string>> {
+  try {
+    return parseRemapping(content, names);
+  } catch (originalErr) {
+    logParseFailure(generationName, content, originalErr);
+    try {
+      const repaired = await provider.complete(
+        buildJsonRepairPrompt(content),
+        `${generationName}-repair`,
+        span,
+      );
+      const remapping = parseRemapping(repaired, names);
+      logger.info("consolidation JSON repair recovered", { phase: generationName });
+      return remapping;
+    } catch (repairErr) {
+      logger.warn("consolidation JSON repair failed", {
+        phase: generationName,
+        error: repairErr instanceof Error ? repairErr.message : String(repairErr),
+      });
+      throw originalErr;
+    }
+  }
+}
+
 async function runChunkedConsolidation(
   deduplicatedNames: string[],
   provider: AIProvider,
@@ -56,13 +95,13 @@ async function runChunkedConsolidation(
       distributionContext,
     );
     const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan);
-    let remapping: Map<string, string>;
-    try {
-      remapping = parseRemapping(content, deduplicatedNames);
-    } catch (err) {
-      logParseFailure("consolidate-categories", content, err);
-      throw err;
-    }
+    const remapping = await parseRemappingWithRepair(
+      provider,
+      content,
+      deduplicatedNames,
+      "consolidate-categories",
+      consolidationSpan,
+    );
     return buildConsolidationResult(
       remapping,
       deduplicatedNames,
@@ -83,14 +122,15 @@ async function runChunkedConsolidation(
         distributionContext,
       );
       const generationName = `consolidate-categories-chunk-${i + 1}`;
-      let content = "";
-      try {
-        content = await provider.complete(prompt, generationName, consolidationSpan);
-        return { chunkNames, remapping: parseRemapping(content, chunkNames) };
-      } catch (err) {
-        logParseFailure("consolidate-categories", content, err);
-        throw err;
-      }
+      const content = await provider.complete(prompt, generationName, consolidationSpan);
+      const remapping = await parseRemappingWithRepair(
+        provider,
+        content,
+        chunkNames,
+        generationName,
+        consolidationSpan,
+      );
+      return { chunkNames, remapping };
     }),
   );
 
@@ -147,7 +187,13 @@ async function runChunkedConsolidation(
         "consolidate-categories-reduce",
         consolidationSpan,
       );
-      const reducerMap = parseRemapping(reducerContent, canonicalsArray);
+      const reducerMap = await parseRemappingWithRepair(
+        provider,
+        reducerContent,
+        canonicalsArray,
+        "consolidate-categories-reduce",
+        consolidationSpan,
+      );
       for (const [name, currentCanonical] of composedRemapping) {
         const finalCanonical = reducerMap.get(currentCanonical) ?? currentCanonical;
         composedRemapping.set(name, finalCanonical);
@@ -156,10 +202,10 @@ async function runChunkedConsolidation(
         canonicalsIn: canonicalsArray.length,
         canonicalsOut: new Set(reducerMap.values()).size,
       });
-    } catch (err) {
-      logParseFailure("consolidate-categories-reduce", reducerContent, err);
-      // Fall through with the pre-reducer composedRemapping —
-      // enforcebudget in buildConsolidationResult is the safety net.
+    } catch {
+      // Parse + repair both failed (already logged) — fall through with the
+      // pre-reducer composedRemapping; enforcebudget in buildConsolidationResult
+      // is the safety net.
     }
   }
 

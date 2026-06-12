@@ -2,6 +2,7 @@ import {
   buildAnalyzeRepoPrompt,
   buildConsolidationPrompt,
   buildConsolidationReducerPrompt,
+  buildJsonRepairPrompt,
   buildReroutingPrompt,
 } from "../ai/prompts.js";
 import type { RepoInput } from "../ai/types.js";
@@ -161,6 +162,14 @@ function runTests() {
     assert(prompt.includes('"API Clients"'), "lists second existing");
     // budget = 32 - 2 = 30
     assert(prompt.includes("at most 30"), "budget reflects remaining slots");
+  });
+
+  test("buildJsonRepairPrompt: contains the malformed content and no code fences", () => {
+    const malformed = '{ "CLI Tools": "CLI Too';
+    const prompt = buildJsonRepairPrompt(malformed);
+    assert(prompt.includes(malformed), "embeds the malformed content verbatim");
+    assert(!prompt.includes("```"), "no markdown code fences");
+    assert(prompt.includes("ONLY the corrected JSON"), "instructs return-only-JSON");
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);
