@@ -8,7 +8,26 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 ## [Unreleased]
 
-_Nothing yet. Next up: the retrieval pivot (embeddings, `--ask`, MCP retrieval) — now the [v0.3.0 milestone](./docs/milestone-v0.2.0.md)._
+_Nothing yet. Next up: an MCP server exposing search / ask to external AI tools._
+
+## [0.3.0] — 2026-06-12
+
+The **retrieval** release. Your analysed stars become a queryable vector store, and `--ask "<question>"` answers natural-language questions over them with grounded, cited, retrieval-augmented responses — fully offline.
+
+### Added
+
+- **Embeddings substrate.** New `embed()` method on the `AIProvider` seam (OpenAI `text-embedding-3-small`, 1536-dim; Ollama `nomic-embed-text`, 768-dim) and an `embeddings` table in the analysis cache (unit-normalized float32 vectors, stale-detected on a per-backend `embedder_id`). Analysis now populates embeddings as a near-zero-cost side effect — reruns embed nothing already cached.
+- **Embeddings retriever** (`src/retrieval/`) — brute-force in-process cosine search fused with the keyword baseline via reciprocal rank fusion (RRF), scored by the eval harness. Beats the keyword baseline on recall@5 and MRR.
+- **`--ask "<question>"`** — headless retrieval-augmented Q&A over your stars. Reads persisted vectors from the local cache and embeds **only the query** (no corpus re-embedding, no GitHub auth — fully offline), then has the AI answer grounded **only** in the retrieved repos. Emits `{ question, answer, citations, retrieved }` JSON. Citations are validated against the retrieved set, so a hallucinated URL never appears; an empty cache prints a "run analysis first" message and exits non-zero.
+
+### Changed
+
+- The embeddings cache is a **self-contained retrieval store**: the `embeddings` table now carries each repo's `owner`, `name`, and the embedded `doc` text, so `--ask` ranks, cites, and grounds answers from the cache alone — no GitHub fetch, no join against the analysis row.
+- Retrieval eval gate moved from `precision@5 ≥ 0.6` (unreachable: the golden queryset caps mean precision@5 at ≈0.268) to **recall@5 / MRR ≥ baseline**. The deterministic keyword `evals/baseline.json` remains the `--check`-gated regression anchor.
+
+### Breaking
+
+- **Analysis cache schema bumps to v5** for the new `embeddings` table and its `owner`/`name`/`doc` columns. Existing caches rebuild via the version policy and re-embed on the next run (pre-1.0, formats not frozen). No session-JSON change.
 
 ## [0.2.1] — 2026-06-05
 
@@ -146,7 +165,8 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
 - The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.2...v0.1.3

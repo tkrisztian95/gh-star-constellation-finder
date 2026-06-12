@@ -9,9 +9,9 @@
 
 **Turn your GitHub stars into a local-first knowledge base.**
 
-`gh-star-constellation-finder` analyses your GitHub stars into a **local-first knowledge base**. It fetches every repo you've starred, reads its README, and runs it through a local or OpenAI model — capturing each project's intent, health, depth, and **technical entities** into a **SQLite cache on your machine**. That corpus already powers an **AI categorizer** (native GitHub Lists), can be exported as a portable `corpus.json` (`--export-corpus`), and is the substrate for the **entity "constellation"** — repos linked by the tech they share ([v0.3.0](docs/milestone-v0.3.0.md)). Making it directly queryable — `--ask`, semantic search, an MCP server — is the [v0.2.0 roadmap](docs/milestone-v0.2.0.md), tracked in the open.
+`gh-star-constellation-finder` analyses your GitHub stars into a **local-first knowledge base**. It fetches every repo you've starred, reads its README, and runs it through a local or OpenAI model — capturing each project's intent, health, depth, and **technical entities** into a **SQLite cache on your machine**. That corpus powers an **AI categorizer** (native GitHub Lists), can be exported as a portable `corpus.json` (`--export-corpus`), is the substrate for the **entity "constellation"** — repos linked by the tech they share — and is now **directly queryable**: `--ask "<question>"` runs retrieval-augmented Q&A over your stars, grounded and cited, fully offline. A semantic-search MCP server is still on the roadmap.
 
-> **Status:** the categorizer, analysis cache, per-repo **entity extraction** (swappable LLM / GLiNER seam — see [docs/entity-extraction.md](docs/entity-extraction.md)), the **eval harness** (`bun run evals`), and **`--export-corpus`** have shipped. The retrieval surfaces (`--ask`, search, MCP) and the constellation graph are roadmap — see [docs/milestone-v0.2.0.md](docs/milestone-v0.2.0.md) and [docs/milestone-v0.3.0.md](docs/milestone-v0.3.0.md).
+> **Status:** the categorizer, analysis cache, per-repo **entity extraction** (swappable LLM / GLiNER seam — see [docs/entity-extraction.md](docs/entity-extraction.md)), the **eval harness** (`bun run evals`), **`--export-corpus`**, the **constellation graph**, **embeddings retrieval**, and **`--ask` RAG** have shipped. An **MCP server** exposing search/ask to external AI tools is the next roadmap surface — see [docs/milestone-v0.3.0.md](docs/milestone-v0.3.0.md).
 
 ![Review screen: an AI-generated suggestion proposing to move a repo into the "Curated Software Resources" list, with keyboard shortcuts for accept / skip / reject / quit](docs/screenshots/review-phase-cropped.png)
 
@@ -29,6 +29,7 @@
   - [Consolidation Strategies](#consolidation-strategies)
 - [🛠 CLI Flags](#-cli-flags)
   - [`--analyze-only` mode](#--analyze-only-mode)
+  - [`--ask` mode (RAG over your stars)](#--ask-mode-rag-over-your-stars)
 - [🌌 Constellation (entity graph)](#-constellation-entity-graph)
 - [⚙️ Configuration](#%EF%B8%8F-configuration)
 - [📓 Logging](#-logging)
@@ -72,6 +73,7 @@ This tool is provided **as is, with no warranty**, under the [MIT License](./LIC
 - **Reserved "Other" Bucket:** One of the 32 GitHub list slots is always reserved for an "Other" catch-all. Any repo that doesn't fit a specific category lands here instead of being forced into an ill-fitting group. The "Other" list is protected — it can never be renamed or deleted by the tool.
 - **Persistent Analysis Cache:** Per-repo AI results are cached in a local SQLite DB keyed on README contents — re-runs only pay for repos whose README has changed. Disable with `--no-cache`.
 - **Headless / Scriptable Mode:** Run with `--analyze-only` to skip the TUI and emit a JSON document to stdout for scripting or inspection.
+- **Ask Your Stars (RAG):** `--ask "<question>"` answers natural-language questions over your analysed stars — retrieval-augmented, grounded only in your corpus, with citations back to repo URLs. Runs **fully offline** from the local cache (no GitHub auth) and embeds only the query; declines instead of hallucinating when nothing matches.
 - **Privacy by Default:** Both prompt tracing (Langfuse) and product analytics (PostHog) are strictly opt-in via env vars. With nothing configured, no telemetry leaves your machine.
 
 ## 🚀 Getting Started
@@ -146,16 +148,17 @@ After confirming, you pick one of three strategies that controls how the AI's pr
 
 ## 🛠 CLI Flags
 
-| Flag                | Default    | Description                                                                    |
-| ------------------- | ---------- | ------------------------------------------------------------------------------ |
-| `--backend <name>`  | `openai`   | AI backend to use (`openai` or `ollama`)                                       |
-| `--limit <n>`       | _(all)_    | Limit the number of repos analysed                                             |
-| `--concurrency <n>` | `5`        | Parallel README fetch concurrency                                              |
-| `--analyze-only`    | off        | Headless mode — skip the TUI and print JSON to stdout                          |
-| `--output <path>`   | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout                      |
-| `--export-corpus <path>` | _(off)_ | Headless — analyse your stars and write a `corpus.json` (the cross-project contract: repo metadata + analysis + entities), then exit |
-| `--no-cache`        | off        | Skip the local analysis cache — every repo is sent to the AI even if unchanged |
-| `--no-analytics`    | off        | Disable PostHog product analytics for this run (also persisted to user config) |
+| Flag                     | Default    | Description                                                                                                                          |
+| ------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `--backend <name>`       | `openai`   | AI backend to use (`openai` or `ollama`)                                                                                             |
+| `--limit <n>`            | _(all)_    | Limit the number of repos analysed                                                                                                   |
+| `--concurrency <n>`      | `5`        | Parallel README fetch concurrency                                                                                                    |
+| `--analyze-only`         | off        | Headless mode — skip the TUI and print JSON to stdout                                                                                |
+| `--output <path>`        | _(stdout)_ | Write `--analyze-only` output to a file instead of stdout                                                                            |
+| `--export-corpus <path>` | _(off)_    | Headless — analyse your stars and write a `corpus.json` (the cross-project contract: repo metadata + analysis + entities), then exit |
+| `--ask "<question>"`     | _(off)_    | Headless — answer a question over your analysed stars from the local cache (offline, no GitHub auth), print JSON, then exit          |
+| `--no-cache`             | off        | Skip the local analysis cache — every repo is sent to the AI even if unchanged                                                       |
+| `--no-analytics`         | off        | Disable PostHog product analytics for this run (also persisted to user config)                                                       |
 
 ### `--analyze-only` mode
 
@@ -189,6 +192,31 @@ Output shape:
 }
 ```
 
+### `--ask` mode (RAG over your stars)
+
+Once a run has populated the cache, ask natural-language questions over your stars. Retrieval reads persisted embeddings from the local cache and embeds **only your query** — no corpus re-embedding, no GitHub auth, fully offline:
+
+```bash
+# Analyse once to populate the cache (embeddings included)
+bun run dev -- --backend ollama --analyze-only --limit 40 > /dev/null
+
+# Then ask — grounded answer + citations as JSON
+bun run dev -- --backend ollama --ask "which of my stars are rust CLI tools" | jq
+```
+
+Output shape:
+
+```json
+{
+  "question": "which of my stars are rust CLI tools",
+  "answer": "Several of your stars are Rust command-line tools: ...",
+  "citations": ["github.com/BurntSushi/ripgrep", "github.com/sharkdp/fd"],
+  "retrieved": [{ "url": "github.com/BurntSushi/ripgrep", "score": 0.031 }]
+}
+```
+
+The answer is grounded **only** in retrieved repos; citations are validated against the retrieved set, so a hallucinated URL never appears. When nothing relevant is found, it says so and cites nothing. The embedder must match the one that populated the cache — analyse and ask with the same `--backend`; an empty cache prints a "run analysis first" message and exits non-zero.
+
 ## 🌌 Constellation (entity graph)
 
 Beyond categorising, the tool extracts **technical entities** per repo and links
@@ -197,7 +225,7 @@ repos that share them into a graph — your stars as a constellation. See
 
 ![Star constellation — starred repos linked by shared technical entities, coloured by community, with a min-edge-weight slider and per-repo related list](docs/screenshots/constellation.png)
 
-*`--serve` web view: repos linked by shared tech, coloured by community. Sliders tune edge-weight threshold and how tightly clusters pull together; hover a repo for its related stars.*
+_`--serve` web view: repos linked by shared tech, coloured by community. Sliders tune edge-weight threshold and how tightly clusters pull together; hover a repo for its related stars._
 
 ```bash
 # 1. Build the graph from your stars (entities are extracted during analysis).
