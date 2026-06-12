@@ -8,6 +8,10 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.3.2] — 2026-06-12
+
 ### Fixed
 
 - **Consolidation survives a malformed JSON response.** When a pass-2 category-consolidation LLM call returns truncated or slightly malformed JSON, the coordinator now issues one repair call (asking the model to return only the corrected JSON) and re-parses before falling back to identity remapping. Applied at all three parse sites — single-chunk, per-chunk, and the reducer. The happy path is unchanged (no extra call), and a still-malformed repair falls back exactly as before. ([#39](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/39))
@@ -173,7 +177,8 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
 - The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.0...v0.2.1

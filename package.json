@@ -1,6 +1,6 @@
 {
   "name": "gh-star-constellation-finder",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Local-first knowledge base built from your GitHub stars, with an AI categorizer for native GitHub Lists.",
   "type": "module",
   "license": "MIT",
