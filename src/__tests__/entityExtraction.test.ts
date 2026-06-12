@@ -22,6 +22,8 @@ function names(entities: Entity[] = []): string {
 function mockProvider(complete: () => Promise<string>): AIProvider {
   return {
     modelId: "test",
+    embedderId: "test:embed",
+    embed: async () => [],
     analyze: async () => ({ category: "", killerFeature: "", description: "" }),
     complete,
   };

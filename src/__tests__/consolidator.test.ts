@@ -23,6 +23,8 @@ function assertEqual<T>(actual: T, expected: T, message: string): void {
 function makeThrowingProvider(): AIProvider {
   return {
     modelId: "mock-throwing",
+    embedderId: "mock:embed",
+    embed: async () => [],
     analyze: async () => {
       throw new Error("mock provider error");
     },
@@ -37,6 +39,8 @@ function makeRecordingProvider(responses: string[]): AIProvider & { calls: strin
   let idx = 0;
   return {
     modelId: "mock-recording",
+    embedderId: "mock:embed",
+    embed: async () => [],
     calls,
     analyze: async () => ({ category: "Test", killerFeature: "", description: "" }),
     complete: async (prompt: string) => {
@@ -61,6 +65,8 @@ function makeHandlerProvider(handler: ChunkedHandler): AIProvider & {
   const generationNames: string[] = [];
   const provider = {
     modelId: "mock-handler",
+    embedderId: "mock:embed",
+    embed: async () => [],
     callCount: 0,
     generationNames,
     analyze: async () => ({ category: "Test", killerFeature: "", description: "" }),

@@ -21,6 +21,7 @@ export function createOpenAIProvider(
   _trace?: LangfuseParent | null,
   apiKey: string = process.env.OPENAI_API_KEY!,
   model: string = process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+  embedModel: string = process.env.OPENAI_EMBED_MODEL ?? "text-embedding-3-small",
 ): AIProvider {
   if (!apiKey) {
     const message = "Error: OPENAI_API_KEY is required for the openai backend";
@@ -32,6 +33,7 @@ export function createOpenAIProvider(
 
   return {
     modelId: `openai/${model}`,
+    embedderId: `openai:${embedModel}`,
 
     async analyze(
       input: RepoInput,
@@ -150,6 +152,49 @@ export function createOpenAIProvider(
       });
 
       return content;
+    },
+
+    async embed(
+      texts: string[],
+      signal?: AbortSignal,
+      parent?: LangfuseParent | null,
+    ): Promise<number[][]> {
+      if (texts.length === 0) return [];
+
+      let generation: { end: (data: object) => void } | undefined;
+      try {
+        if (parent) {
+          generation = parent.generation({
+            name: `embed-${texts.length}`,
+            model: embedModel,
+            input: texts,
+          });
+        }
+      } catch {
+        // tracing errors must not affect embedding
+      }
+
+      try {
+        const response = await client.embeddings.create(
+          { model: embedModel, input: texts },
+          { signal },
+        );
+        const vectors = response.data
+          .slice()
+          .sort((a, b) => a.index - b.index)
+          .map((d) => d.embedding);
+        endGenerationSafe(generation, {
+          output: `${vectors.length} vectors`,
+          usage: response.usage ? { input: response.usage.prompt_tokens, output: 0 } : undefined,
+        });
+        return vectors;
+      } catch (err: unknown) {
+        endGenerationSafe(generation, {
+          level: "ERROR",
+          statusMessage: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
     },
   };
 }

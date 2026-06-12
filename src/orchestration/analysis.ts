@@ -22,7 +22,73 @@ import type { InterruptChoice } from "../components/InterruptConfirmScreen.js";
 import type { AIProvider } from "../ai/index.js";
 import { LlmEntityExtractor, type EntitySource } from "../ai/entityExtractor.js";
 import type { AnalysisCache } from "../cache/analysisCache.js";
+import { buildEmbeddingText } from "../retrieval/embeddingText.js";
 import { logger } from "../logger.js";
+
+/** Max texts per embed call. OpenAI accepts far more; this bounds memory and
+ * keeps a single failure from sinking the whole corpus. */
+const EMBED_BATCH_SIZE = 256;
+
+/**
+ * Populate the embeddings cache for newly analyzed repos. Shared by the TUI and
+ * headless paths via runAnalysis. Only repos whose cached vector is stale for
+ * the active embedder are (re)embedded, so reruns make zero embedding calls.
+ * Best-effort: an embedding failure is logged but never fails analysis — the
+ * vectors are a retrieval substrate, not part of the analysis result.
+ */
+export async function populateEmbeddings(params: {
+  analyzedRepos: AnalyzedRepo[];
+  analyzer: AIProvider;
+  cache: AnalysisCache;
+  signal: AbortSignal;
+  parent: LangfuseParent | null;
+}): Promise<void> {
+  const { analyzedRepos, analyzer, cache, signal, parent } = params;
+  const embedderId = analyzer.embedderId;
+
+  const stale = analyzedRepos.filter(
+    ({ repo, analysis }) =>
+      analysis.category !== "analysis-failed" && cache.needsEmbed(repo.id, embedderId),
+  );
+  if (stale.length === 0) return;
+
+  logger.info("embedding repos", { count: stale.length, embedderId });
+  try {
+    for (let i = 0; i < stale.length; i += EMBED_BATCH_SIZE) {
+      if (signal.aborted) return;
+      const batch = stale.slice(i, i + EMBED_BATCH_SIZE);
+      const texts = batch.map(({ repo, analysis }) =>
+        buildEmbeddingText({
+          name: `${repo.owner}/${repo.name}`,
+          topics: repo.topics,
+          category: analysis.category,
+          killerFeature: analysis.killerFeature,
+          description: analysis.description,
+        }),
+      );
+      const vectors = await analyzer.embed(texts, signal, parent);
+      if (vectors.length !== batch.length) {
+        logger.warn("embed returned wrong vector count; skipping batch", {
+          expected: batch.length,
+          got: vectors.length,
+        });
+        continue;
+      }
+      for (let j = 0; j < batch.length; j++) {
+        await cache.saveEmbedding(batch[j]!.repo.id, vectors[j]!, embedderId);
+        logger.debug("repo embedded", {
+          owner: batch[j]!.repo.owner,
+          name: batch[j]!.repo.name,
+        });
+      }
+    }
+  } catch (err) {
+    if (signal.aborted) return;
+    logger.error("embedding population failed", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 export type AnalysisTimingStatus = "ok" | "failed" | "skipped-archived" | "aborted";
 
@@ -220,6 +286,19 @@ export async function runAnalysis({
     }
 
     await Promise.all(inFlight);
+
+    // Embed newly analyzed repos into the retrieval substrate (#44). Runs in
+    // the shared engine so TUI and --analyze-only populate identically. Skipped
+    // when there is no cache or the run was interrupted.
+    if (cache && !interruptedRef.value) {
+      await populateEmbeddings({
+        analyzedRepos,
+        analyzer,
+        cache,
+        signal: abortController.signal,
+        parent: analysisSpan,
+      });
+    }
   } finally {
     endSpanSafe(analysisSpan, {
       output: { successCount: analyzedRepos.length - analysisErrorCount },

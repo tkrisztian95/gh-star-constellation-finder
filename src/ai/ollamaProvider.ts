@@ -20,9 +20,11 @@ export function createOllamaProvider(
   model: string = process.env.OLLAMA_MODEL ?? "llama3",
   _trace?: LangfuseParent | null,
   host: string = process.env.OLLAMA_HOST ?? "http://localhost:11434",
+  embedModel: string = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text",
 ): AIProvider {
   return {
     modelId: `ollama/${model}`,
+    embedderId: `ollama:${embedModel}`,
 
     async analyze(
       input: RepoInput,
@@ -187,6 +189,52 @@ export function createOllamaProvider(
       });
 
       return content;
+    },
+
+    async embed(
+      texts: string[],
+      signal?: AbortSignal,
+      parent?: LangfuseParent | null,
+    ): Promise<number[][]> {
+      if (texts.length === 0) return [];
+
+      let generation: { end: (data: object) => void } | undefined;
+      try {
+        if (parent) {
+          generation = parent.generation({
+            name: `embed-${texts.length}`,
+            model: embedModel,
+            input: texts,
+          });
+        }
+      } catch {
+        // tracing errors must not affect embedding
+      }
+
+      let response: Response;
+      try {
+        response = await fetch(`${host}/api/embed`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          signal,
+          body: JSON.stringify({ model: embedModel, input: texts }),
+        });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
+        throw error;
+      }
+
+      if (!response.ok) {
+        const message = `HTTP ${response.status}`;
+        endGenerationSafe(generation, { level: "ERROR", statusMessage: message });
+        throw new Error(`Ollama embed error: ${message}`);
+      }
+
+      const body = (await response.json()) as { embeddings?: number[][] };
+      const vectors = body.embeddings ?? [];
+      endGenerationSafe(generation, { output: `${vectors.length} vectors` });
+      return vectors;
     },
   };
 }
