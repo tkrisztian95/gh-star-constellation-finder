@@ -168,6 +168,54 @@ async function runTests(): Promise<void> {
     }
   });
 
+  // --- keep_alive on the /api/chat hot path (#36) ---
+
+  function captureChatBody(): { get: () => Record<string, unknown> } {
+    let captured: Record<string, unknown> = {};
+    globalThis.fetch = ((_url: string, init?: { body?: string }) => {
+      captured = JSON.parse(init?.body ?? "{}") as Record<string, unknown>;
+      return Promise.resolve(
+        new Response(JSON.stringify({ message: { content: "{}" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }) as unknown as typeof fetch;
+    return { get: () => captured };
+  }
+
+  await test("Ollama analyze() sends default keep_alive on /api/chat", async () => {
+    const originalFetch = globalThis.fetch;
+    const cap = captureChatBody();
+    try {
+      const provider = createOllamaProvider();
+      await provider.analyze({
+        owner: "o",
+        name: "n",
+        description: "d",
+        language: "TypeScript",
+        topics: [],
+        readme: "",
+        isArchived: false,
+      });
+      assertEqual(cap.get().keep_alive, "10m", "analyze body carries default keep_alive");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await test("Ollama complete() sends configured keep_alive on /api/chat", async () => {
+    const originalFetch = globalThis.fetch;
+    const cap = captureChatBody();
+    try {
+      const provider = createOllamaProvider(undefined, null, undefined, undefined, "30m");
+      await provider.complete("prompt", "gen-name");
+      assertEqual(cap.get().keep_alive, "30m", "complete body carries configured keep_alive");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);
 }

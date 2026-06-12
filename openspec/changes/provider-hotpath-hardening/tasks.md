@@ -1,9 +1,9 @@
 ## 1. keep_alive residency (#36 — smallest, lowest risk)
 
-- [ ] 1.1 Add a configurable `keep_alive` (default `"10m"`) — env var (e.g. `OLLAMA_KEEP_ALIVE`) read in `src/ai/ollamaProvider.ts`.
-- [ ] 1.2 Include `keep_alive` in every `/api/chat` body (both `analyze()` and `complete()`).
-- [ ] 1.3 Document the env var in `.env.example`.
-- [ ] 1.4 Test: assert the request body carries the configured `keep_alive` (mock fetch).
+- [x] 1.1 Add a configurable `keep_alive` (default `"10m"`) — env var (e.g. `OLLAMA_KEEP_ALIVE`) read in `src/ai/ollamaProvider.ts`.
+- [x] 1.2 Include `keep_alive` in every `/api/chat` body (both `analyze()` and `complete()`).
+- [x] 1.3 Document the env var in `.env.example`.
+- [x] 1.4 Test: assert the request body carries the configured `keep_alive` (mock fetch).
 
 ## 2. Streaming complete() (#34)
 

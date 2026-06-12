@@ -21,6 +21,10 @@ export function createOllamaProvider(
   _trace?: LangfuseParent | null,
   host: string = process.env.OLLAMA_HOST ?? "http://localhost:11434",
   embedModel: string = process.env.OLLAMA_EMBED_MODEL ?? "nomic-embed-text",
+  // Keep the model resident across the analyze batch + consolidate calls so it
+  // is not evicted (and re-loaded / re-tokenized) between the 100–250 calls per
+  // run. Silently ignored by Ollama deployments that do not support it.
+  keepAlive: string = process.env.OLLAMA_KEEP_ALIVE ?? "10m",
 ): AIProvider {
   return {
     modelId: `ollama/${model}`,
@@ -61,6 +65,7 @@ export function createOllamaProvider(
           body: JSON.stringify({
             model,
             stream: false,
+            keep_alive: keepAlive,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userMessage },
@@ -132,6 +137,7 @@ export function createOllamaProvider(
           body: JSON.stringify({
             model,
             stream: false,
+            keep_alive: keepAlive,
             // `think: false` skips reasoning tokens on Gemma3/Gemma4 and
             // other thinking models — those tokens count toward num_predict
             // but go to `message.thinking`, not `message.content`. Without
