@@ -1,12 +1,5 @@
 import { repoKey, repoUrl, type CorpusEntry, type Retriever } from "./types.js";
-
-/** Lowercase, split on non-alphanumerics, drop empties. Deterministic. */
-function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 0);
-}
+import { tokenize } from "../retrieval/tokenize.js";
 
 /** Searchable token bag for a corpus entry, across all text fields. The
  * archived flag is surfaced as a synthetic token so health-check queries can

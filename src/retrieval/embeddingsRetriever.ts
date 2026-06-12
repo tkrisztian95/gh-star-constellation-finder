@@ -1,4 +1,5 @@
 import { buildEmbeddingText } from "./embeddingText.js";
+import { normalize, dot } from "./vectorMath.js";
 import type { AIProvider } from "../ai/types.js";
 import { createBaselineRetriever } from "../evals/baselineRetriever.js";
 import { repoKey, repoUrl, type CorpusEntry, type Retriever } from "../evals/types.js";
@@ -10,25 +11,6 @@ const EMBED_BATCH_SIZE = 256;
  * paper (Cormack et al.) and is robust across corpora — it damps the influence
  * of any single retriever's exact ranking while preserving order. */
 const RRF_C = 60;
-
-/** Unit-normalize so cosine similarity reduces to a dot product. A zero vector
- * stays zero (cosine against it is 0). */
-function normalize(vec: number[]): Float32Array {
-  let norm = 0;
-  for (const v of vec) norm += v * v;
-  norm = Math.sqrt(norm);
-  const out = new Float32Array(vec.length);
-  if (norm > 0) {
-    for (let i = 0; i < vec.length; i++) out[i] = vec[i]! / norm;
-  }
-  return out;
-}
-
-function dot(a: Float32Array, b: Float32Array): number {
-  let s = 0;
-  for (let i = 0; i < a.length; i++) s += a[i]! * b[i]!;
-  return s;
-}
 
 /** Build the embedding text for a corpus entry — identical to the text the
  * analysis engine persists per repo, so eval scores predict production. */

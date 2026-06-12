@@ -7,9 +7,9 @@
 
 ## 2. Shared retrieval helpers (de-dup with slice A)
 
-- [ ] 2.1 Extract `normalize` + `dot` into `src/retrieval/vectorMath.ts`; extract `tokenize` into `src/retrieval/tokenize.ts` (from the eval baseline retriever)
-- [ ] 2.2 Refactor `src/retrieval/embeddingsRetriever.ts` and the eval baseline to use the shared helpers — behavior-preserving
-- [ ] 2.3 Confirm `bun run evals --check` still reproduces the keyword baseline (proves the refactor changed nothing)
+- [x] 2.1 Extract `normalize` + `dot` into `src/retrieval/vectorMath.ts`; extract `tokenize` into `src/retrieval/tokenize.ts` (from the eval baseline retriever)
+- [x] 2.2 Refactor `src/retrieval/embeddingsRetriever.ts` and the eval baseline to use the shared helpers — behavior-preserving
+- [x] 2.3 Confirm `bun run evals --check` still reproduces the keyword baseline (proves the refactor changed nothing)
 
 ## 3. Cache-backed retriever
 
