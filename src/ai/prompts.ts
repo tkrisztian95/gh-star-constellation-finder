@@ -317,6 +317,33 @@ NOW PROCESS THIS INPUT
 Return ONLY a valid JSON object mapping every input name to its canonical name. No prose, no markdown, no code fences.`;
 }
 
+/** A repo retrieved for an --ask question, as fed into the answer prompt. */
+export interface AskContextRepo {
+  url: string;
+  doc: string;
+}
+
+export function buildAskPrompt(question: string, repos: AskContextRepo[]): string {
+  const context = repos.map((r, i) => `${i + 1}. ${r.url}\n${r.doc}`).join("\n\n");
+
+  return `You are answering a question about a developer's own GitHub starred repositories. You are given a shortlist of their stars retrieved as most relevant to the question. Answer using ONLY these repositories — do not use any outside knowledge and do not invent repositories or URLs.
+
+QUESTION
+${question}
+
+CANDIDATE STARRED REPOSITORIES
+${context}
+
+RULES
+- Answer the question in a few sentences, grounded only in the repositories above.
+- Cite every repository you rely on by its exact github.com/<owner>/<name> URL, taken verbatim from the list.
+- "citations" MUST be a subset of the URLs listed above — never a URL not in the list.
+- If none of the repositories are relevant to the question, say so plainly and return an empty "citations" array.
+
+OUTPUT
+Return ONLY a JSON object of the form {"answer": "<text>", "citations": ["github.com/owner/name", ...]}. No prose, no markdown, no code fences.`;
+}
+
 export function buildReroutingPrompt(
   orphans: { category: string }[],
   availableTargets: string[],

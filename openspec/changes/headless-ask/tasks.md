@@ -19,9 +19,9 @@
 
 ## 4. RAG answer
 
-- [ ] 4.1 Add `buildAskPrompt(question, retrieved)` in `src/ai/prompts.ts`: numbered context block from docs, instruct "answer ONLY from these starred repos, cite github.com/<owner>/<name>, return JSON `{answer, citations}`"
-- [ ] 4.2 Add an answer module (`src/orchestration/ask.ts`) that calls `provider.complete()`, zod-parses `{answer, citations}`, intersects citations with the retrieved URL set, and falls back to `{answer: raw, citations: []}` on parse failure
-- [ ] 4.3 Unit tests: citations intersected with retrieved (hallucinated URL dropped); no-relevant-repos → empty citations; malformed model output → graceful fallback
+- [x] 4.1 Add `buildAskPrompt(question, retrieved)` in `src/ai/prompts.ts`: numbered context block from docs, instruct "answer ONLY from these starred repos, cite github.com/<owner>/<name>, return JSON `{answer, citations}`"
+- [x] 4.2 Add an answer module (`src/orchestration/ask.ts`) that calls `provider.complete()`, zod-parses `{answer, citations}`, intersects citations with the retrieved URL set, and falls back to `{answer: raw, citations: []}` on parse failure
+- [x] 4.3 Unit tests: citations intersected with retrieved (hallucinated URL dropped); no-relevant-repos → empty citations; malformed model output → graceful fallback
 
 ## 5. --ask CLI surface
 
