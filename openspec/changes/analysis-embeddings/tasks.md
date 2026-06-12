@@ -7,11 +7,11 @@
 
 ## 2. Embeddings cache table
 
-- [ ] 2.1 Add the `embeddings` table (`repo_id` PK, `vector` BLOB, `embedder_id` TEXT, `updated_at` INTEGER) to `src/cache/analysisCache.ts` and bump `SCHEMA_VERSION`
-- [ ] 2.2 Add write helper: store a vector as float32 LE BLOB (normalized to unit length at write) with `embedder_id` + `updated_at`
-- [ ] 2.3 Add read helper: decode BLOB to `Float32Array`, return null on miss, treat `embedder_id` mismatch or wrong vector length as a miss/stale
-- [ ] 2.4 Add a "needs (re)embed" predicate comparing stored `embedder_id` to the active `embedderId`
-- [ ] 2.5 Unit tests: write→read round-trip, missing row returns null, identity match is a hit, mismatch is stale, old-schema cache rebuilds and gains the table
+- [x] 2.1 Add the `embeddings` table (`repo_id` PK, `vector` BLOB, `embedder_id` TEXT, `updated_at` INTEGER) to `src/cache/analysisCache.ts` and bump `SCHEMA_VERSION`
+- [x] 2.2 Add write helper: store a vector as float32 LE BLOB (normalized to unit length at write) with `embedder_id` + `updated_at`
+- [x] 2.3 Add read helper: decode BLOB to `Float32Array`, return null on miss, treat `embedder_id` mismatch or wrong vector length as a miss/stale
+- [x] 2.4 Add a "needs (re)embed" predicate comparing stored `embedder_id` to the active `embedderId`
+- [x] 2.5 Unit tests: write→read round-trip, missing row returns null, identity match is a hit, mismatch is stale, old-schema cache rebuilds and gains the table
 
 ## 3. Populate embeddings in the shared engine
 

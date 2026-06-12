@@ -85,7 +85,7 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 3, "PRAGMA user_version is 3");
+      assertEqual(userVersion, 4, "PRAGMA user_version is 4");
 
       const tables = db
         .query<
@@ -330,7 +330,7 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 3, "user_version bumped to 3 after migration");
+      assertEqual(userVersion, 4, "user_version bumped to 4 after migration");
 
       // The new columns must exist on the recreated table.
       const cols = db
@@ -378,6 +378,74 @@ async function runTests(): Promise<void> {
       (hit?.entities ?? []).map((e) => `${e.name}:${e.label}`).join(","),
       "Docker:TOOL,Go:LANGUAGE",
       "entities survive the cache round-trip",
+    );
+  });
+
+  // --- Test 12 (analysis-embeddings 2.5): embedding write → read round-trip,
+  // unit-normalized so cosine becomes a dot product
+  await withTempDir(async (dir) => {
+    const cache = await loadCache(join(dir, "analysis.db"));
+    await cache.saveEmbedding("node-1", [3, 4], "openai:test");
+    const vec = cache.getEmbedding("node-1", "openai:test");
+    assert(vec !== null, "embedding round-trips");
+    assertEqual(vec!.length, 2, "vector length preserved");
+    // [3,4] has norm 5 → normalized to [0.6, 0.8]
+    assert(Math.abs(vec![0]! - 0.6) < 1e-6, "first component normalized");
+    assert(Math.abs(vec![1]! - 0.8) < 1e-6, "second component normalized");
+  });
+
+  // --- Test 13: missing row returns null; needsEmbed true
+  await withTempDir(async (dir) => {
+    const cache = await loadCache(join(dir, "analysis.db"));
+    assertEqual(cache.getEmbedding("absent", "openai:test"), null, "missing → null");
+    assert(cache.needsEmbed("absent", "openai:test"), "missing → needsEmbed");
+  });
+
+  // --- Test 14: identity match is a hit, mismatch is stale
+  await withTempDir(async (dir) => {
+    const cache = await loadCache(join(dir, "analysis.db"));
+    await cache.saveEmbedding("node-2", [1, 0], "openai:v1");
+    assert(cache.getEmbedding("node-2", "openai:v1") !== null, "matching identity is a hit");
+    assert(!cache.needsEmbed("node-2", "openai:v1"), "matching identity does not need embed");
+    assertEqual(cache.getEmbedding("node-2", "openai:v2"), null, "mismatched identity is stale");
+    assert(cache.needsEmbed("node-2", "openai:v2"), "mismatched identity needs embed");
+  });
+
+  // --- Test 15: allEmbeddings returns only the active embedder's vectors
+  await withTempDir(async (dir) => {
+    const cache = await loadCache(join(dir, "analysis.db"));
+    await cache.saveEmbedding("a", [1, 0], "openai:v1");
+    await cache.saveEmbedding("b", [0, 1], "openai:v1");
+    await cache.saveEmbedding("c", [1, 1], "openai:v2");
+    const all = cache.allEmbeddings("openai:v1");
+    assertEqual(all.length, 2, "only v1 vectors returned");
+    assertEqual(
+      all
+        .map((e) => e.repoId)
+        .sort()
+        .join(","),
+      "a,b",
+      "correct repo ids",
+    );
+  });
+
+  // --- Test 16: an old-schema cache rebuilds and gains the embeddings table
+  await withTempDir(async (dir) => {
+    const dbPath = join(dir, "analysis.db");
+    // Write a v3-style db: entries table only, user_version = 3.
+    const seed = new Database(dbPath);
+    seed.exec(
+      "CREATE TABLE entries (key TEXT PRIMARY KEY, category TEXT NOT NULL, killer_feature TEXT NOT NULL, description TEXT NOT NULL, entities TEXT NOT NULL DEFAULT '[]', data_quality TEXT, updated_at INTEGER NOT NULL) WITHOUT ROWID;",
+    );
+    seed.exec("PRAGMA user_version = 3;");
+    seed.close();
+
+    const cache = await loadCache(dbPath);
+    // Table exists and is usable after migration.
+    await cache.saveEmbedding("node-x", [1, 0], "openai:test");
+    assert(
+      cache.getEmbedding("node-x", "openai:test") !== null,
+      "embeddings table usable post-migration",
     );
   });
 
