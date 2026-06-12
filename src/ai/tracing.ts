@@ -45,6 +45,14 @@ export function createRunTrace(
   return langfuse.trace({ name: "constellation-run", metadata, sessionId });
 }
 
+export function createAskTrace(
+  langfuse: Langfuse,
+  metadata: { question: string; backend: string },
+  sessionId: string,
+): LangfuseTrace {
+  return langfuse.trace({ name: "ask", metadata, sessionId });
+}
+
 export function createPhaseSpan(
   parent: LangfuseParent | null,
   name: string,

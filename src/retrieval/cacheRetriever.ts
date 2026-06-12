@@ -2,6 +2,7 @@ import { normalize, dot } from "./vectorMath.js";
 import { tokenize } from "./tokenize.js";
 import { repoKey } from "../evals/types.js";
 import type { AIProvider } from "../ai/types.js";
+import type { LangfuseParent } from "../ai/tracing.js";
 import type { AnalysisCache } from "../cache/analysisCache.js";
 
 /** Reciprocal-rank-fusion constant — matches the slice-A embeddings retriever. */
@@ -18,7 +19,7 @@ export interface RetrievedRepo {
 
 export interface CacheRetriever {
   /** Embed the query and return up to `k` repos best-first. */
-  search(query: string, k: number): Promise<RetrievedRepo[]>;
+  search(query: string, k: number, parent?: LangfuseParent | null): Promise<RetrievedRepo[]>;
   /** Number of repos available for retrieval (rows for the active embedder). */
   readonly size: number;
 }
@@ -47,10 +48,14 @@ export function createCacheRetriever(cache: AnalysisCache, provider: AIProvider)
 
   return {
     size: records.length,
-    async search(query: string, k: number): Promise<RetrievedRepo[]> {
+    async search(
+      query: string,
+      k: number,
+      parent: LangfuseParent | null = null,
+    ): Promise<RetrievedRepo[]> {
       if (records.length === 0) return [];
 
-      const [qraw] = await provider.embed([query]);
+      const [qraw] = await provider.embed([query], undefined, parent);
       if (!qraw) return [];
       const q = normalize(qraw);
 

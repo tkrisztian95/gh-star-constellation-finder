@@ -25,10 +25,10 @@
 
 ## 5. --ask CLI surface
 
-- [ ] 5.1 Add `--ask "<question>"` parsing + help text to `src/cli/args.ts` (new `askQuestion?: string` on `CliArgs`)
-- [ ] 5.2 Route `--ask` in `src/orchestration/main.tsx` before `authenticate()` (offline, cache-only, like `--serve`): load cache, build retriever + answer, emit JSON, exit
-- [ ] 5.3 Emit `{ question, answer, citations, retrieved: [{url, score}] }` to stdout; unpopulated cache (no vectors for active embedder) → message to run analysis first + non-zero exit, no answer call
-- [ ] 5.4 Trace query-embed + completion via the existing Langfuse wrapper; capture an `ask` PostHog event consistent with `src/analytics.ts` (omit token counts for Ollama)
+- [x] 5.1 Add `--ask "<question>"` parsing + help text to `src/cli/args.ts` (new `askQuestion?: string` on `CliArgs`)
+- [x] 5.2 Route `--ask` in `src/orchestration/main.tsx` before `authenticate()` (offline, cache-only, like `--serve`): load cache, build retriever + answer, emit JSON, exit
+- [x] 5.3 Emit `{ question, answer, citations, retrieved: [{url, score}] }` to stdout; unpopulated cache (no vectors for active embedder) → message to run analysis first + non-zero exit, no answer call
+- [x] 5.4 Trace query-embed + completion via the existing Langfuse wrapper; capture an `ask` PostHog event consistent with `src/analytics.ts` (omit token counts for Ollama)
 
 ## 6. Quality gates + manual verification
 

@@ -14,6 +14,7 @@ export interface CliArgs {
   serve?: boolean;
   graphPath?: string;
   port?: number;
+  askQuestion?: string;
   noAnalytics: boolean;
   noCache: boolean;
 }
@@ -51,6 +52,9 @@ Options:
   --serve [path]        Serve the constellation as an interactive web graph
                         (default out/constellation.json); offline, no auth
   --port <n>            Port for --serve (default 4477)
+  --ask "<question>"    Headless: answer a question over your analysed stars
+                        from the local cache (offline, no auth); prints JSON.
+                        Run --analyze-only first to populate the cache.
   --no-cache            Skip the local analysis cache (re-analyse every repo)
   --no-analytics        Disable PostHog product analytics for this run
   -h, --help            Show this help and exit
@@ -145,6 +149,9 @@ export function parseArgs(): CliArgs {
         process.exit(1);
       }
       result.entitySource = v;
+      i++;
+    } else if (args[i] === "--ask" && args[i + 1]) {
+      result.askQuestion = args[i + 1];
       i++;
     } else if (args[i] === "--no-analytics") {
       result.noAnalytics = true;
