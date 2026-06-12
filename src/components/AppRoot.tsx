@@ -109,7 +109,13 @@ export function App({
         />
       )}
 
-      {phase.tag === "pick-scope" && <ScopeScreen onSelect={onScopeSelect} />}
+      {phase.tag === "pick-scope" && (
+        <ScopeScreen
+          onSelect={onScopeSelect}
+          totalCount={phase.totalCount}
+          unlistedCount={phase.unlistedCount}
+        />
+      )}
 
       {phase.tag === "pick-strategy" && (
         <StrategyScreen

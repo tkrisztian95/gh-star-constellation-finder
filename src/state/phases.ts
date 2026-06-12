@@ -12,7 +12,7 @@ export type AppPhase =
       login: string;
       showAnalyticsNotice: boolean;
     }
-  | { tag: "pick-scope" }
+  | { tag: "pick-scope"; totalCount: number; unlistedCount: number }
   | { tag: "pick-strategy"; scopeMode: ScopeMode; hasLists: boolean }
   | { tag: "fetching"; filterLabel?: string }
   | {

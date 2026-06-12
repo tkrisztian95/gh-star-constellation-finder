@@ -178,17 +178,22 @@ export async function main() {
   }
   logger.info("user confirmed");
 
+  const unlistedRepos = repos.filter((r) => r.listIds.length === 0);
+
   let scopeMode: ScopeMode;
   if (lists.length > 0) {
-    tui.setPhase({ tag: "pick-scope" });
+    tui.setPhase({
+      tag: "pick-scope",
+      totalCount: repos.length,
+      unlistedCount: unlistedRepos.length,
+    });
     scopeMode = await tui.scopePromise;
     logger.info("user picked scope", { scope: scopeMode });
   } else {
     scopeMode = "all";
   }
 
-  const filteredRepos =
-    scopeMode === "unlisted-only" ? repos.filter((r) => r.listIds.length === 0) : repos;
+  const filteredRepos = scopeMode === "unlisted-only" ? unlistedRepos : repos;
 
   if (filteredRepos.length === 0) {
     logger.info("scope filter eliminated all repos; exiting", { scope: scopeMode });
