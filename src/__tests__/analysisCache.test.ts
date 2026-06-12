@@ -85,7 +85,7 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 4, "PRAGMA user_version is 4");
+      assertEqual(userVersion, 5, "PRAGMA user_version is 5");
 
       const tables = db
         .query<
@@ -330,7 +330,7 @@ async function runTests(): Promise<void> {
       const userVersion = db
         .query<{ user_version: number }, []>("PRAGMA user_version")
         .get()?.user_version;
-      assertEqual(userVersion, 4, "user_version bumped to 4 after migration");
+      assertEqual(userVersion, 5, "user_version bumped to 5 after migration");
 
       // The new columns must exist on the recreated table.
       const cols = db
@@ -385,13 +385,17 @@ async function runTests(): Promise<void> {
   // unit-normalized so cosine becomes a dot product
   await withTempDir(async (dir) => {
     const cache = await loadCache(join(dir, "analysis.db"));
-    await cache.saveEmbedding("node-1", [3, 4], "openai:test");
-    const vec = cache.getEmbedding("node-1", "openai:test");
-    assert(vec !== null, "embedding round-trips");
-    assertEqual(vec!.length, 2, "vector length preserved");
+    await cache.saveEmbedding("node-1", [3, 4], "openai:test", "octo", "cat", "cat doc");
+    const rec = cache.getEmbedding("node-1", "openai:test");
+    assert(rec !== null, "embedding round-trips");
+    assertEqual(rec!.vector.length, 2, "vector length preserved");
     // [3,4] has norm 5 → normalized to [0.6, 0.8]
-    assert(Math.abs(vec![0]! - 0.6) < 1e-6, "first component normalized");
-    assert(Math.abs(vec![1]! - 0.8) < 1e-6, "second component normalized");
+    assert(Math.abs(rec!.vector[0]! - 0.6) < 1e-6, "first component normalized");
+    assert(Math.abs(rec!.vector[1]! - 0.8) < 1e-6, "second component normalized");
+    // owner/name/doc round-trip (headless-ask: self-contained retrieval store)
+    assertEqual(rec!.owner, "octo", "owner round-trips");
+    assertEqual(rec!.name, "cat", "name round-trips");
+    assertEqual(rec!.doc, "cat doc", "doc round-trips");
   });
 
   // --- Test 13: missing row returns null; needsEmbed true
@@ -404,7 +408,7 @@ async function runTests(): Promise<void> {
   // --- Test 14: identity match is a hit, mismatch is stale
   await withTempDir(async (dir) => {
     const cache = await loadCache(join(dir, "analysis.db"));
-    await cache.saveEmbedding("node-2", [1, 0], "openai:v1");
+    await cache.saveEmbedding("node-2", [1, 0], "openai:v1", "o", "node2", "doc");
     assert(cache.getEmbedding("node-2", "openai:v1") !== null, "matching identity is a hit");
     assert(!cache.needsEmbed("node-2", "openai:v1"), "matching identity does not need embed");
     assertEqual(cache.getEmbedding("node-2", "openai:v2"), null, "mismatched identity is stale");
@@ -414,9 +418,9 @@ async function runTests(): Promise<void> {
   // --- Test 15: allEmbeddings returns only the active embedder's vectors
   await withTempDir(async (dir) => {
     const cache = await loadCache(join(dir, "analysis.db"));
-    await cache.saveEmbedding("a", [1, 0], "openai:v1");
-    await cache.saveEmbedding("b", [0, 1], "openai:v1");
-    await cache.saveEmbedding("c", [1, 1], "openai:v2");
+    await cache.saveEmbedding("a", [1, 0], "openai:v1", "o", "a", "doc");
+    await cache.saveEmbedding("b", [0, 1], "openai:v1", "o", "b", "doc");
+    await cache.saveEmbedding("c", [1, 1], "openai:v2", "o", "c", "doc");
     const all = cache.allEmbeddings("openai:v1");
     assertEqual(all.length, 2, "only v1 vectors returned");
     assertEqual(
@@ -442,7 +446,7 @@ async function runTests(): Promise<void> {
 
     const cache = await loadCache(dbPath);
     // Table exists and is usable after migration.
-    await cache.saveEmbedding("node-x", [1, 0], "openai:test");
+    await cache.saveEmbedding("node-x", [1, 0], "openai:test", "o", "nodex", "doc");
     assert(
       cache.getEmbedding("node-x", "openai:test") !== null,
       "embeddings table usable post-migration",
@@ -486,12 +490,36 @@ async function runTests(): Promise<void> {
     assert(embedCalls >= 1, "embed called during first analysis");
     const all = cache.allEmbeddings("fake:embed-v1");
     assertEqual(all.length, 2, "both repos embedded");
-    assert(cache.getEmbedding("a/one", "fake:embed-v1") !== null, "repo a embedded");
+    const recA = cache.getEmbedding("a/one", "fake:embed-v1");
+    assert(recA !== null, "repo a embedded");
+    // populateEmbeddings persists owner/name/doc for the retrieval store
+    assertEqual(recA!.owner, "a", "owner persisted by populateEmbeddings");
+    assertEqual(recA!.name, "one", "name persisted by populateEmbeddings");
+    assert(recA!.doc.includes("a/one"), "doc carries the embedded text");
 
     // Rerun: entries + embeddings are warm, so no new embed calls.
     const callsBefore = embedCalls;
     await runAnalysis({ ...params, phaseTimings: {} as PhaseTimings });
     assertEqual(embedCalls, callsBefore, "rerun makes zero embed calls (cache hit)");
+  });
+
+  // --- Test 18 (headless-ask 1.4): a v4 cache (embeddings without owner/name/doc)
+  // rebuilds to v5 and gains the new columns
+  await withTempDir(async (dir) => {
+    const dbPath = join(dir, "analysis.db");
+    const seed = new Database(dbPath);
+    seed.exec(
+      "CREATE TABLE embeddings (repo_id TEXT PRIMARY KEY, vector BLOB NOT NULL, embedder_id TEXT NOT NULL, updated_at INTEGER NOT NULL) WITHOUT ROWID;",
+    );
+    seed.exec("PRAGMA user_version = 4;");
+    seed.close();
+
+    const cache = await loadCache(dbPath);
+    await cache.saveEmbedding("node-1", [1, 0], "openai:test", "octo", "cat", "cat doc");
+    const rec = cache.getEmbedding("node-1", "openai:test");
+    assert(rec !== null, "v4→v5 migrated cache is usable");
+    assertEqual(rec!.owner, "octo", "owner column exists post-migration");
+    assertEqual(rec!.doc, "cat doc", "doc column exists post-migration");
   });
 
   console.log("  ✓ all analysisCache assertions passed");

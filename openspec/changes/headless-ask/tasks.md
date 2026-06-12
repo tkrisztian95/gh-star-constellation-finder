@@ -1,9 +1,9 @@
 ## 1. Cache as a self-contained retrieval store
 
-- [ ] 1.1 Add `owner TEXT`, `name TEXT`, `doc TEXT` to the `embeddings` table CREATE in `src/cache/analysisCache.ts` and bump `SCHEMA_VERSION` 4→5
-- [ ] 1.2 Update `saveEmbedding` to accept and persist `owner`, `name`, `doc`; update the `CachedEmbedding` type + `allEmbeddings`/`getEmbedding` to return them
-- [ ] 1.3 Update slice-A callers (`populateEmbeddings`) and tests for the new `saveEmbedding` signature; `populateEmbeddings` passes `repo.owner`, `repo.name`, and the already-built embed text as `doc`
-- [ ] 1.4 Unit tests: write→read round-trip carries owner/name/doc; `allEmbeddings` returns them; old-schema (v4) cache rebuilds to v5 and gains the columns
+- [x] 1.1 Add `owner TEXT`, `name TEXT`, `doc TEXT` to the `embeddings` table CREATE in `src/cache/analysisCache.ts` and bump `SCHEMA_VERSION` 4→5
+- [x] 1.2 Update `saveEmbedding` to accept and persist `owner`, `name`, `doc`; update the `CachedEmbedding` type + `allEmbeddings`/`getEmbedding` to return them
+- [x] 1.3 Update slice-A callers (`populateEmbeddings`) and tests for the new `saveEmbedding` signature; `populateEmbeddings` passes `repo.owner`, `repo.name`, and the already-built embed text as `doc`
+- [x] 1.4 Unit tests: write→read round-trip carries owner/name/doc; `allEmbeddings` returns them; old-schema (v4) cache rebuilds to v5 and gains the columns
 
 ## 2. Shared retrieval helpers (de-dup with slice A)
 
