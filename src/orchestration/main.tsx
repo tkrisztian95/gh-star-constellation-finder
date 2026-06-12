@@ -19,6 +19,7 @@ import { logger } from "../logger.js";
 import { parseArgs } from "../cli/args.js";
 import { serveConstellation } from "../constellation/viz.js";
 import { runAnalyzeOnly } from "../cli/modes.js";
+import { runAsk } from "../cli/askMode.js";
 import { setupTui } from "./tui.js";
 import { runAnalysis, handleInterrupt } from "./analysis.js";
 import { runReviewPhase } from "./review.js";
@@ -32,6 +33,12 @@ export async function main() {
   if (cliArgs.serve) {
     serveConstellation(cliArgs.graphPath ?? "out/constellation.json", cliArgs.port ?? 4477);
     return; // Bun.serve keeps the process alive
+  }
+
+  // --ask is offline + read-only: answer from the local cache, no GitHub auth.
+  if (cliArgs.askQuestion) {
+    await runAsk(cliArgs);
+    return; // runAsk calls process.exit()
   }
 
   // Analytics init

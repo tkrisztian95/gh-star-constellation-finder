@@ -75,11 +75,19 @@ export async function populateEmbeddings(params: {
         continue;
       }
       for (let j = 0; j < batch.length; j++) {
-        await cache.saveEmbedding(batch[j]!.repo.id, vectors[j]!, embedderId);
-        logger.debug("repo embedded", {
-          owner: batch[j]!.repo.owner,
-          name: batch[j]!.repo.name,
-        });
+        const { repo } = batch[j]!;
+        // Persist owner/name/doc alongside the vector so the cache is a
+        // self-contained retrieval store for --ask (#21): rank, cite, and
+        // ground answers without a GitHub fetch or an entries join.
+        await cache.saveEmbedding(
+          repo.id,
+          vectors[j]!,
+          embedderId,
+          repo.owner,
+          repo.name,
+          texts[j]!,
+        );
+        logger.debug("repo embedded", { owner: repo.owner, name: repo.name });
       }
     }
   } catch (err) {

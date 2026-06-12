@@ -18,7 +18,7 @@ function parseEntitiesColumn(raw: string): Entity[] {
   }
 }
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS entries (
@@ -35,7 +35,10 @@ const CREATE_TABLE_SQL = `
     repo_id     TEXT PRIMARY KEY,
     vector      BLOB NOT NULL,
     embedder_id TEXT NOT NULL,
-    updated_at  INTEGER NOT NULL
+    updated_at  INTEGER NOT NULL,
+    owner       TEXT NOT NULL DEFAULT '',
+    name        TEXT NOT NULL DEFAULT '',
+    doc         TEXT NOT NULL DEFAULT ''
   ) WITHOUT ROWID;
 `;
 
@@ -72,26 +75,43 @@ type SaveParams = [string, string, string, string, string, string | null, number
 interface EmbeddingRow {
   vector: Uint8Array;
   embedder_id: string;
+  owner: string;
+  name: string;
+  doc: string;
 }
 
-type EmbeddingSaveParams = [string, Uint8Array, string, number];
+type EmbeddingSaveParams = [string, Uint8Array, string, number, string, string, string];
 
-/** A repo's cached vector together with the node id it was stored under. */
+/** A repo's cached vector plus the metadata needed to rank, cite, and ground an
+ * answer from the embeddings table alone: the node id it was stored under, the
+ * repo `owner`/`name` (for the `github.com/<owner>/<name>` citation), and the
+ * `doc` text the vector was embedded from (answer context + keyword fusion). */
 export interface CachedEmbedding {
   repoId: string;
   vector: Float32Array;
+  owner: string;
+  name: string;
+  doc: string;
 }
 
 export interface AnalysisCache {
   get(repoId: string, readme: string): AnalysisResult | null;
   saveEntry(repoId: string, readme: string, result: AnalysisResult): Promise<void>;
-  /** Persist a per-repo embedding, normalized to unit length. Keyed by the
-   * GitHub node id, alongside the repo's `entries` row. */
-  saveEmbedding(repoId: string, vector: number[], embedderId: string): Promise<void>;
-  /** Return the cached vector for `repoId` only when it was produced by the
+  /** Persist a per-repo embedding, normalized to unit length, with the repo
+   * `owner`/`name` and the `doc` it was embedded from. Keyed by the GitHub node
+   * id, alongside the repo's `entries` row. */
+  saveEmbedding(
+    repoId: string,
+    vector: number[],
+    embedderId: string,
+    owner: string,
+    name: string,
+    doc: string,
+  ): Promise<void>;
+  /** Return the cached embedding for `repoId` only when it was produced by the
    * active `embedderId`. A missing row or an `embedder_id` mismatch (which also
    * implies a dimension change) returns null — i.e. it is stale. */
-  getEmbedding(repoId: string, embedderId: string): Float32Array | null;
+  getEmbedding(repoId: string, embedderId: string): CachedEmbedding | null;
   /** True when `repoId` has no fresh vector for `embedderId` and must be
    * (re)embedded. */
   needsEmbed(repoId: string, embedderId: string): boolean;
@@ -171,13 +191,15 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
   const countStmt: Statement<{ n: number }, []> = db.query("SELECT COUNT(*) AS n FROM entries");
 
   const selectEmbeddingStmt: Statement<EmbeddingRow, [string]> = db.query(
-    "SELECT vector, embedder_id FROM embeddings WHERE repo_id = ?",
+    "SELECT vector, embedder_id, owner, name, doc FROM embeddings WHERE repo_id = ?",
   );
   const upsertEmbeddingStmt: Statement<unknown, EmbeddingSaveParams> = db.query(
-    "INSERT OR REPLACE INTO embeddings (repo_id, vector, embedder_id, updated_at) VALUES (?, ?, ?, ?)",
+    "INSERT OR REPLACE INTO embeddings (repo_id, vector, embedder_id, updated_at, owner, name, doc) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
-  const selectAllEmbeddingsStmt: Statement<{ repo_id: string; vector: Uint8Array }, [string]> =
-    db.query("SELECT repo_id, vector FROM embeddings WHERE embedder_id = ?");
+  const selectAllEmbeddingsStmt: Statement<
+    { repo_id: string; vector: Uint8Array; owner: string; name: string; doc: string },
+    [string]
+  > = db.query("SELECT repo_id, vector, owner, name, doc FROM embeddings WHERE embedder_id = ?");
 
   logger.info("analysis cache opened", {
     path: filePath,
@@ -207,13 +229,19 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
         Date.now(),
       );
     },
-    async saveEmbedding(repoId, vector, embedderId) {
-      upsertEmbeddingStmt.run(repoId, packVector(vector), embedderId, Date.now());
+    async saveEmbedding(repoId, vector, embedderId, owner, name, doc) {
+      upsertEmbeddingStmt.run(repoId, packVector(vector), embedderId, Date.now(), owner, name, doc);
     },
     getEmbedding(repoId, embedderId) {
       const row = selectEmbeddingStmt.get(repoId);
       if (!row || row.embedder_id !== embedderId) return null;
-      return unpackVector(row.vector);
+      return {
+        repoId,
+        vector: unpackVector(row.vector),
+        owner: row.owner,
+        name: row.name,
+        doc: row.doc,
+      };
     },
     needsEmbed(repoId, embedderId) {
       const row = selectEmbeddingStmt.get(repoId);
@@ -223,6 +251,9 @@ export async function loadCache(filePath: string = DEFAULT_CACHE_PATH): Promise<
       return selectAllEmbeddingsStmt.all(embedderId).map((row) => ({
         repoId: row.repo_id,
         vector: unpackVector(row.vector),
+        owner: row.owner,
+        name: row.name,
+        doc: row.doc,
       }));
     },
     get size() {
