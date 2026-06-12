@@ -8,7 +8,9 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 ## [Unreleased]
 
-_Nothing yet. Next up: an MCP server exposing search / ask to external AI tools._
+### Fixed
+
+- **Consolidation survives a malformed JSON response.** When a pass-2 category-consolidation LLM call returns truncated or slightly malformed JSON, the coordinator now issues one repair call (asking the model to return only the corrected JSON) and re-parses before falling back to identity remapping. Applied at all three parse sites — single-chunk, per-chunk, and the reducer. The happy path is unchanged (no extra call), and a still-malformed repair falls back exactly as before. ([#39](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/39))
 
 ## [0.3.1] — 2026-06-12
 
