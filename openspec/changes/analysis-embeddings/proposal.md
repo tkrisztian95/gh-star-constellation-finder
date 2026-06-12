@@ -26,7 +26,7 @@ The analysis pass already produces a rich, structured view of every starred repo
 ### New Capabilities
 - `provider-embeddings`: the `embed()` method on the `AIProvider` seam — batch text→vector with per-backend model/dimension selection and an `embedder_id` identity for cache-staleness detection.
 - `embeddings-cache`: the `embeddings` table in the analysis cache — persist/read per-repo vectors keyed by `repo_id`, stale-detect on `embedder_id` mismatch, near-zero-cost hit on rerun.
-- `embeddings-retrieval`: the `src/retrieval/` module — embed-query + brute-force cosine top-k + rerank, implementing the evals `Retriever` interface and beating the keyword baseline at precision@5 ≥ 0.6.
+- `embeddings-retrieval`: the `src/retrieval/` module — embed-query + brute-force cosine top-k + a keyword-fusion rerank, implementing the evals `Retriever` interface and matching-or-beating the keyword baseline on recall@5 and MRR. (The originally proposed `precision@5 ≥ 0.6` bar proved unreachable — the golden queryset's expected-count distribution caps mean precision@5 at ≈ 0.268 — so the gate moved to recall@5/MRR; see the `embeddings-retrieval` spec.)
 
 ### Modified Capabilities
 <!-- No existing spec's REQUIREMENTS change — the AIProvider extension is additive and the cache gains a new table without altering the `entries` contract. -->

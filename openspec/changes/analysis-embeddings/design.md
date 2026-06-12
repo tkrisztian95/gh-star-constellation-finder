@@ -49,7 +49,12 @@ Constraints from the project: AI access goes through the `AIProvider` seam only 
 4. Add `src/retrieval/` and wire an embeddings-retriever option into `src/evals/run.ts`.
 5. Rollback: revert the table + seam; an older binary opening a newer cache rebuilds it (version policy), so no data-corruption path.
 
+## Resolved during apply
+
+- **Gate metric.** `precision@5 ≥ 0.6` was unreachable: 30/41 golden queries have a single expected repo, capping mean precision@5 at ≈ 0.268, and the keyword baseline already sits at 0.2634. Moved the gate to recall@5 ≥ baseline and MRR ≥ baseline (the metrics that actually move on this queryset). Spec updated accordingly.
+- **Rerank shape.** Cosine-only with Ollama `nomic-embed-text` tied the baseline on precision but trailed it on recall (0.976 vs 0.992) and MRR (0.917 vs 0.925). Added a reciprocal-rank-fusion (RRF, C=60) rerank combining the dense cosine ranking with the keyword baseline's lexical ranking. Fused result beats the baseline on every metric (recall@5 1.000, MRR 0.9329, precision@5 0.2683 = the ceiling). RRF chosen over a weighted linear blend because it is parameter-light and scale-free across the two heterogeneous score distributions.
+- **Recorded scorecard.** `evals/embeddings.json` is a recorded result (embedder-dependent), not a CI regression gate — only the deterministic keyword `baseline.json` is `--check`-gated. The committed number was produced with `nomic-embed-text`; OpenAI `text-embedding-3-small` was unavailable (no key) and would likely score at least as well.
+
 ## Open Questions
 
-- Rerank pass shape: cosine-only vs a light re-score that boosts exact name/topic matches (hybrid). Start cosine-only; add reranking only if precision@5 misses 0.6. Decide during `/opsx:apply` against the eval number.
 - Whether to expose a `--reembed` flag to force re-embedding without nuking the whole cache. Defer to #21 unless trivial.
