@@ -10,6 +10,12 @@ The authoritative per-commit history lives in [git log](https://github.com/tkris
 
 _Nothing yet. Next up: an MCP server exposing search / ask to external AI tools._
 
+## [0.3.1] — 2026-06-12
+
+### Added
+
+- **Repo counts on the scope screen.** The scope selection prompt now shows how many repos each option covers — the total starred count next to "All starred repos" and the unlisted count next to "Unlisted repos only" — so you can see the size of each scope before choosing. Counts derive from the already-fetched repo set; display-only, no change to scoping behavior. ([#3](https://github.com/tkrisztian95/gh-star-constellation-finder/issues/3))
+
 ## [0.3.0] — 2026-06-12
 
 The **retrieval** release. Your analysed stars become a queryable vector store, and `--ask "<question>"` answers natural-language questions over them with grounded, cited, retrieval-augmented responses — fully offline.
@@ -165,7 +171,8 @@ First public release. The full feature set is captured under [`openspec/specs/`]
 - `package.json` now declares `repository`, `bugs`, `homepage`, `author`, `license`, and `keywords` so package-info widgets and search tooling can pick the project up.
 - The moderate `brace-expansion` advisory ([GHSA-f886-m6hf-6m8v](https://github.com/advisories/GHSA-f886-m6hf-6m8v)) is resolved via a lockfile override pinning to `^5.0.6`.
 
-[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/tkrisztian95/gh-star-constellation-finder/compare/v0.1.3...v0.2.0
