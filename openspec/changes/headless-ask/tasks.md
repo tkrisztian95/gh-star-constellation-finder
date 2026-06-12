@@ -13,9 +13,9 @@
 
 ## 3. Cache-backed retriever
 
-- [ ] 3.1 Add `createCacheRetriever(cache, provider)` in `src/retrieval/`: read `allEmbeddings(provider.embedderId)`, embed only the query (one call), cosine-rank, fuse with a keyword ranking over cached `doc` via RRF (C=60), deterministic repo-key tie-break
-- [ ] 3.2 Return top-k records `{ url, doc, score }` best-first; empty cache → empty result (no throw)
-- [ ] 3.3 Unit tests with a mocked provider + seeded cache: one query embed (no corpus re-embed), ranking, k-truncation, tie-break, stale-embedder exclusion, empty-cache empty result
+- [x] 3.1 Add `createCacheRetriever(cache, provider)` in `src/retrieval/`: read `allEmbeddings(provider.embedderId)`, embed only the query (one call), cosine-rank, fuse with a keyword ranking over cached `doc` via RRF (C=60), deterministic repo-key tie-break
+- [x] 3.2 Return top-k records `{ url, doc, score }` best-first; empty cache → empty result (no throw)
+- [x] 3.3 Unit tests with a mocked provider + seeded cache: one query embed (no corpus re-embed), ranking, k-truncation, tie-break, stale-embedder exclusion, empty-cache empty result
 
 ## 4. RAG answer
 
