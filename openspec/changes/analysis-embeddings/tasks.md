@@ -29,7 +29,7 @@
 
 ## 5. Evals wiring + gate
 
-- [ ] 5.1 Add an embeddings-retriever option to `src/evals/run.ts` so `bun run evals` can score it against the committed golden queryset (no `Retriever` interface change)
+- [x] 5.1 Add an embeddings-retriever option to `src/evals/run.ts` so `bun run evals` can score it against the committed golden queryset (no `Retriever` interface change)
 - [ ] 5.2 Run `bun run evals` against a real backend locally; record precision@5 and confirm it is ≥ 0.6 and strictly beats `baseline-keyword`
 - [ ] 5.3 If under 0.6: tune embedding text / add a light rerank pass, re-score, document the chosen approach in design Open Questions
 - [ ] 5.4 Commit the embeddings scorecard alongside the baseline scorecard for comparison

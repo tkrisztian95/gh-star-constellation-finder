@@ -1,7 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { logger } from "../logger.js";
+import { createProvider, type Backend } from "../ai/index.js";
 import { createBaselineRetriever } from "./baselineRetriever.js";
+import { createEmbeddingsRetriever } from "../retrieval/embeddingsRetriever.js";
 import { crossCheck, FixtureError, loadCorpus, loadQueryset } from "./loaders.js";
 import { aggregate, scoreQuery } from "./metrics.js";
 import type { QueryResult, Retriever, Scorecard } from "./types.js";
@@ -9,7 +11,10 @@ import type { QueryResult, Retriever, Scorecard } from "./types.js";
 const DEFAULT_CORPUS = "evals/corpus.json";
 const DEFAULT_QUERIES = "evals/queries.json";
 const DEFAULT_BASELINE = "evals/baseline.json";
+const DEFAULT_EMBEDDINGS_SCORECARD = "evals/embeddings.json";
 const DEFAULT_K = 5;
+
+type RetrieverKind = "baseline" | "embeddings";
 
 interface EvalOptions {
   corpusPath: string;
@@ -20,6 +25,10 @@ interface EvalOptions {
   outPath: string | null;
   /** Compare against the committed baseline and exit non-zero on drift. */
   check: boolean;
+  /** Which retriever to score. */
+  retriever: RetrieverKind;
+  /** Backend for the embeddings retriever (omit to auto-detect from env). */
+  backend: Backend | undefined;
 }
 
 function parseArgs(argv: string[]): EvalOptions {
@@ -30,6 +39,8 @@ function parseArgs(argv: string[]): EvalOptions {
     k: DEFAULT_K,
     outPath: null,
     check: false,
+    retriever: "baseline",
+    backend: undefined,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -40,8 +51,29 @@ function parseArgs(argv: string[]): EvalOptions {
     else if (a === "--queries") opts.queriesPath = next();
     else if (a === "--baseline") opts.baselinePath = next();
     else if (a === "--out") opts.outPath = next();
+    else if (a === "--retriever") {
+      const v = next();
+      opts.retriever = v === "embeddings" ? "embeddings" : "baseline";
+    } else if (a === "--backend") {
+      const v = next();
+      if (v === "openai" || v === "ollama") opts.backend = v;
+    }
   }
   return opts;
+}
+
+/** Build the retriever named by the options. The embeddings retriever needs a
+ * live provider (it embeds the corpus + each query), so it is constructed via
+ * the same provider seam the app uses. */
+async function buildRetriever(
+  opts: EvalOptions,
+  corpus: ReturnType<typeof loadCorpus>,
+): Promise<Retriever> {
+  if (opts.retriever === "embeddings") {
+    const provider = createProvider(opts.backend);
+    return createEmbeddingsRetriever(corpus, provider);
+  }
+  return createBaselineRetriever(corpus);
 }
 
 /** Round metrics to 4 decimals so committed scorecards diff cleanly and the
@@ -119,7 +151,7 @@ export async function main(argv: string[]): Promise<number> {
     const queryset = loadQueryset(opts.queriesPath);
     crossCheck(corpus, queryset);
 
-    const retriever = createBaselineRetriever(corpus);
+    const retriever = await buildRetriever(opts, corpus);
     const scorecard = await runEvals(retriever, queryset, opts.k);
 
     process.stdout.write(formatScorecard(scorecard, retriever.name));
@@ -140,7 +172,11 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     }
 
-    const out = opts.outPath ?? opts.baselinePath;
+    // Default output path: the embeddings retriever writes its own scorecard so
+    // it never clobbers the committed keyword baseline.
+    const defaultOut =
+      opts.retriever === "embeddings" ? DEFAULT_EMBEDDINGS_SCORECARD : opts.baselinePath;
+    const out = opts.outPath ?? defaultOut;
     writeFileSync(out, JSON.stringify(scorecard, null, 2) + "\n");
     process.stdout.write(`Scorecard written to ${out}\n`);
     return 0;
