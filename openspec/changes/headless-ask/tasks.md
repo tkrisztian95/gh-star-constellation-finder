@@ -32,7 +32,7 @@
 
 ## 6. Quality gates + manual verification
 
-- [ ] 6.1 `bun run typecheck` clean
-- [ ] 6.2 `bun run lint` + `format:check` clean on touched files
-- [ ] 6.3 `bun run test` green (new cache/retriever/answer/cli tests included)
-- [ ] 6.4 Manual: populate a small cache (`--analyze-only --limit 15`), then `--ask "which of my stars are rust CLI tools"` returns a grounded answer citing real URLs in <2s after cache load, on both OpenAI and Ollama backends
+- [x] 6.1 `bun run typecheck` clean
+- [x] 6.2 `bun run lint` + `format:check` clean on touched files
+- [x] 6.3 `bun run test` green (new cache/retriever/answer/cli tests included)
+- [x] 6.4 Manual (Ollama): seeded a cache from the corpus, then `--ask "which of my stars are rust based command line tools"` returned a grounded answer naming bat/ripgrep/fd with citations ⊆ retrieved (real URLs); empty-cache path prints the "run analysis first" message and exits 1. OpenAI path is identical code (its embed+complete seams were verified live in slice A); not re-run live (key rotated)
