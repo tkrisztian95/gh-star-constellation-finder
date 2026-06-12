@@ -22,10 +22,10 @@
 
 ## 4. Retrieval module
 
-- [ ] 4.1 Create `src/retrieval/` with `createEmbeddingsRetriever(corpus, cache, provider)` implementing the evals `Retriever` interface (`name`, `search(query, k)`)
-- [ ] 4.2 Preload corpus vectors into an in-memory matrix once; `search()` embeds the query, dot-products against the normalized matrix, sorts best-first with a deterministic repo-key tie-break matching the baseline
-- [ ] 4.3 Return up to `k` `github.com/<owner>/<name>` URLs; guard against vectors whose dimension ≠ the active embedder
-- [ ] 4.4 Unit tests with a mocked provider (deterministic stub vectors): ordering, k-truncation, tie-break determinism, dimension-mismatch skip
+- [x] 4.1 Create `src/retrieval/` with `createEmbeddingsRetriever(corpus, cache, provider)` implementing the evals `Retriever` interface (`name`, `search(query, k)`)
+- [x] 4.2 Preload corpus vectors into an in-memory matrix once; `search()` embeds the query, dot-products against the normalized matrix, sorts best-first with a deterministic repo-key tie-break matching the baseline
+- [x] 4.3 Return up to `k` `github.com/<owner>/<name>` URLs; guard against vectors whose dimension ≠ the active embedder
+- [x] 4.4 Unit tests with a mocked provider (deterministic stub vectors): ordering, k-truncation, tie-break determinism, dimension-mismatch skip
 
 ## 5. Evals wiring + gate
 
