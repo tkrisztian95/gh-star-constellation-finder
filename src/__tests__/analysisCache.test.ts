@@ -449,6 +449,51 @@ async function runTests(): Promise<void> {
     );
   });
 
+  // --- Test 17 (analysis-embeddings 3.x): runAnalysis populates embeddings,
+  // and a rerun over the already-embedded repo makes zero embed calls
+  await withTempDir(async (dir) => {
+    const cache = await loadCache(join(dir, "analysis.db"));
+    let embedCalls = 0;
+    const provider: AIProvider = {
+      modelId: "fake-model",
+      embedderId: "fake:embed-v1",
+      embed: async (texts) => {
+        embedCalls++;
+        // One deterministic 2-d vector per input.
+        return texts.map((_, i) => [i + 1, 1]);
+      },
+      analyze: async () => ({ category: "Tools", killerFeature: "k", description: "d" }),
+      complete: async () => "[]",
+    };
+    const params = {
+      filteredRepos: [makeRepo("a", "one"), makeRepo("b", "two")],
+      readmes: new Map([
+        ["a/one", "readme one"],
+        ["b/two", "readme two"],
+      ]),
+      analyzer: provider,
+      existingListNames: [],
+      abortController: new AbortController(),
+      interruptedRef: { value: false },
+      filterLabel: undefined,
+      concurrency: 2,
+      setPhase: () => {},
+      phaseTimings: {} as PhaseTimings,
+      cache,
+    };
+
+    await runAnalysis(params);
+    assert(embedCalls >= 1, "embed called during first analysis");
+    const all = cache.allEmbeddings("fake:embed-v1");
+    assertEqual(all.length, 2, "both repos embedded");
+    assert(cache.getEmbedding("a/one", "fake:embed-v1") !== null, "repo a embedded");
+
+    // Rerun: entries + embeddings are warm, so no new embed calls.
+    const callsBefore = embedCalls;
+    await runAnalysis({ ...params, phaseTimings: {} as PhaseTimings });
+    assertEqual(embedCalls, callsBefore, "rerun makes zero embed calls (cache hit)");
+  });
+
   console.log("  ✓ all analysisCache assertions passed");
 }
 

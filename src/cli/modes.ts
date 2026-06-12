@@ -22,6 +22,7 @@ import { writeCorpusFile } from "../corpus/exportCorpus.js";
 import { buildConstellation, toGexf, toJson } from "../constellation/graph.js";
 import { LlmEntityExtractor } from "../ai/entityExtractor.js";
 import type { CliArgs } from "./args.js";
+import { populateEmbeddings } from "../orchestration/analysis.js";
 import type { AnalysisTiming, AnalysisTimingStatus } from "../orchestration/analysis.js";
 import type { PhaseTimings } from "../types.js";
 import type { AnalysisCache } from "../cache/analysisCache.js";
@@ -179,6 +180,18 @@ export async function runAnalyzeOnly(
       }
     }),
   );
+  // Populate the retrieval substrate (#44). Same shared helper the TUI path
+  // uses, so headless and interactive populate embeddings identically.
+  if (cache) {
+    await populateEmbeddings({
+      analyzedRepos,
+      analyzer,
+      cache,
+      signal: new AbortController().signal,
+      parent: trace,
+    });
+  }
+
   phaseTimings.analysisMs = Date.now() - analysisStart;
   const analyzeOnlyErrorCount = analyzedRepos.filter(
     (r) => r.analysis.category === "analysis-failed",

@@ -15,10 +15,10 @@
 
 ## 3. Populate embeddings in the shared engine
 
-- [ ] 3.1 After an `entries` row is written during analysis, build the embedding text (name + topics + category + killerFeature + description) and, if the repo needs (re)embedding, call `provider.embed()` and persist the vector
-- [ ] 3.2 Batch the embed calls where the engine already batches repos; skip cache hits so reruns make zero embedding calls
-- [ ] 3.3 Verify headless parity: `--analyze-only` and interactive TUI both populate the table via the shared engine path (no duplicate logic)
-- [ ] 3.4 Add a `logger.info`/`debug` line at the embed phase boundary (debug for per-repo); omit token counts for the Ollama backend
+- [x] 3.1 After an `entries` row is written during analysis, build the embedding text (name + topics + category + killerFeature + description) and, if the repo needs (re)embedding, call `provider.embed()` and persist the vector
+- [x] 3.2 Batch the embed calls where the engine already batches repos; skip cache hits so reruns make zero embedding calls
+- [x] 3.3 Verify headless parity: `--analyze-only` and interactive TUI both populate the table via the shared engine path (no duplicate logic)
+- [x] 3.4 Add a `logger.info`/`debug` line at the embed phase boundary (debug for per-repo); omit token counts for the Ollama backend
 
 ## 4. Retrieval module
 
