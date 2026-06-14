@@ -67,6 +67,16 @@ export interface ConsolidationResult {
   mergeWarnings: string[];
 }
 
+/** Optional controls for a `complete()` call. Backward-compatible: callers that
+ * omit it observe the prior behaviour (aside from streamed transport on Ollama). */
+export interface CompleteOptions {
+  /** Aborts the in-flight call; the provider rejects when this fires. */
+  signal?: AbortSignal;
+  /** Progress callback invoked with the running token count as output streams
+   * (Ollama only; throttled, not per-token). OpenAI ignores it. */
+  onProgress?: (tokenCount: number) => void;
+}
+
 export interface AIProvider {
   modelId: string;
   /** Stable identity of the embedding model + dimensionality producing this
@@ -78,7 +88,12 @@ export interface AIProvider {
     signal?: AbortSignal,
     parent?: LangfuseParent | null,
   ): Promise<AnalysisResult>;
-  complete(prompt: string, generationName: string, parent?: LangfuseParent | null): Promise<string>;
+  complete(
+    prompt: string,
+    generationName: string,
+    parent?: LangfuseParent | null,
+    opts?: CompleteOptions,
+  ): Promise<string>;
   /** Embed a batch of texts, returning one vector per input in input order.
    * Empty input returns `[]` with no network call. An aborted `signal` rejects. */
   embed(texts: string[], signal?: AbortSignal, parent?: LangfuseParent | null): Promise<number[][]>;

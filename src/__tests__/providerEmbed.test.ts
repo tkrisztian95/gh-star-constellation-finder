@@ -29,6 +29,22 @@ mock.module("openai", () => ({
 
 const { createOpenAIProvider } = await import("../ai/openaiProvider.js");
 const { createOllamaProvider } = await import("../ai/ollamaProvider.js");
+const { findBalancedJsonEnd } = await import("../ai/ollamaUtils.js");
+
+/** Build a streaming NDJSON /api/chat Response, one enqueue per line. */
+function ndjsonResponse(lines: object[]): Response {
+  const enc = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const obj of lines) controller.enqueue(enc.encode(JSON.stringify(obj) + "\n"));
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: { "content-type": "application/x-ndjson" },
+  });
+}
 
 async function runTests(): Promise<void> {
   console.log("providerEmbed.test.ts\n");
@@ -163,6 +179,145 @@ async function runTests(): Promise<void> {
         threw = true;
       }
       assert(threw, "embed rejected on abort");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  // --- keep_alive on the /api/chat hot path (#36) ---
+
+  function captureChatBody(): { get: () => Record<string, unknown> } {
+    let captured: Record<string, unknown> = {};
+    globalThis.fetch = ((_url: string, init?: { body?: string }) => {
+      captured = JSON.parse(init?.body ?? "{}") as Record<string, unknown>;
+      return Promise.resolve(
+        new Response(JSON.stringify({ message: { content: "{}" } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }) as unknown as typeof fetch;
+    return { get: () => captured };
+  }
+
+  await test("Ollama analyze() sends default keep_alive on /api/chat", async () => {
+    const originalFetch = globalThis.fetch;
+    const cap = captureChatBody();
+    try {
+      const provider = createOllamaProvider();
+      await provider.analyze({
+        owner: "o",
+        name: "n",
+        description: "d",
+        language: "TypeScript",
+        topics: [],
+        readme: "",
+        isArchived: false,
+      });
+      assertEqual(cap.get().keep_alive, "10m", "analyze body carries default keep_alive");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await test("Ollama complete() sends configured keep_alive on /api/chat", async () => {
+    const originalFetch = globalThis.fetch;
+    const cap = captureChatBody();
+    try {
+      const provider = createOllamaProvider(undefined, null, undefined, undefined, "30m");
+      await provider.complete("prompt", "gen-name");
+      assertEqual(cap.get().keep_alive, "30m", "complete body carries configured keep_alive");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  // --- findBalancedJsonEnd (pure) (#34) ---
+
+  await test("findBalancedJsonEnd: returns end index of balanced object", () => {
+    assertEqual(findBalancedJsonEnd('{"a":1}'), 7, "closes at index 7");
+    assertEqual(findBalancedJsonEnd('{"a":{"b":2}}rest'), 13, "outermost close, ignores trailing");
+  });
+
+  await test("findBalancedJsonEnd: ignores braces inside strings", () => {
+    assertEqual(findBalancedJsonEnd('{"a":"}{"}'), 10, "brace in string value not counted");
+    assertEqual(findBalancedJsonEnd('{"a":"\\""}'), 10, "escaped quote handled");
+  });
+
+  await test("findBalancedJsonEnd: -1 when not yet balanced", () => {
+    assertEqual(findBalancedJsonEnd('{"a":1'), -1, "unclosed object");
+    assertEqual(findBalancedJsonEnd("no braces"), -1, "no object");
+  });
+
+  // --- Ollama complete() streaming (#34) ---
+
+  await test("Ollama complete() accumulates streamed content and reports progress", async () => {
+    const originalFetch = globalThis.fetch;
+    const lines: object[] = [{ message: { content: '{"k":"' } }];
+    for (let i = 0; i < 16; i++) lines.push({ message: { content: "x" } });
+    lines.push({ message: { content: '"}' } });
+    lines.push({ done: true, done_reason: "stop", eval_count: 18 });
+    globalThis.fetch = (() => Promise.resolve(ndjsonResponse(lines))) as unknown as typeof fetch;
+    try {
+      const progress: number[] = [];
+      const provider = createOllamaProvider();
+      const out = await provider.complete("p", "gen", null, {
+        onProgress: (n) => progress.push(n),
+      });
+      assertEqual(out, '{"k":"xxxxxxxxxxxxxxxx"}', "accumulated streamed JSON string");
+      assert(progress.length >= 1, "onProgress fired at least once");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await test("Ollama complete() early-exits on a balanced object", async () => {
+    const originalFetch = globalThis.fetch;
+    // No `done` line — completion is detected structurally; trailing line ignored.
+    const lines = [
+      { message: { content: '{"a":1}' } },
+      { message: { content: "SHOULD-NOT-APPEND" } },
+    ];
+    globalThis.fetch = (() => Promise.resolve(ndjsonResponse(lines))) as unknown as typeof fetch;
+    try {
+      const provider = createOllamaProvider();
+      const out = await provider.complete("p", "gen");
+      assertEqual(out, '{"a":1}', "resolves at balanced JSON, ignores later tokens");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await test("Ollama complete() empty stream falls back to {}", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      Promise.resolve(
+        ndjsonResponse([{ done: true, done_reason: "stop" }]),
+      )) as unknown as typeof fetch;
+    try {
+      const provider = createOllamaProvider();
+      const out = await provider.complete("p", "gen");
+      assertEqual(out, "{}", "empty content fallback");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  await test("Ollama complete() rejects when signal already aborted", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (() =>
+      Promise.resolve(ndjsonResponse([{ message: { content: "{}" } }]))) as unknown as typeof fetch;
+    try {
+      const controller = new AbortController();
+      controller.abort();
+      const provider = createOllamaProvider();
+      let threw = false;
+      try {
+        await provider.complete("p", "gen", null, { signal: controller.signal });
+      } catch {
+        threw = true;
+      }
+      assert(threw, "complete rejected on aborted signal");
     } finally {
       globalThis.fetch = originalFetch;
     }

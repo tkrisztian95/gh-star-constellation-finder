@@ -360,6 +360,7 @@ export async function main() {
     provider: analyzer,
     phaseTimings,
     analysisTimings,
+    signal: abortController.signal,
   });
 
   logger.info("review phase complete", {
