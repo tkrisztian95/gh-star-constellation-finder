@@ -7,14 +7,14 @@
 
 ## 2. Streaming complete() (#34)
 
-- [ ] 2.1 Extend the `complete()` seam in `src/ai/types.ts` to accept an optional opts bag `{ parent?, signal?, onProgress? }`; keep the 3-arg form working. Update OpenAI provider to honour `signal` at the fetch boundary and ignore `onProgress`.
-- [ ] 2.2 In `src/ai/ollamaProvider.ts`, switch `complete()` to `stream: true` and consume the NDJSON line stream, accumulating `message.content`.
-- [ ] 2.3 Emit `onProgress(tokenCount)` throttled every N≈16 tokens.
-- [ ] 2.4 Honour `signal`: pass to `fetch` and break the read loop on `signal.aborted`, rejecting with the same abort error shape `embed()` uses.
-- [ ] 2.5 Structural early-exit: stop reading once the outermost `{...}` is balanced (depth counter ignoring braces inside quoted strings); treat stream `done` as authoritative terminator.
-- [ ] 2.6 Replace the single-shot log with `{ tokensStreamed, doneReason, latencyMs }`.
-- [ ] 2.7 Wire `onSubStep`/abort through `consolidationCoordinator.ts` (map `onProgress` → "consolidating… N names mapped") and ensure the analyze loop's existing `AbortController` reaches `complete()`.
-- [ ] 2.8 Tests: progress callback fires, abort rejects mid-stream, early-exit resolves on balanced JSON, `complete()` still returns one string. Mock the streamed body at the fetch seam.
+- [x] 2.1 Extend the `complete()` seam in `src/ai/types.ts` to accept an optional opts bag `{ parent?, signal?, onProgress? }`; keep the 3-arg form working. Update OpenAI provider to honour `signal` at the fetch boundary and ignore `onProgress`.
+- [x] 2.2 In `src/ai/ollamaProvider.ts`, switch `complete()` to `stream: true` and consume the NDJSON line stream, accumulating `message.content`.
+- [x] 2.3 Emit `onProgress(tokenCount)` throttled every N≈16 tokens.
+- [x] 2.4 Honour `signal`: pass to `fetch` and break the read loop on `signal.aborted`, rejecting with the same abort error shape `embed()` uses.
+- [x] 2.5 Structural early-exit: stop reading once the outermost `{...}` is balanced (depth counter ignoring braces inside quoted strings); treat stream `done` as authoritative terminator.
+- [x] 2.6 Replace the single-shot log with `{ tokensStreamed, doneReason, latencyMs }`.
+- [x] 2.7 Wire `onSubStep`/abort through `consolidationCoordinator.ts` (map `onProgress` → "consolidating… N names mapped") and ensure the analyze loop's existing `AbortController` reaches `complete()`.
+- [x] 2.8 Tests: progress callback fires, abort rejects mid-stream, early-exit resolves on balanced JSON, `complete()` still returns one string. Mock the streamed body at the fetch seam.
 
 ## 3. JSON-schema format toggle (#33 — rides on streaming, riskiest)
 

@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { LangfuseParent } from "./tracing.js";
-import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
+import type { AIProvider, RepoInput, AnalysisResult, CompleteOptions } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
 import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
 import { logger } from "../logger.js";
@@ -107,7 +107,10 @@ export function createOpenAIProvider(
       prompt: string,
       generationName: string,
       parent?: LangfuseParent | null,
+      opts?: CompleteOptions,
     ): Promise<string> {
+      // OpenAI `complete()` is already fast; no streaming. Honour `signal` at the
+      // request boundary; `onProgress` is Ollama-only and ignored here.
       // Start tracing if enabled
       let generation: { end: (data: object) => void } | undefined;
       try {
@@ -125,11 +128,14 @@ export function createOpenAIProvider(
       // Make OpenAI API call
       let completion: OpenAICompletion;
       try {
-        completion = (await client.chat.completions.create({
-          model,
-          response_format: { type: "json_object" },
-          messages: [{ role: "user", content: prompt }],
-        })) as OpenAICompletion;
+        completion = (await client.chat.completions.create(
+          {
+            model,
+            response_format: { type: "json_object" },
+            messages: [{ role: "user", content: prompt }],
+          },
+          { signal: opts?.signal },
+        )) as OpenAICompletion;
       } catch (err: unknown) {
         endGenerationSafe(generation, {
           level: "ERROR",

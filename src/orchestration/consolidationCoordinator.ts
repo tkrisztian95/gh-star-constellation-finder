@@ -41,6 +41,8 @@ async function runChunkedConsolidation(
   strategy: ConsolidationStrategy,
   distributionContext: string | undefined,
   consolidationSpan: LangfuseParent | null,
+  signal?: AbortSignal,
+  onProgress?: (tokenCount: number) => void,
 ): Promise<ConsolidationResult> {
   const chunks = chunkProposedNames(deduplicatedNames, CONSOLIDATION_CHUNK_SIZE);
 
@@ -55,7 +57,10 @@ async function runChunkedConsolidation(
       strategy,
       distributionContext,
     );
-    const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan);
+    const content = await provider.complete(prompt, "consolidate-categories", consolidationSpan, {
+      signal,
+      onProgress,
+    });
     let remapping: Map<string, string>;
     try {
       remapping = parseRemapping(content, deduplicatedNames);
@@ -85,7 +90,7 @@ async function runChunkedConsolidation(
       const generationName = `consolidate-categories-chunk-${i + 1}`;
       let content = "";
       try {
-        content = await provider.complete(prompt, generationName, consolidationSpan);
+        content = await provider.complete(prompt, generationName, consolidationSpan, { signal });
         return { chunkNames, remapping: parseRemapping(content, chunkNames) };
       } catch (err) {
         logParseFailure("consolidate-categories", content, err);
@@ -146,6 +151,7 @@ async function runChunkedConsolidation(
         reducerPrompt,
         "consolidate-categories-reduce",
         consolidationSpan,
+        { signal, onProgress },
       );
       const reducerMap = parseRemapping(reducerContent, canonicalsArray);
       for (const [name, currentCanonical] of composedRemapping) {
@@ -183,6 +189,7 @@ export async function consolidateCategories(
   parent?: LangfuseParent | null,
   analyzedRepos?: AnalyzedRepo[],
   onSubStep?: (message: string) => void,
+  signal?: AbortSignal,
 ): Promise<ConsolidationResult> {
   if (proposedNames.length < 2) {
     return identityResult(proposedNames);
@@ -258,6 +265,10 @@ export async function consolidateCategories(
       strategy,
       distributionContext,
       consolidationSpan,
+      signal,
+      onSubStep
+        ? (tokenCount) => onSubStep(`Consolidating categories… ${tokenCount} tokens`)
+        : undefined,
     );
 
     // Compose: original → pass1 deduped → pass2 final

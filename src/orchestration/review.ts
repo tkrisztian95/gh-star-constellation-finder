@@ -46,6 +46,8 @@ export interface ReviewPhaseParams {
   provider: AIProvider;
   phaseTimings: PhaseTimings;
   analysisTimings: AnalysisTiming[];
+  /** Aborts the in-flight consolidate call when the user interrupts (ESC). */
+  signal?: AbortSignal;
 }
 
 // Returns only if the user confirmed to apply changes; otherwise calls process.exit()
@@ -69,6 +71,7 @@ export async function runReviewPhase({
   provider,
   phaseTimings,
   analysisTimings,
+  signal,
 }: ReviewPhaseParams): Promise<ReviewPhaseResult> {
   // Consolidate proposed new category names to reduce list proliferation
   setPhase({ tag: "consolidating" });
@@ -95,6 +98,7 @@ export async function runReviewPhase({
     parent,
     analyzedRepos,
     (msg) => setPhase({ tag: "consolidating", subStep: msg }),
+    signal,
   ).finally(() => {
     phaseTimings.consolidationMs = Date.now() - consolidationStart;
   });

@@ -1,11 +1,12 @@
 import type { LangfuseParent } from "./tracing.js";
-import type { AIProvider, RepoInput, AnalysisResult } from "./types.js";
+import type { AIProvider, RepoInput, AnalysisResult, CompleteOptions } from "./types.js";
 import { parseAnalysisResponse } from "./types.js";
 import { buildSystemPrompt, buildAnalyzeRepoPrompt } from "./prompts.js";
 import { logger } from "../logger.js";
 import {
   endGenerationSafe,
   parseOllamaResponseBody,
+  consumeOllamaChatStream,
   ANALYSIS_FAILED_RESULT,
   type OllamaResponse,
 } from "./ollamaUtils.js";
@@ -113,7 +114,11 @@ export function createOllamaProvider(
       prompt: string,
       generationName: string,
       parent?: LangfuseParent | null,
+      opts?: CompleteOptions,
     ): Promise<string> {
+      const { signal, onProgress } = opts ?? {};
+      const startedAt = Date.now();
+
       // Start tracing if enabled
       let generation: { end: (data: object) => void } | undefined;
       try {
@@ -128,15 +133,17 @@ export function createOllamaProvider(
         // tracing errors must not affect consolidation
       }
 
-      // Make Ollama API call (with options for context window)
+      // Make Ollama API call. `stream: true` so the TUI can show progress and
+      // ESC can abort mid-call instead of waiting 40–160 s for the full body.
       let response: Response;
       try {
         response = await fetch(`${host}/api/chat`, {
           method: "POST",
           headers: { "content-type": "application/json" },
+          signal,
           body: JSON.stringify({
             model,
-            stream: false,
+            stream: true,
             keep_alive: keepAlive,
             // `think: false` skips reasoning tokens on Gemma3/Gemma4 and
             // other thinking models — those tokens count toward num_predict
@@ -168,9 +175,8 @@ export function createOllamaProvider(
         throw new Error(`Ollama consolidation error: ${message}`);
       }
 
-      // Parse response body with type safety
-      const body = (await response.json()) as OllamaResponse;
-      let content = parseOllamaResponseBody(body);
+      const stream = await consumeOllamaChatStream(response, { signal, onProgress });
+      let content = stream.content;
 
       // Mirror openaiProvider's `|| "{}"` fallback: when Ollama returns
       // empty content, fall back to an empty mapping so the consolidator
@@ -178,19 +184,26 @@ export function createOllamaProvider(
       if (!content) {
         logger.warn("Ollama returned empty content", {
           generationName,
-          evalCount: body.eval_count ?? 0,
-          doneReason: body.done_reason,
-          thinkingLen: body.message?.thinking?.length ?? 0,
+          evalCount: stream.evalCount,
+          doneReason: stream.doneReason,
         });
         content = "{}";
       }
+
+      logger.debug("Ollama complete streamed", {
+        generationName,
+        tokensStreamed: stream.evalCount,
+        doneReason: stream.doneReason,
+        earlyExit: stream.earlyExit,
+        latencyMs: Date.now() - startedAt,
+      });
 
       // End tracing with output/usage if enabled
       endGenerationSafe(generation, {
         output: content,
         usage:
-          body.prompt_eval_count !== undefined
-            ? { input: body.prompt_eval_count, output: body.eval_count ?? 0 }
+          stream.promptEvalCount !== undefined
+            ? { input: stream.promptEvalCount, output: stream.evalCount }
             : undefined,
       });
 
